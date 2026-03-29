@@ -20,7 +20,6 @@ That difference — between connection and coherence — is the entire idea. The
 
 The interface is deliberately **organic and ambient**. Clusters appear as soft fields. Structure emerges over time. The math stays hidden until you want it.
 
-
 ![Screenshot-1](docs/images/Formal.png)
 ![Screenshot-2](docs/images/Ambient.png)
 
