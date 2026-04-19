@@ -142,6 +142,7 @@ export default class SimplicialPlugin extends Plugin {
       name: "Toggle simplicial edges",
       hotkeys: [{ modifiers: [], key: "1" }],
       callback: () => {
+        if (document.activeElement?.tagName === "INPUT" || document.activeElement?.tagName === "TEXTAREA") return;
         this.settings.showEdges = !this.settings.showEdges;
         void this.saveSettings();
         this.renderer.render();
@@ -152,6 +153,7 @@ export default class SimplicialPlugin extends Plugin {
       name: "Toggle simplicial clusters",
       hotkeys: [{ modifiers: [], key: "2" }],
       callback: () => {
+        if (document.activeElement?.tagName === "INPUT" || document.activeElement?.tagName === "TEXTAREA") return;
         this.settings.showClusters = !this.settings.showClusters;
         void this.saveSettings();
         this.renderer.render();
@@ -162,6 +164,7 @@ export default class SimplicialPlugin extends Plugin {
       name: "Toggle simplicial cores",
       hotkeys: [{ modifiers: [], key: "3" }],
       callback: () => {
+        if (document.activeElement?.tagName === "INPUT" || document.activeElement?.tagName === "TEXTAREA") return;
         this.settings.showCores = !this.settings.showCores;
         void this.saveSettings();
         this.renderer.render();
@@ -172,6 +175,10 @@ export default class SimplicialPlugin extends Plugin {
       name: "Clear simplicial focus",
       hotkeys: [{ modifiers: [], key: "Escape" }],
       callback: () => {
+        if (document.activeElement?.tagName === "INPUT" || document.activeElement?.tagName === "TEXTAREA") {
+          (document.activeElement as HTMLElement).blur();
+          return;
+        }
         this.controller.clearFocus();
         this.renderer.render();
       },
@@ -181,6 +188,7 @@ export default class SimplicialPlugin extends Plugin {
       name: "Focus hovered simplicial node",
       hotkeys: [{ modifiers: [], key: "f" }],
       callback: () => {
+        if (document.activeElement?.tagName === "INPUT" || document.activeElement?.tagName === "TEXTAREA") return;
         this.controller.focusHoveredNode();
         this.renderer.render();
       },
@@ -189,7 +197,10 @@ export default class SimplicialPlugin extends Plugin {
       id: "open-hovered-simplex-panel",
       name: "Open metadata panel for hovered simplex",
       hotkeys: [{ modifiers: [], key: "p" }],
-      callback: () => void this.openPanelForCurrentSelection(),
+      callback: () => {
+        if (document.activeElement?.tagName === "INPUT" || document.activeElement?.tagName === "TEXTAREA") return;
+        void this.openPanelForCurrentSelection();
+      },
     });
     this.addSettingTab(new SimplicialSettingTab(this.app, this));
 

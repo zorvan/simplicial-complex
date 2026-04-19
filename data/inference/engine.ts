@@ -60,10 +60,23 @@ export function runEmergentInference(
   console.timeEnd('runEmergentInference-score');
 
   // Add graph edges as 1-simplices so basic links are visible
+  // Fix 3: Percentile-based threshold (eliminates bistability cliff)
   console.time('runEmergentInference-edges');
   const edgeSimplices: Simplex[] = [];
+
+  // Compute percentile-based threshold
+  const allStrengths = [...graph.edges.values()]
+    .map(e => e.strength)
+    .filter(s => s > 0)
+    .sort((a, b) => b - a);
+
+  // slider = 0.0 → keep top edges (sparse); slider = 1.0 → keep all edges (dense)
+  const keepFraction = 1 - config.linkStrengthThreshold;
+  const cutoffIdx = Math.max(0, Math.floor(allStrengths.length * keepFraction) - 1);
+  const effectiveThreshold = allStrengths[cutoffIdx] ?? 0;
+
   for (const edge of graph.edges.values()) {
-    if (edge.strength >= config.linkStrengthThreshold) {
+    if (edge.strength >= effectiveThreshold) {
       edgeSimplices.push({
         nodes: [edge.a, edge.b],
         weight: edge.strength,

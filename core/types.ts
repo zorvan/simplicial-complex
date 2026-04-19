@@ -102,6 +102,8 @@ export interface PluginSettings {
   inferenceMode: 'emergent' | 'taxonomic' | 'hybrid';
   insightThreshold: number;
   linkStrengthThreshold: number;
+  linkThresholdLowerBound: number;
+  linkThresholdUpperBound: number;
   closureThreshold: number;
   tagRarityThreshold: number;
   decayHalfLifeDays: number;

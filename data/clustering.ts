@@ -12,7 +12,7 @@ export const DEFAULT_CLUSTERING_CONFIG: ClusteringConfig = {
   maxIterations: 100,
 };
 
-interface DocumentVector {
+export interface DocumentVector {
   path: string;
   vector: Map<string, number>;
   magnitude: number;
@@ -43,7 +43,7 @@ export function clusterByContent(
   return new Map(clusters.map((clusterId, i) => [vectors[i].path, `cluster-${clusterId}`]));
 }
 
-function buildTFIDFVectors(contexts: InferenceContext[]): DocumentVector[] {
+export function buildTFIDFVectors(contexts: InferenceContext[]): DocumentVector[] {
   const docCount = contexts.length;
   const termDocFreq = new Map<string, number>();
   const docVectors: Map<string, number>[] = [];
@@ -95,7 +95,7 @@ function buildTFIDFVectors(contexts: InferenceContext[]): DocumentVector[] {
   });
 }
 
-function cosineSimilarity(a: DocumentVector, b: DocumentVector): number {
+export function cosineSimilarity(a: DocumentVector, b: DocumentVector): number {
   if (a.magnitude === 0 || b.magnitude === 0) return 0;
   
   let dotProduct = 0;

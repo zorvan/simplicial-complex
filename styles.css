@@ -289,6 +289,38 @@
   accent-color: var(--interactive-accent-hover);
 }
 
+/* Bounds row and input styles */
+.simplicial-bounds-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.simplicial-bounds-row .simplicial-slider-label {
+  flex-shrink: 0;
+}
+
+.simplicial-bound-input {
+  width: 70px;
+  padding: 2px 6px;
+  font-size: 12px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  background: var(--background-primary);
+  color: var(--text-normal);
+}
+
+.simplicial-bound-input:focus {
+  border-color: var(--interactive-accent);
+  outline: none;
+}
+
+.simplicial-bound-separator {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
 /* Explanation Card Styles */
 .simplicial-explanation-card {
   background: color-mix(in srgb, var(--background-secondary) 60%, transparent);

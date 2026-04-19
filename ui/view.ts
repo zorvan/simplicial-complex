@@ -216,12 +216,24 @@ export class SimplicialView extends ItemView {
     const inferenceHeader = panel.createDiv({ cls: "simplicial-control-header" });
     inferenceHeader.setText("Inference");
 
-    // Link Threshold - Dual slider (coarse + fine)
-    this.addDualSlider(panel, "Link Threshold", this.settings.linkStrengthThreshold, (value) => {
-      this.settings.linkStrengthThreshold = value;
-      this.onSettingsChanged();
-      this.onRescan?.("canvas-link-threshold-changed", 100);
-    });
+    // Link Threshold - Dual slider (coarse + fine) with configurable bounds
+    this.addDualSlider(
+      panel,
+      "Link Threshold",
+      this.settings.linkStrengthThreshold,
+      (value) => {
+        this.settings.linkStrengthThreshold = value;
+        this.onSettingsChanged();
+        this.onRescan?.("canvas-link-threshold-changed", 100);
+      },
+      this.settings.linkThresholdLowerBound,
+      this.settings.linkThresholdUpperBound,
+      (lower, upper) => {
+        this.settings.linkThresholdLowerBound = lower;
+        this.settings.linkThresholdUpperBound = upper;
+        this.onSettingsChanged();
+      }
+    );
 
     // Insight Threshold
     this.addCanvasSlider(panel, "Insight Threshold", this.settings.insightThreshold, 0, 1, 0.05, (value) => {
@@ -340,24 +352,27 @@ export class SimplicialView extends ItemView {
     label: string,
     initialValue: number,
     onChange: (value: number) => void,
+    lowerBound: number,
+    upperBound: number,
+    onBoundsChange?: (lower: number, upper: number) => void,
   ): void {
     const wrap = container.createDiv({ cls: "simplicial-dual-slider-wrap" });
 
     // Value display header
     const header = wrap.createDiv({ cls: "simplicial-dual-slider-header" });
     header.createSpan({ text: label });
-    const valueDisplay = header.createSpan({ cls: "simplicial-control-value", text: initialValue.toFixed(3) });
+    const valueDisplay = header.createSpan({ cls: "simplicial-control-value", text: initialValue.toFixed(4) });
 
-    // Coarse slider (0 to 1, step 0.1) - sets the base value
-    const coarseRow = wrap.createDiv({ cls: "simplicial-control-row" });
-    coarseRow.createSpan({ text: "Range", cls: "simplicial-slider-label" });
-    const coarseSlider = coarseRow.createEl("input", { type: "range" });
-    coarseSlider.min = "0";
-    coarseSlider.max = "1";
-    coarseSlider.step = "0.1";
-    coarseSlider.value = String(Math.round(initialValue * 10) / 10);
+    // Main range slider with step 0.01
+    const sliderRow = wrap.createDiv({ cls: "simplicial-control-row" });
+    sliderRow.createSpan({ text: "Range", cls: "simplicial-slider-label" });
+    const slider = sliderRow.createEl("input", { type: "range" });
+    slider.min = String(lowerBound);
+    slider.max = String(upperBound);
+    slider.step = "0.01";
+    slider.value = String(initialValue);
 
-    // Fine slider (-0.05 to +0.05 around coarse value, step 0.001)
+    // Fine tuner slider (±0.05 around current value, step 0.001)
     const fineRow = wrap.createDiv({ cls: "simplicial-control-row" });
     fineRow.createSpan({ text: "Fine", cls: "simplicial-slider-label" });
     const fineSlider = fineRow.createEl("input", { type: "range" });
@@ -366,21 +381,18 @@ export class SimplicialView extends ItemView {
     fineSlider.step = "0.001";
     fineSlider.value = "0";
 
-    let coarseValue = Number(coarseSlider.value);
+    let currentValue = initialValue;
     let fineOffset = 0;
 
     const updateValue = (): number => {
-      let value = coarseValue + fineOffset;
-      // Clamp to [0, 1]
-      value = Math.max(0, Math.min(1, value));
-      valueDisplay.setText(value.toFixed(3));
+      const value = Math.max(lowerBound, Math.min(upperBound, currentValue + fineOffset));
+      valueDisplay.setText(value.toFixed(4));
       onChange(value);
       return value;
     };
 
-    coarseSlider.addEventListener("input", () => {
-      coarseValue = Number(coarseSlider.value);
-      // Reset fine slider when coarse changes
+    slider.addEventListener("input", () => {
+      currentValue = Number(slider.value);
       fineOffset = 0;
       fineSlider.value = "0";
       updateValue();
@@ -391,17 +403,7 @@ export class SimplicialView extends ItemView {
       updateValue();
     });
 
-    // Allow fine slider to "stick" at edges - if we hit bounds, adjust coarse
-    fineSlider.addEventListener("change", () => {
-      const currentValue = coarseValue + fineOffset;
-      if (currentValue <= 0 || currentValue >= 1) {
-        // Update coarse to the clamped value and reset fine
-        coarseValue = Math.max(0, Math.min(1, currentValue));
-        coarseSlider.value = String(Math.round(coarseValue * 10) / 10);
-        fineOffset = 0;
-        fineSlider.value = "0";
-      }
-    });
+    onBoundsChange?.(lowerBound, upperBound);
   }
 
   private updateEventMarkers(): void {
