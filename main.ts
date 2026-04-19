@@ -43,7 +43,8 @@ export default class SimplicialPlugin extends Plugin {
   private rescanTimer: number | null = null;
 
   async onload(): Promise<void> {
-    this.settings = Object.assign(getDefaultSettings(), await this.loadData());
+    const saved = await this.loadData() ?? {};
+    this.settings = { ...getDefaultSettings(), ...saved };
     if (this.settings.maxRenderedDim === 3) {
       this.settings.maxRenderedDim = 12;
     }

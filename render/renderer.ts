@@ -155,7 +155,7 @@ export class Renderer {
       locked,
       nodes.length,
       this.settings.renderFilterMetric,
-      this.settings.renderFilterThithreshold.toFixed(2),
+      (this.settings.renderFilterThreshold ?? 0).toFixed(2),
     ].join("|");
   }
 
