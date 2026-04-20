@@ -61,60 +61,52 @@ Both views are projections of the same underlying simplicial model. Toggle betwe
 
 ## Features
 
-### Core (v1–v2)
+**Core:** Organic blob renderer, living force-based layout, hover focus, dimension filtering, node pinning, real-time vault updates, formal geometric view, lasso selection, simplex-to-note promotion, centrality analysis.
 
-- **Organic blob renderer** — clusters visualized as soft, overlapping fields. Blobs use a capsule-union metaball approach that correctly handles any node arrangement, including non-convex shapes.
-- **Living layout** — force simulation with simplex cohesion and gentle breathing. Layout never fully settles; it drifts quietly when idle, wakes on interaction or vault changes.
-- **Sleep mode** — the render loop pauses when kinetic energy falls below threshold. No idle CPU drain.
-- **Hover focus** — hovering a node reveals only its structural context. Everything else fades. No click required.
-- **Dimension filter** — toggle edges, clusters (2-simplices), and cores (3-simplices and higher) independently.
-- **Metadata panel** — optional label and weight per simplex. Weight is felt (blob density), not displayed as a number.
-- **Node pinning** — double-click any node to fix its position across sessions. Click-and-hold to temporarily push overlapping neighbors apart.
-- **Rename tracking** — renaming a note in Obsidian automatically updates all simplex references without losing layout positions.
-- **Real-time updates** — vault changes (create, modify, delete, rename) update the graph live.
-- **Formal/geometric view** — toggle between organic blobs and crisp geometric rendering with wireframe edges.
-- **Lasso-select creation** — click and drag to draw a lasso around nodes, then open the create-simplex dialog directly on the canvas.
-- **Promote simplex to note** — compress a cluster into a first-class vault concept. The new note links to all member nodes.
-- **Filtration controls** — reveal structure layer by layer by weight threshold. Choose from weight, confidence, or decayed-weight metrics.
-- **Simplex centrality analysis** — identify which notes anchor the most clusters. Displayed in the metadata panel and global analysis view.
+**Analysis & Inference:** Edge inference from tags/links/folders, suggestion system for missing connections, temporal decay, and centrality measures.
 
-### Analysis & Inference (v2+)
+**Topological Analysis (v3):** Real-time Betti numbers (β₀, β₁, β₂), phantom hole visualization, and live Betti HUD.
 
-- **Edge inference** — infer lightweight edges from tags, outbound links, title/content overlap, and folder co-location.
-- **Suggestion system** — detect triangle closures and soft clusters with configurable confidence threshold. Render suggestions directly on the canvas.
-- **Temporal decay** — older simplices gradually lose strength, allowing your graph to naturally shift focus toward recent work.
-- **Centrality measures** — simplex centrality per node, plus global hub identification.
+**Emergent Inference (v3):** Semantic clustering with TF-IDF, emergent edge detection, hybrid inference modes, domain-aware coloring.
 
-### Topological Analysis (v3 — New!)
-
-- **Betti numbers (β₀, β₁, β₂)** — real-time computation of topological invariants showing:
-  - β₀: Connected components in your knowledge graph
-  - β₁: Unfilled triangles (holes) representing missing connections
-  - β₂: Hollow shells (voids) where 3D structure could form
-- **Phantom hole visualization** — missing simplices rendered as dashed orange outlines on the canvas. Click to create the missing connection.
-- **Hole-as-prompt interaction** — hover over a phantom hole to see which notes would complete the structure.
-- **Live Betti HUD** — display current Betti numbers in the top-left corner of the canvas.
-
-### Emergent Inference Engine (v3 — New!)
-
-- **Semantic clustering** — automatically group notes by content similarity using TF-IDF vectorization and k-means clustering
-- **Emergent edge detection** — discover relationships based on shared semantic domains, not just explicit links
-- **Hybrid inference modes** — choose between:
-  - **Emergent**: Graph-based semantic analysis with content clustering
-  - **Legacy**: Rule-based heuristics (tags, links, folders)
-  - **Hybrid**: Both systems working together
-- **Domain-aware coloring** — notes colored by their semantic cluster or folder structure
-- **Interaction reinforcement** — tracked interactions boost edge weights, making frequently-used connections stronger
-
-### UI/UX Improvements (v3 — New!)
-
-- **Floating canvas controls** — gear icon on the canvas opens real-time parameter adjustment panel
-- **Dual-slider precision controls** — Link Threshold and Filtration use coarse+fine dual sliders for precise tuning
-- **Adaptive value displays** — sliders show appropriate decimal precision (3 decimals for fine controls)
-- **Reorganized settings panel** — Emergent options prioritized, Legacy options organized separately
-- **Explanation cards** — human-readable explanations for inferred simplices in the metadata panel
+*See [Technical Details](#technical-details) for complete feature documentation.*
 
 ---
+
+## Quick Start
+
+**Installation:**
+
+```bash
+git clone https://github.com/zorvan/simplicial-complex
+cd simplicial-complex
+npm install
+npm run build
+```
+
+Copy `main.js`, `manifest.json`, and `styles.css` to `.obsidian/plugins/simplicial-complex/` in your vault.
+
+**Create your first simplex:**
+
+In any note, type:
+```markdown
+△ startup capital talent
+```
+
+Or use YAML frontmatter:
+```yaml
+---
+simplices:
+  - nodes: [startup, capital, talent]
+    label: "founding engine"
+---
+```
+
+Open the Simplicial Complex view to see your cluster as a living, organic field.
+
+---
+
+# Technical Details
 
 ## Defining Simplices
 
@@ -195,30 +187,54 @@ You can switch to a central `_simplicial.md` file in settings if you prefer to k
 
 ---
 
-## Installation
+## Complete Feature List
 
-### From Obsidian Community Plugins *(not yet available)*
+### Core (v1–v2)
 
-1. Open Obsidian Settings → Community plugins
-2. Search for "Simplicial Complex"
-3. Install and enable
+- **Organic blob renderer** — clusters visualized as soft, overlapping fields. Blobs use a capsule-union metaball approach that correctly handles any node arrangement, including non-convex shapes.
+- **Living layout** — force simulation with simplex cohesion and gentle breathing. Layout never fully settles; it drifts quietly when idle, wakes on interaction or vault changes.
+- **Sleep mode** — the render loop pauses when kinetic energy falls below threshold. No idle CPU drain.
+- **Hover focus** — hovering a node reveals only its structural context. Everything else fades. No click required.
+- **Dimension filter** — toggle edges, clusters (2-simplices), and cores (3-simplices and higher) independently.
+- **Metadata panel** — optional label and weight per simplex. Weight is felt (blob density), not displayed as a number.
+- **Node pinning** — double-click any node to fix its position across sessions. Click-and-hold to temporarily push overlapping neighbors apart.
+- **Rename tracking** — renaming a note in Obsidian automatically updates all simplex references without losing layout positions.
+- **Real-time updates** — vault changes (create, modify, delete, rename) update the graph live.
+- **Formal/geometric view** — toggle between organic blobs and crisp geometric rendering with wireframe edges.
+- **Lasso-select creation** — click and drag to draw a lasso around nodes, then open the create-simplex dialog directly on the canvas.
+- **Promote simplex to note** — compress a cluster into a first-class vault concept. The new note links to all member nodes.
+- **Filtration controls** — reveal structure layer by layer by weight threshold. Choose from weight, confidence, or decayed-weight metrics.
+- **Simplex centrality analysis** — identify which notes anchor the most clusters. Displayed in the metadata panel and global analysis view.
 
-### Manual installation
+### Analysis & Inference (v2+)
 
-1. Download the latest release from the [Releases](../../releases) page
-2. Copy `main.js`, `manifest.json`, and `styles.css` to `.obsidian/plugins/simplicial-complex/` in your vault
-3. Reload Obsidian and enable the plugin under Settings → Community plugins
+- **Edge inference** — infer lightweight edges from tags, outbound links, title/content overlap, and folder co-location.
+- **Suggestion system** — detect triangle closures and soft clusters with configurable confidence threshold. Render suggestions directly on the canvas.
+- **Temporal decay** — older simplices gradually lose strength, allowing your graph to naturally shift focus toward recent work.
+- **Centrality measures** — simplex centrality per node, plus global hub identification.
 
-### From source
+### Topological Analysis (v3)
 
-```bash
-git clone https://github.com/zorvan/simplicial-complex
-cd simplicial-complex
-npm install
-npm run build
-```
+- **Betti numbers (β₀, β₁, β₂)** — real-time computation of topological invariants showing connected components, unfilled triangles (holes), and hollow shells (voids).
+- **Phantom hole visualization** — missing simplices rendered as dashed orange outlines on the canvas. Click to create the missing connection.
+- **Hole-as-prompt interaction** — hover over a phantom hole to see which notes would complete the structure.
+- **Live Betti HUD** — display current Betti numbers in the top-left corner of the canvas.
 
-Copy the output to your vault's plugin directory as above.
+### Emergent Inference Engine (v3)
+
+- **Semantic clustering** — automatically group notes by content similarity using TF-IDF vectorization and k-means clustering.
+- **Emergent edge detection** — discover relationships based on shared semantic domains, not just explicit links.
+- **Hybrid inference modes** — choose between Emergent (graph-based), Legacy (rule-based), or Hybrid systems.
+- **Domain-aware coloring** — notes colored by their semantic cluster or folder structure.
+- **Interaction reinforcement** — tracked interactions boost edge weights, making frequently-used connections stronger.
+
+### UI/UX Improvements (v3)
+
+- **Floating canvas controls** — gear icon on the canvas opens real-time parameter adjustment panel.
+- **Dual-slider precision controls** — Link Threshold and Filtration use coarse+fine dual sliders for precise tuning.
+- **Adaptive value displays** — sliders show appropriate decimal precision.
+- **Reorganized settings panel** — Emergent options prioritized, Legacy options organized separately.
+- **Explanation cards** — human-readable explanations for inferred simplices in the metadata panel.
 
 ---
 
