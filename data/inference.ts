@@ -4,7 +4,7 @@ import { logger } from "../core/logger";
 import { inferSimplicesEmergentWithMode } from "./inference/engine";
 import { extractRole } from "./inference/roles";
 import type { InferenceContext } from "./inference/types";
-import { STOPWORDS_EN, isStopword, type Language } from "./stopwords";
+import { isStopword, type Language } from "./stopwords";
 export type { InferenceContext } from "./inference/types";
 
 // Default language for tokenization - can be made configurable in settings

@@ -333,7 +333,7 @@ export class SimplicialSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Display Betti on canvas")
-      .setDesc("Show live betti numbers in the top-left HUD overlay (requires betti computation to be enabled).")
+      .setDesc("Show live Betti numbers in the top-left HUD overlay (requires Betti computation to be enabled).")
       .addToggle((toggle) => {
         toggle.setValue(this.plugin.settings.bettiDisplayOnCanvas);
         toggle.onChange(async (value) => {
