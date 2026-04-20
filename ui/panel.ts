@@ -3,7 +3,7 @@ import { SimplicialModel } from "../core/model";
 import type { PluginSettings, Simplex, SimplexKey } from "../core/types";
 import { VIEW_TYPE_SIMPLICIAL_PANEL } from "../core/types";
 import { effectiveColorForSimplex } from "../render/palette";
-import { explainSimplex, type SimplexExplanation } from "../data/explainer";
+import { explainSimplex } from "../data/explainer";
 import type { NoteProfile } from "../data/inference/types";
 
 export class MetadataPanel extends ItemView {
@@ -34,7 +34,7 @@ export class MetadataPanel extends ItemView {
   }
 
   getDisplayText(): string {
-    return "Simplicial Metadata";
+    return "Simplicial metadata";
   }
 
   setActions(actions: {
@@ -60,7 +60,7 @@ export class MetadataPanel extends ItemView {
     const { contentEl } = this;
     contentEl.empty();
     const simplex = this.simplexKey ? this.model.getSimplex(this.simplexKey) : null;
-    contentEl.createEl("div", { cls: "simplicial-panel-title", text: "SIMPLEX" });
+    contentEl.createEl("div", { cls: "simplicial-panel-title", text: "Simplex" });
     if (!simplex) {
       contentEl.createEl("div", { text: "Select a simplex or click a node cluster." });
       return;

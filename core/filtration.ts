@@ -8,12 +8,6 @@ export interface FiltrationEvent {
   description: string;
 }
 
-interface SimplexWithWeight {
-  key: string;
-  simplex: Simplex;
-  weight: number;
-}
-
 /**
  * Compute topological events that occur during filtration.
  * Events are detected by sorting simplices by weight and tracking
@@ -34,7 +28,6 @@ export function computeFiltrationEvents(
   const appearedNodes = new Set<NodeID>();
   const appearedEdges = new Map<string, Set<NodeID>>(); // node -> connected component
   const appearedTriangles = new Set<string>();
-  let componentCounter = 0;
 
   for (const { key, simplex, weight } of simplices) {
     const dim = simplex.nodes.length - 1;
@@ -45,7 +38,6 @@ export function computeFiltrationEvents(
         if (!appearedNodes.has(node)) {
           appearedNodes.add(node);
           appearedEdges.set(node, new Set([node]));
-          componentCounter++;
           events.push({
             threshold: weight,
             type: 'edge-appear',
@@ -66,7 +58,6 @@ export function computeFiltrationEvents(
         for (const node of merged) {
           appearedEdges.set(node, merged);
         }
-        componentCounter--;
         events.push({
           threshold: weight,
           type: 'component-merge',

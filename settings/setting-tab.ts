@@ -387,7 +387,7 @@ export class SimplicialSettingTab extends PluginSettingTab {
 
   private renderEmergentSettings(containerEl: HTMLElement): void {
     // V2 Settings Section - Inference Architecture
-    containerEl.createEl("h3", { text: "Inference Engine (V2)" });
+    new Setting(containerEl).setName("Inference Engine (V2)").setHeading();
     containerEl.createEl("p", {
       cls: "setting-item-description",
       text: "The plugin has two inference systems: Emergent (graph-based with semantic clustering) and Legacy (rule-based). Choose which to use."
@@ -413,7 +413,7 @@ export class SimplicialSettingTab extends PluginSettingTab {
     // Emergent-mode settings (shown first as primary option)
     const emergentSettingsDiv = containerEl.createDiv({ cls: "emergent-settings" });
 
-    emergentSettingsDiv.createEl("h4", { text: "Emergent Inference Settings", cls: "setting-heading" });
+    new Setting(emergentSettingsDiv).setName("Emergent Inference Settings").setHeading();
 
     new Setting(emergentSettingsDiv)
       .setName("Domain source")
@@ -463,7 +463,7 @@ export class SimplicialSettingTab extends PluginSettingTab {
 
   private renderLegacySettings(containerEl: HTMLElement): void {
     // Legacy inference weights (only apply when inference mode is taxonomic or hybrid)
-    containerEl.createEl("h4", { text: "Legacy Inference Weights", cls: "setting-heading" });
+    new Setting(containerEl).setName("Legacy Inference Weights").setHeading();
     containerEl.createEl("p", {
       cls: "setting-item-description",
       text: "These weights only apply when using Legacy or Hybrid inference mode. They control rule-based edge detection."

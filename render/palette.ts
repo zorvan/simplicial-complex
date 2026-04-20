@@ -25,18 +25,6 @@ function inferredColor(simplex: Simplex): [number, number, number] {
   return SIMPLEX_COLORS.neutral;
 }
 
-function colorForOrder(order: number): [number, number, number] {
-  const orderedPalette: Array<[number, number, number]> = [
-    SIMPLEX_COLORS.blue,
-    SIMPLEX_COLORS.teal,
-    SIMPLEX_COLORS.coral,
-    SIMPLEX_COLORS.pink,
-    SIMPLEX_COLORS.amber,
-    SIMPLEX_COLORS.purple,
-  ];
-  return orderedPalette[(Math.max(2, order) - 2) % orderedPalette.length];
-}
-
 function variantSeed(simplex: Simplex): string {
   return `${simplex.nodes.join("|")}|${simplex.label ?? ""}|${simplex.sourcePath ?? ""}`;
 }

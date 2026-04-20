@@ -440,3 +440,8 @@
   line-height: 1;
   white-space: nowrap;
 }
+
+/* Utility classes for hiding/showing elements */
+.simplicial-hidden {
+  display: none !important;
+}

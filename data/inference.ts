@@ -1,7 +1,7 @@
 import type { App, CachedMetadata, TFile } from "obsidian";
 import type { PluginSettings, Simplex } from "../core/types";
 import { logger } from "../core/logger";
-import { inferSimplicesEmergentWithMode, runEmergentInferenceWithHoles } from "./inference/engine";
+import { inferSimplicesEmergentWithMode } from "./inference/engine";
 import { extractRole } from "./inference/roles";
 import type { InferenceContext } from "./inference/types";
 export type { InferenceContext } from "./inference/types";
@@ -362,22 +362,16 @@ export function inferSimplicesLegacy(contexts: InferenceContext[], settings: Pic
 }
 
 export function inferSimplices(contexts: InferenceContext[], settings: PluginSettings): Simplex[] {
-  console.time('inferSimplices-total');
   const mode = settings.inferenceMode ?? 'taxonomic';
   const results: Simplex[] = [];
 
   if (mode === 'taxonomic' || mode === 'hybrid') {
-    console.time('inferSimplices-legacy');
     results.push(...inferSimplicesLegacy(contexts, settings));
-    console.timeEnd('inferSimplices-legacy');
   }
 
   if (mode === 'emergent' || mode === 'hybrid') {
-    console.time('inferSimplices-emergent');
     results.push(...inferSimplicesEmergentWithMode(contexts, settings));
-    console.timeEnd('inferSimplices-emergent');
   }
 
-  console.timeEnd('inferSimplices-total');
   return results;
 }

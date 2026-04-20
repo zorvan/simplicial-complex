@@ -23,7 +23,7 @@ function write(level: LogLevel, scope: string, message: string, details?: Record
     console.debug(prefix);
     return;
   }
-  console.log(prefix);
+  console.debug(prefix);
 }
 
 export const logger = {

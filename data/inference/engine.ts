@@ -1,6 +1,6 @@
 import type { Simplex, Hole } from "../../core/types";
-import type { InferenceConfig, InferenceContext, RawGraph, NoteProfile } from "./types";
-import { buildRawGraph, getEdgeStrength, getNeighborsAbove } from "./graph";
+import type { InferenceConfig, InferenceContext } from "./types";
+import { buildRawGraph } from "./graph";
 import { detectOpenTriads, detectOpenTriadsFromHoles } from "./rules/open-triad";
 import { detectDensityClusters } from "./rules/density-cluster";
 import { scoreCandidate } from "./scorer";
@@ -10,19 +10,9 @@ export function runEmergentInference(
   contexts: InferenceContext[],
   config: InferenceConfig,
 ): Simplex[] {
-  console.time('runEmergentInference-buildGraph');
   const graph = buildRawGraph(contexts, config);
-  console.timeEnd('runEmergentInference-buildGraph');
-
-  console.time('runEmergentInference-detectTriads');
   const triads = detectOpenTriads(graph, config);
-  console.timeEnd('runEmergentInference-detectTriads');
-
-  console.time('runEmergentInference-detectClusters');
   const densityClusters = detectDensityClusters(graph, config);
-  console.timeEnd('runEmergentInference-detectClusters');
-
-  console.time('runEmergentInference-dedupe');
   const dedupedCandidates = new Map<string, CandidateSimplex>();
 
   [...triads, ...densityClusters].forEach((candidate) => {
@@ -33,9 +23,7 @@ export function runEmergentInference(
     }
   });
   const allCandidates = [...dedupedCandidates.values()];
-  console.timeEnd('runEmergentInference-dedupe');
 
-  console.time('runEmergentInference-score');
   const scored = allCandidates
     .map((c) => scoreCandidate(c, [...graph.nodes.values()], config))
     .filter((c) => c.insightScore >= config.insightThreshold && c.class !== 'folder-cluster')
@@ -57,11 +45,9 @@ export function runEmergentInference(
       dominantSignal: c.label === "density cluster" ? 'semantic' : 'soft-cluster',
       // class is in type; we preserve via label where needed
     }));
-  console.timeEnd('runEmergentInference-score');
 
   // Add graph edges as 1-simplices so basic links are visible
   // Fix 3: Percentile-based threshold (eliminates bistability cliff)
-  console.time('runEmergentInference-edges');
   const edgeSimplices: Simplex[] = [];
 
   // Compute percentile-based threshold
@@ -94,7 +80,6 @@ export function runEmergentInference(
       });
     }
   }
-  console.timeEnd('runEmergentInference-edges');
 
   return [...edgeSimplices, ...scored];
 }
@@ -115,19 +100,9 @@ export function runEmergentInferenceWithHoles(
   config: InferenceConfig,
   holes: Hole[],
 ): Simplex[] {
-  console.time('runEmergentInferenceWithHoles-buildGraph');
   const graph = buildRawGraph(contexts, config);
-  console.timeEnd('runEmergentInferenceWithHoles-buildGraph');
-
-  console.time('runEmergentInferenceWithHoles-holesToTriads');
   const triads = detectOpenTriadsFromHoles(holes, graph, config);
-  console.timeEnd('runEmergentInferenceWithHoles-holesToTriads');
-
-  console.time('runEmergentInferenceWithHoles-detectClusters');
   const densityClusters = detectDensityClusters(graph, config);
-  console.timeEnd('runEmergentInferenceWithHoles-detectClusters');
-
-  console.time('runEmergentInferenceWithHoles-dedupe');
   const dedupedCandidates = new Map<string, CandidateSimplex>();
 
   [...triads, ...densityClusters].forEach((candidate) => {
@@ -138,9 +113,7 @@ export function runEmergentInferenceWithHoles(
     }
   });
   const allCandidates = [...dedupedCandidates.values()];
-  console.timeEnd('runEmergentInferenceWithHoles-dedupe');
 
-  console.time('runEmergentInferenceWithHoles-score');
   const scored = allCandidates
     .map((c) => scoreCandidate(c, [...graph.nodes.values()], config))
     .filter((c) => c.insightScore >= config.insightThreshold && c.class !== 'folder-cluster')
@@ -161,10 +134,8 @@ export function runEmergentInferenceWithHoles(
       inferredSignals: c.label === "density cluster" ? ["density-cluster"] : [],
       dominantSignal: c.label === "density cluster" ? 'semantic' : 'soft-cluster',
     }));
-  console.timeEnd('runEmergentInferenceWithHoles-score');
 
   // Add graph edges as 1-simplices
-  console.time('runEmergentInferenceWithHoles-edges');
   const edgeSimplices: Simplex[] = [];
 
   const allStrengths = [...graph.edges.values()]
@@ -195,7 +166,6 @@ export function runEmergentInferenceWithHoles(
       });
     }
   }
-  console.timeEnd('runEmergentInferenceWithHoles-edges');
 
   return [...edgeSimplices, ...scored];
 }

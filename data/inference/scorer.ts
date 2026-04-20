@@ -1,5 +1,5 @@
 import type { CandidateSimplex, ScoredCandidate, InferenceConfig } from "./types";
-import type { RawGraph, NoteProfile } from "./types";
+import type { NoteProfile } from "./types";
 import { passesDiversityConstraint } from "./rules/role-diversity";
 import { qualifiesAsCore } from "./rules/domain-cross";
 import { applyTemporalDecay } from "./rules/temporal-decay";

@@ -94,10 +94,9 @@ function explainInferredSimplex(
 
 function explainAutoFace(
   simplex: Simplex,
-  nodes: NoteProfile[],
+  _nodes: NoteProfile[],
 ): SimplexExplanation {
   const dim = simplex.nodes.length - 1;
-  const nodeNames = nodes.map(n => n.id.replace(/\.md$/, ""));
 
   return {
     headline: `Auto-generated face of a ${dim + 1}-simplex.`,
@@ -112,11 +111,11 @@ function explainUserDefinedSimplex(
   nodes: NoteProfile[],
 ): SimplexExplanation {
   const dim = simplex.nodes.length - 1;
-  const nodeNames = nodes.map(n => n.id.replace(/\.md$/, ""));
+  const nodeNamesList = nodes.map(n => n.id.replace(/\.md$/, ""));
 
   return {
     headline: `Confirmed ${dim === 1 ? "relation" : dim === 2 ? "triangle" : dim === 3 ? "tetrahedron" : "simplex"} you defined.`,
-    tension: `You explicitly marked ${nodeNames.join(" · ")} as forming a meaningful structure.`,
+    tension: `You explicitly marked ${nodeNamesList.join(" · ")} as forming a meaningful structure.`,
     prompt: simplex.label 
       ? `Labeled as "${simplex.label}". Does this label still capture the relationship?`
       : `Consider adding a label to capture what binds these notes together.`,

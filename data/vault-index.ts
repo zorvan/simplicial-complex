@@ -176,32 +176,26 @@ export class VaultIndex {
   }
 
   private rebuildInferredSimplices(): void {
-    console.time('rebuildInferredSimplices-total');
     let inferred: import("../core/types").Simplex[];
 
     // Use optimized path with cached Betti holes when enabled
     if (this.settings.enableBettiComputation &&
         (this.settings.inferenceMode === 'emergent' || this.settings.inferenceMode === 'hybrid')) {
-      console.time('rebuildInferredSimplices-withHoles');
       const holes = this.model.getCachedBetti().holes;
       inferred = runEmergentInferenceWithHoles([...this.inferenceContexts.values()], this.settings, holes);
 
       // Add legacy inferences if in hybrid mode (only taxonomic/legacy, NOT emergent)
       if (this.settings.inferenceMode === 'hybrid') {
-        console.time('rebuildInferredSimplices-legacy');
         const legacy = inferSimplicesLegacy([...this.inferenceContexts.values()], this.settings);
-        console.timeEnd('rebuildInferredSimplices-legacy');
         // Deduplicate by key
         const existingKeys = new Set(inferred.map(s => s.nodes.sort().join("|")));
         const uniqueLegacy = legacy.filter(s => !existingKeys.has(s.nodes.sort().join("|")));
         inferred.push(...uniqueLegacy);
       }
-      console.timeEnd('rebuildInferredSimplices-withHoles');
     } else {
       inferred = inferSimplices([...this.inferenceContexts.values()], this.settings);
     }
 
-    console.timeEnd('rebuildInferredSimplices-total');
     this.model.replaceInferredSimplices(inferred);
     const snapshot = JSON.stringify({
       inferredSimplexCount: inferred.length,

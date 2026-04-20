@@ -1,10 +1,9 @@
 import { ItemView, WorkspaceLeaf } from "obsidian";
 import { SimplicialModel } from "../core/model";
-import type { PluginSettings, RenderFilterMetric, Simplex } from "../core/types";
+import type { PluginSettings, RenderFilterMetric } from "../core/types";
 import { VIEW_TYPE_SIMPLICIAL } from "../core/types";
 import { Renderer } from "../render/renderer";
 import { computeFiltrationEvents, getEventThresholds, type FiltrationEvent } from "../core/filtration";
-import type SimplicialPlugin from "../main";
 
 export class SimplicialView extends ItemView {
   private filtrationEvents: FiltrationEvent[] = [];
@@ -36,13 +35,13 @@ export class SimplicialView extends ItemView {
     if (!this.settings.showFiltrationSlider) {
       // Hide slider if disabled
       if (this.sliderWrap) {
-        this.sliderWrap.style.display = "none";
+        this.sliderWrap.addClass("simplicial-hidden");
       }
       return;
     }
     // Show slider if enabled
     if (this.sliderWrap) {
-      this.sliderWrap.style.display = "";
+      this.sliderWrap.removeClass("simplicial-hidden");
     }
     this.filtrationEvents = computeFiltrationEvents(this.model, this.settings.renderFilterMetric);
     this.updateEventMarkers();
@@ -57,7 +56,7 @@ export class SimplicialView extends ItemView {
   }
 
   getDisplayText(): string {
-    return "Simplicial Graph";
+    return "Simplicial graph";
   }
  
   async onOpen(): Promise<void> {
@@ -297,11 +296,11 @@ export class SimplicialView extends ItemView {
 
     // Toggle panel visibility
     toggleBtn.addEventListener("click", () => {
-      panel.style.display = panel.style.display === "none" ? "block" : "none";
+      panel.toggleClass("simplicial-hidden", !panel.hasClass("simplicial-hidden"));
     });
 
     // Start hidden
-    panel.style.display = "none";
+    panel.addClass("simplicial-hidden");
   }
 
   private addCanvasToggle(
@@ -420,8 +419,7 @@ export class SimplicialView extends ItemView {
     thresholds.forEach(threshold => {
       const marker = this.sliderWrap!.createDiv({ cls: "simplicial-filtration-marker" });
       const percent = threshold * 100;
-      marker.style.left = `${percent}%`;
-      marker.style.position = "absolute";
+      marker.style.setProperty("left", `${percent}%`);
       marker.title = `Event at ${threshold.toFixed(2)}`;
       this.eventMarkers.push(marker);
     });

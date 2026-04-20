@@ -11,11 +11,6 @@ interface Triangle {
   edges: Edge[];
 }
 
-interface Tetrahedron {
-  nodes: [NodeID, NodeID, NodeID, NodeID];
-  triangles: Triangle[];
-}
-
 /**
  * Compute Betti numbers (β₀, β₁, β₂) for a simplicial complex.
  * 
@@ -197,7 +192,7 @@ function findHollowTetrahedra(
   
   const tetraCandidates = new Map<string, Set<NodeID>>();
   
-  for (const [edge, tris] of edgeToTriangles) {
+  for (const [, tris] of edgeToTriangles) {
     if (tris.size < 2) continue;
     
     const triList = [...tris];

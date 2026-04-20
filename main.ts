@@ -1,5 +1,4 @@
 import {
-  App,
   Menu,
   Notice,
   Plugin,
@@ -131,28 +130,25 @@ export default class SimplicialPlugin extends Plugin {
       return panel;
     });
 
-    this.addRibbonIcon("network", "Simplicial Graph", () => void this.activateView());
+    this.addRibbonIcon("network", "Simplicial graph", () => void this.activateView());
     this.addCommand({
       id: "open-simplicial",
       name: "Open simplicial graph",
-      hotkeys: [{ modifiers: ["Mod", "Shift"], key: "g" }],
       callback: () => void this.activateView(),
     });
     this.addCommand({
       id: "insert-simplex-symbol",
       name: "Insert triangle simplex marker",
-      hotkeys: [{ modifiers: ["Mod", "Shift"], key: "s" }],
       editorCallback: (editor: Editor) => editor.replaceSelection("\u25b3 "),
     });
     this.addCommand({
       id: "form-simplex-from-open-note",
-      name: "Simplicial: Form simplex from open note",
+      name: "Simplicial: form simplex from open note",
       callback: () => void this.formSimplexFromOpenNote(),
     });
     this.addCommand({
       id: "toggle-edges",
       name: "Toggle simplicial edges",
-      hotkeys: [{ modifiers: [], key: "1" }],
       callback: () => {
         if (document.activeElement?.tagName === "INPUT" || document.activeElement?.tagName === "TEXTAREA") return;
         this.settings.showEdges = !this.settings.showEdges;
@@ -163,7 +159,6 @@ export default class SimplicialPlugin extends Plugin {
     this.addCommand({
       id: "toggle-clusters",
       name: "Toggle simplicial clusters",
-      hotkeys: [{ modifiers: [], key: "2" }],
       callback: () => {
         if (document.activeElement?.tagName === "INPUT" || document.activeElement?.tagName === "TEXTAREA") return;
         this.settings.showClusters = !this.settings.showClusters;
@@ -174,7 +169,6 @@ export default class SimplicialPlugin extends Plugin {
     this.addCommand({
       id: "toggle-cores",
       name: "Toggle simplicial cores",
-      hotkeys: [{ modifiers: [], key: "3" }],
       callback: () => {
         if (document.activeElement?.tagName === "INPUT" || document.activeElement?.tagName === "TEXTAREA") return;
         this.settings.showCores = !this.settings.showCores;
@@ -185,7 +179,6 @@ export default class SimplicialPlugin extends Plugin {
     this.addCommand({
       id: "clear-simplicial-focus",
       name: "Clear simplicial focus",
-      hotkeys: [{ modifiers: [], key: "Escape" }],
       callback: () => {
         if (document.activeElement?.tagName === "INPUT" || document.activeElement?.tagName === "TEXTAREA") {
           (document.activeElement as HTMLElement).blur();
@@ -198,7 +191,6 @@ export default class SimplicialPlugin extends Plugin {
     this.addCommand({
       id: "focus-hovered-node",
       name: "Focus hovered simplicial node",
-      hotkeys: [{ modifiers: [], key: "f" }],
       callback: () => {
         if (document.activeElement?.tagName === "INPUT" || document.activeElement?.tagName === "TEXTAREA") return;
         this.controller.focusHoveredNode();
@@ -208,7 +200,6 @@ export default class SimplicialPlugin extends Plugin {
     this.addCommand({
       id: "open-hovered-simplex-panel",
       name: "Open metadata panel for hovered simplex",
-      hotkeys: [{ modifiers: [], key: "p" }],
       callback: () => {
         if (document.activeElement?.tagName === "INPUT" || document.activeElement?.tagName === "TEXTAREA") return;
         void this.openPanelForCurrentSelection();
@@ -392,7 +383,7 @@ export default class SimplicialPlugin extends Plugin {
     new Notice(`Simplex now owned by ${promotedFile.basename}.`);
   }
 
-  private async openCreateSimplexModal(nodes: string[], sourcePath: string): Promise<void> {
+  private openCreateSimplexModal(nodes: string[], sourcePath: string): void {
     new CreateSimplexModal(
       this.app,
       nodes,
@@ -431,7 +422,7 @@ export default class SimplicialPlugin extends Plugin {
     const simplexKey = this.controller.hoveredSimplexKey
       ?? (this.controller.hoveredNodeId
         ? this.model.getSimplicesForNode(this.controller.hoveredNodeId)[0]?.nodes
-          ? normalizeKey(this.model.getSimplicesForNode(this.controller.hoveredNodeId)[0]!.nodes)
+          ? normalizeKey(this.model.getSimplicesForNode(this.controller.hoveredNodeId)[0].nodes)
           : null
         : null);
     await this.openPanel(simplexKey, true);
