@@ -206,7 +206,7 @@ export class SimplicialView extends ItemView {
     // Toggle button
     const toggleBtn = controlsWrap.createDiv({ cls: "simplicial-controls-toggle" });
     toggleBtn.setText("⚙️");
-    toggleBtn.title = "Canvas Settings";
+    toggleBtn.title = "Canvas settings";
 
     // Controls panel
     const panel = controlsWrap.createDiv({ cls: "simplicial-controls-panel" });
@@ -289,7 +289,7 @@ export class SimplicialView extends ItemView {
 
     // Rescan button
     const rescanRow = panel.createDiv({ cls: "simplicial-control-row" });
-    const rescanBtn = rescanRow.createEl("button", { cls: "simplicial-control-button", text: "🔄 Rescan Vault" });
+    const rescanBtn = rescanRow.createEl("button", { cls: "simplicial-control-button", text: "🔄 Rescan vault" });
     rescanBtn.addEventListener("click", () => {
       this.onRescan?.("manual-rescan", 0);
     });

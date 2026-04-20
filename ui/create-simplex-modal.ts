@@ -41,7 +41,7 @@ export class CreateSimplexModal extends Modal {
     new Setting(contentEl)
       .setName("Label")
       .addText((text) => {
-        text.setPlaceholder("unnamed");
+        text.setPlaceholder("Unnamed");
         text.onChange((value) => {
           this.labelInput = value;
         });

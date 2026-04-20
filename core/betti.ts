@@ -6,11 +6,6 @@ interface Edge {
   b: NodeID;
 }
 
-interface Triangle {
-  nodes: [NodeID, NodeID, NodeID];
-  edges: Edge[];
-}
-
 /**
  * Compute Betti numbers (β₀, β₁, β₂) for a simplicial complex.
  * 

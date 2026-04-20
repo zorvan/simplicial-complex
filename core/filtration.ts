@@ -29,7 +29,7 @@ export function computeFiltrationEvents(
   const appearedEdges = new Map<string, Set<NodeID>>(); // node -> connected component
   const appearedTriangles = new Set<string>();
 
-  for (const { key, simplex, weight } of simplices) {
+  for (const { simplex, weight } of simplices) {
     const dim = simplex.nodes.length - 1;
     
     if (dim === 0) {

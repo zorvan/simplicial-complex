@@ -344,7 +344,7 @@ export default class SimplicialPlugin extends Plugin {
       new Notice(`Need at least ${desiredSize - 1} resolvable outgoing links to form this simplex.`);
       return;
     }
-    await this.openCreateSimplexModal(nodes, file.path);
+    this.openCreateSimplexModal(nodes, file.path);
   }
 
   private async promoteSimplex(simplexKey: string): Promise<void> {
@@ -545,7 +545,7 @@ export default class SimplicialPlugin extends Plugin {
       new Notice("Need at least one connected neighbor to form a simplex.");
       return;
     }
-    await this.openCreateSimplexModal(nodes, nodeId);
+    this.openCreateSimplexModal(nodes, nodeId);
   }
 
   private async dissolveSimplex(simplexKey: string): Promise<void> {
