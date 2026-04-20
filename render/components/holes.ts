@@ -46,24 +46,32 @@ function drawSingleHole(
 
   if (nodes.length < 3) return;
 
-  // Check if all nodes have valid positions (not at origin or uninitialized)
-  const validNodes = nodes.filter(n => Math.abs(n.px) > 1 && Math.abs(n.py) > 1);
-  if (validNodes.length < 3) return;
+  // Require ALL nodes to be meaningfully placed (not near origin)
+  const MIN_PLACEMENT_DIST = 200;
+  const placedNodes = nodes.filter(n => Math.hypot(n.px, n.py) > MIN_PLACEMENT_DIST);
+  if (placedNodes.length < nodes.length) return;
 
-  // Calculate centroid
-  const centroid = validNodes.reduce(
+  // Calculate centroid from placed nodes
+  const centroid = placedNodes.reduce(
     (sum, n) => ({ x: sum.x + n.px, y: sum.y + n.py }),
     { x: 0, y: 0 }
   );
-  centroid.x /= validNodes.length;
-  centroid.y /= validNodes.length;
+  centroid.x /= placedNodes.length;
+  centroid.y /= placedNodes.length;
+
+  // Skip if hole is degenerate (all nodes too close together)
+  const MIN_SPREAD = 150;
+  const spread = Math.max(...placedNodes.map(n =>
+    Math.hypot(n.px - centroid.x, n.py - centroid.y)
+  ));
+  if (spread < MIN_SPREAD) return;
 
   // Skip if hole is far outside visible area (generous margin)
   const margin = 300;
-  const holeMinX = Math.min(...validNodes.map(n => n.px));
-  const holeMaxX = Math.max(...validNodes.map(n => n.px));
-  const holeMinY = Math.min(...validNodes.map(n => n.py));
-  const holeMaxY = Math.max(...validNodes.map(n => n.py));
+  const holeMinX = Math.min(...placedNodes.map(n => n.px));
+  const holeMaxX = Math.max(...placedNodes.map(n => n.px));
+  const holeMinY = Math.min(...placedNodes.map(n => n.py));
+  const holeMaxY = Math.max(...placedNodes.map(n => n.py));
 
   // Skip if entire hole is outside viewport (with margin)
   if (holeMaxX < visibleBounds.minX - margin ||
@@ -72,10 +80,6 @@ function drawSingleHole(
       holeMinY > visibleBounds.maxY + margin) {
     return;
   }
-
-  // Also skip if hole is too close to origin (uninitialized cluster)
-  const distFromOrigin = Math.sqrt(centroid.x ** 2 + centroid.y ** 2);
-  if (distFromOrigin < 50) return;
 
   // Generate hole key from boundary nodes
   const holeKey = hole.boundaryNodes.sort().join("|");
@@ -89,9 +93,9 @@ function drawSingleHole(
       : "rgba(255, 140, 0, 0.6)";
 
   ctx.beginPath();
-  ctx.moveTo(validNodes[0].px, validNodes[0].py);
-  for (let i = 1; i < validNodes.length; i++) {
-    ctx.lineTo(validNodes[i].px, validNodes[i].py);
+  ctx.moveTo(placedNodes[0].px, placedNodes[0].py);
+  for (let i = 1; i < placedNodes.length; i++) {
+    ctx.lineTo(placedNodes[i].px, placedNodes[i].py);
   }
   ctx.closePath();
   ctx.stroke();
@@ -104,8 +108,8 @@ function drawSingleHole(
 
   // Draw missing indicator at centroid (only if hovered or hole is small)
   const holeSize = Math.sqrt(
-    validNodes.reduce((sum, n) => sum + (n.px - centroid.x) ** 2 + (n.py - centroid.y) ** 2, 0)
-    / validNodes.length
+    placedNodes.reduce((sum: number, n: { px: number; py: number }) => sum + (n.px - centroid.x) ** 2 + (n.py - centroid.y) ** 2, 0)
+    / placedNodes.length
   );
 
   if (isHovered || holeSize < 200) {
@@ -125,6 +129,6 @@ function drawSingleHole(
     // Show node count
     ctx.font = "400 10px system-ui, sans-serif";
     ctx.fillStyle = isDark ? "rgba(255, 255, 255, 0.5)" : "rgba(0, 0, 0, 0.5)";
-    ctx.fillText(`${validNodes.length} nodes`, centroid.x, centroid.y + 14);
+    ctx.fillText(`${placedNodes.length} nodes`, centroid.x, centroid.y + 14);
   }
 }

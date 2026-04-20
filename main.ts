@@ -87,6 +87,18 @@ export default class SimplicialPlugin extends Plugin {
       onContextMenu: (target, event) => this.openCanvasContextMenu(target, event),
       onLassoCreate: (nodeIds) => void this.openCreateSimplexModal(nodeIds, nodeIds[0] ?? ""),
       onNodeOpen: (nodeId) => void this.openNodeNote(nodeId),
+      onHoleHover: (hole, explanation) => {
+        if (hole && explanation) {
+          // Show subtle notice about the hole on hover
+          const nodeNames = hole.boundaryNodes.map(id => id.split("/").pop()?.replace(/\.md$/, "") ?? id);
+          new Notice(`Hole: ${explanation.headline}\n${nodeNames.join(" · ")}`, 3000);
+        }
+      },
+      onHoleClick: (hole, explanation) => {
+        // On hole click, show a more prominent notice with the prompt
+        const nodeNames = hole.boundaryNodes.map(id => id.split("/").pop()?.replace(/\.md$/, "") ?? id);
+        new Notice(`🕳️ ${explanation.headline}\n\nNotes: ${nodeNames.join(" · ")}\n\n${explanation.prompt}`, 8000);
+      },
     });
     this.index = new VaultIndex(this.app, this.model, this.settings, () => this.engine.wake());
 

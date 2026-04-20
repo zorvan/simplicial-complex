@@ -1,7 +1,7 @@
 import type { App, CachedMetadata, TFile } from "obsidian";
 import type { PluginSettings, Simplex } from "../core/types";
 import { logger } from "../core/logger";
-import { inferSimplicesEmergentWithMode } from "./inference/engine";
+import { inferSimplicesEmergentWithMode, runEmergentInferenceWithHoles } from "./inference/engine";
 import { extractRole } from "./inference/roles";
 import type { InferenceContext } from "./inference/types";
 export type { InferenceContext } from "./inference/types";

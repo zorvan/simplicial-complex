@@ -1,4 +1,4 @@
-import type { LayoutNode, PluginSettings, Rect, RenderFilterMetric, Simplex } from "../core/types";
+import type { LayoutNode, PluginSettings, Rect, RenderFilterMetric, Simplex, Hole } from "../core/types";
 import { normalizeKey } from "../core/normalize";
 import { SimplicialModel } from "../core/model";
 import { LayoutEngine } from "../layout/engine";
@@ -8,11 +8,15 @@ import { renderEdges } from "./edges";
 import { effectiveColorForSimplex } from "./palette";
 import { drawBettiHUD } from "./components/hud";
 import { drawPhantomHoles, type VisibleBounds } from "./components/holes";
+import { explainHole, type SimplexExplanation } from "../data/explainer";
+import type { InferenceContext } from "../data/inference/types";
 
 interface RendererCallbacks {
   onContextMenu?: (target: { nodeId?: string; simplexKey?: string }, event: MouseEvent) => void;
   onLassoCreate?: (nodeIds: string[]) => void;
   onNodeOpen?: (nodeId: string) => void;
+  onHoleHover?: (hole: Hole | null, explanation: SimplexExplanation | null) => void;
+  onHoleClick?: (hole: Hole, explanation: SimplexExplanation) => void;
 }
 
 type Box = { left: number; top: number; right: number; bottom: number };
@@ -313,6 +317,25 @@ export class Renderer {
       }
       const point = this.eventToCanvasPoint(event);
       this.pointer = point;
+
+      // Check for hole hover when Betti is enabled
+      if (this.settings.enableBettiComputation) {
+        const hole = this.findHoleAtPoint(point);
+        const prevHoleKey = this.hoveredHoleKey;
+        if (hole) {
+          this.hoveredHoleKey = hole.boundaryNodes.sort().join("|");
+          if (this.hoveredHoleKey !== prevHoleKey) {
+            const explanation = explainHole(hole, new Map<string, InferenceContext>());
+            this.callbacks.onHoleHover?.(hole, explanation);
+          }
+        } else {
+          this.hoveredHoleKey = null;
+          if (prevHoleKey !== null) {
+            this.callbacks.onHoleHover?.(null, null);
+          }
+        }
+      }
+
       if (this.isLassoActive) {
         this.lassoPath.push(point);
       } else if (this.controller.onPointerMove(point.x, point.y)) {
@@ -371,6 +394,13 @@ export class Renderer {
         return;
       }
       const point = this.eventToCanvasPoint(event);
+      // Check for hole click first
+      const hole = this.settings.enableBettiComputation ? this.findHoleAtPoint(point) : null;
+      if (hole) {
+        const explanation = explainHole(hole, new Map<string, InferenceContext>());
+        this.callbacks.onHoleClick?.(hole, explanation);
+        return;
+      }
       const simplex = this.findSimplexAtPoint(point);
       this.controller.selectSimplex(simplex ? normalizeKey(simplex.nodes) : null);
       this.render();
@@ -450,6 +480,55 @@ export class Renderer {
     return hovered
       ? this.model.getSimplicesForNode(hovered.id).sort((a, b) => b.nodes.length - a.nodes.length)[0] ?? null
       : null;
+  }
+
+  private findHoleAtPoint(point: { x: number; y: number }): Hole | null {
+    if (!this.settings.enableBettiComputation) return null;
+    const betti = this.model.getCachedBetti();
+    if (!betti?.holes?.length) return null;
+
+    const allNodes = this.model.getAllNodes();
+    const nodeMap = new Map(allNodes.map(n => [n.id, n]));
+    const clickRadius = this.worldRadius(15); // Tolerance for hole clicking
+
+    for (const hole of betti.holes) {
+      const nodes = hole.boundaryNodes
+        .map(id => nodeMap.get(id))
+        .filter(Boolean) as Array<{ px: number; py: number }>;
+
+      if (nodes.length < 3) continue;
+
+      // Check if all nodes are placed (same check as drawSingleHole)
+      const placedNodes = nodes.filter(n => Math.hypot(n.px, n.py) > 80);
+      if (placedNodes.length < nodes.length) continue;
+
+      // Calculate centroid
+      const centroid = placedNodes.reduce(
+        (sum, n) => ({ x: sum.x + n.px, y: sum.y + n.py }),
+        { x: 0, y: 0 }
+      );
+      centroid.x /= placedNodes.length;
+      centroid.y /= placedNodes.length;
+
+      // Check spread
+      const spread = Math.max(...placedNodes.map(n =>
+        Math.hypot(n.px - centroid.x, n.py - centroid.y)
+      ));
+      if (spread < 40) continue;
+
+      // Check if point is near the hole centroid or inside the hole polygon
+      const distToCentroid = Math.hypot(point.x - centroid.x, point.y - centroid.y);
+      if (distToCentroid < clickRadius * 2) {
+        return hole;
+      }
+
+      // Also check if point is inside the hole polygon
+      const polygon = placedNodes.map(n => ({ x: n.px, y: n.py }));
+      if (pointInPolygon(point, polygon)) {
+        return hole;
+      }
+    }
+    return null;
   }
 
   private finishLasso(): void {
