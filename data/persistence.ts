@@ -141,7 +141,7 @@ export async function readCentralFileState(app: App, centralFile: string): Promi
 
 export function getDefaultSettings(): PluginSettings {
   return {
-    domainSource: "content-cluster",
+    domainSource: "hybrid",
     contentClusterCount: 8,
     enableBettiComputation: false,
     bettiDisplayOnCanvas: true,
@@ -164,7 +164,7 @@ export function getDefaultSettings(): PluginSettings {
     dampingFactor: 0.84,
     boundaryPadding: 50,
     darkMode: "auto",
-    inferenceMode: "emergent",
+    inferenceMode: "hybrid",
     insightThreshold: 0.45,
     linkStrengthThreshold: 0.4,
     linkThresholdLowerBound: 0.0,

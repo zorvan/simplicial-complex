@@ -4,22 +4,18 @@ import { logger } from "../core/logger";
 import { inferSimplicesEmergentWithMode } from "./inference/engine";
 import { extractRole } from "./inference/roles";
 import type { InferenceContext } from "./inference/types";
+import { STOPWORDS_EN, isStopword, type Language } from "./stopwords";
 export type { InferenceContext } from "./inference/types";
 
-const STOPWORDS = new Set([
-  "the", "a", "an", "and", "or", "but", "for", "with", "from", "into", "onto", "in", "on", "at", "to", "of",
-  "is", "are", "was", "were", "be", "been", "being", "this", "that", "these", "those", "it", "its", "as", "by",
-  "about", "after", "before", "between", "through", "during", "over", "under", "again", "further", "then", "once",
-  "note", "notes", "todo", "idea"
-]);
+// Default language for tokenization - can be made configurable in settings
+const DEFAULT_TOKENIZE_LANG: Language = "en";
 
-
-function tokenize(value: string): Set<string> {
+function tokenize(value: string, lang: Language = DEFAULT_TOKENIZE_LANG): Set<string> {
   return new Set(
     value
       .toLocaleLowerCase()
       .split(/[^\p{L}\p{N}_]+/gu)
-      .filter((token) => token.length >= 3 && !STOPWORDS.has(token)),
+      .filter((token) => token.length >= 3 && !isStopword(token, lang)),
   );
 }
 
