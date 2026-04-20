@@ -1,11 +1,6 @@
 import type { SimplicialModel } from "./model";
 import type { NodeID, Simplex, BettiResult, Hole } from "./types";
 
-interface Edge {
-  a: NodeID;
-  b: NodeID;
-}
-
 /**
  * Compute Betti numbers (β₀, β₁, β₂) for a simplicial complex.
  * 

@@ -333,7 +333,7 @@ export class SimplicialSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Display Betti on canvas")
-      .setDesc("Show live Betti numbers in the top-left HUD overlay (requires Betti computation to be enabled).")
+      .setDesc("Show live betti numbers in the top-left HUD overlay (requires betti computation to be enabled).")
       .addToggle((toggle) => {
         toggle.setValue(this.plugin.settings.bettiDisplayOnCanvas);
         toggle.onChange(async (value) => {
@@ -387,15 +387,15 @@ export class SimplicialSettingTab extends PluginSettingTab {
 
   private renderEmergentSettings(containerEl: HTMLElement): void {
     // V2 Settings Section - Inference Architecture
-    new Setting(containerEl).setName("Inference engine (V2)").setHeading();
+    new Setting(containerEl).setName("Inference engine (v2)").setHeading();
     containerEl.createEl("p", {
       cls: "setting-item-description",
-      text: "The plugin has two inference systems: Emergent (graph-based with semantic clustering) and Legacy (rule-based). Choose which to use."
+      text: "The plugin has two inference systems: emergent (graph-based with semantic clustering) and legacy (rule-based). Choose which to use."
     });
 
     new Setting(containerEl)
       .setName("Inference mode")
-      .setDesc("Emergent = semantic graph analysis | Legacy = rule-based heuristics | Hybrid = both")
+      .setDesc("Emergent = semantic graph analysis | legacy = rule-based heuristics | hybrid = both")
       .addDropdown((dropdown) => {
         dropdown.addOption("emergent", "Emergent (semantic graph)");
         dropdown.addOption("taxonomic", "Legacy (rule-based)");
@@ -466,7 +466,7 @@ export class SimplicialSettingTab extends PluginSettingTab {
     new Setting(containerEl).setName("Legacy inference weights").setHeading();
     containerEl.createEl("p", {
       cls: "setting-item-description",
-      text: "These weights only apply when using Legacy or Hybrid inference mode. They control rule-based edge detection."
+      text: "These weights only apply when using legacy or hybrid inference mode. They control rule-based edge detection."
     });
 
     this.addWeightSlider(containerEl, "Link weight", "Strength added by a resolved outbound link.", "linkWeight", "enableLinkInference", 0, 0.6, 0.01);

@@ -320,7 +320,7 @@ export default class SimplicialPlugin extends Plugin {
     await this.saveSettings();
   }
 
-  private async formSimplexFromOpenNote(): Promise<void> {
+  private formSimplexFromOpenNote(): void {
     const view = this.app.workspace.getActiveViewOfType(MarkdownView);
     const file = view?.file;
     if (!file) {
@@ -538,7 +538,7 @@ export default class SimplicialPlugin extends Plugin {
     await this.app.workspace.getLeaf(true).openFile(file);
   }
 
-  private async createSimplexFromNode(nodeId: string): Promise<void> {
+  private createSimplexFromNode(nodeId: string): void {
     const neighbors = this.model.getNeighbors(nodeId);
     const nodes = [nodeId, ...neighbors].slice(0, Math.max(2, this.settings.commandSimplexSize));
     if (nodes.length < 2) {
