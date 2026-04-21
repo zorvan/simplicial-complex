@@ -360,7 +360,7 @@ export class SimplicialSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Show filtration slider")
-      .setDesc("Enable the slider UI with topological event markers in the graph view. (Requires reopening the view)")
+      .setDesc("Enable the slider UI with topological event markers in the graph view. (requires reopening the view)")
       .addToggle((toggle) => {
         toggle.setValue(this.plugin.settings.showFiltrationSlider);
         toggle.onChange(async (value) => {

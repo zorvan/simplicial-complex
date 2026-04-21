@@ -1,4 +1,4 @@
-/* global activeDocument, activeWindow */
+/* global activeDocument, activeWindow -- Allow document/window references for context menu and resize handling in Obsidian/Electron environment (ESLint browser globals) */
 import {
   Menu,
   Notice,

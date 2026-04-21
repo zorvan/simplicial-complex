@@ -1,4 +1,4 @@
-/* global cancelAnimationFrame, requestAnimationFrame */
+/* global cancelAnimationFrame, requestAnimationFrame -- Allow animation frame APIs for layout loop in browser environment (ESLint browser globals) */
 import { HOLD_REPULSION } from "../core/types";
 import type { LayoutNode, Rect, Simplex } from "../core/types";
 

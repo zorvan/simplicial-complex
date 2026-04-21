@@ -1,4 +1,4 @@
-/* global activeWindow */
+/* global activeWindow -- Allow activeWindow for window reference in Obsidian/Electron environment (ESLint browser globals) */
 import { debounce, TFile, type App, type TAbstractFile } from "obsidian";
 import { djb2Hash } from "../core/hash.js";
 import { logger } from "../core/logger.js";

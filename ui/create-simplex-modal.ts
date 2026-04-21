@@ -1,4 +1,4 @@
-/* global activeWindow */
+/* global activeWindow -- Allow activeWindow for modal positioning in Obsidian/Electron environment (ESLint browser globals) */
 import { Modal, Notice, Setting, TextAreaComponent, type App } from "obsidian";
 import type { Simplex } from "../core/types";
 

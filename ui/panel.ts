@@ -1,4 +1,4 @@
-/* global activeWindow */
+/* global activeWindow -- Allow activeWindow for scroll handling in Obsidian/Electron environment (ESLint browser globals) */
 import { ItemView, Notice, Setting, TFile, WorkspaceLeaf, type App } from "obsidian";
 import { SimplicialModel } from "../core/model";
 import type { PluginSettings, Simplex, SimplexKey } from "../core/types";

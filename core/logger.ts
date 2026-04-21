@@ -1,4 +1,4 @@
-/* global console */
+/* global console -- Allow console for leveled logging in browser environment (ESLint browser globals) */
 type LogLevel = "debug" | "info" | "warn" | "error";
 
 function formatDetails(details?: Record<string, unknown>): string {

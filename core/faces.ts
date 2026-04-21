@@ -1,4 +1,4 @@
-/* global console */
+/* global console -- Allow console for warning output in browser environment (ESLint browser globals) */
 import { hashLabel } from "./hash.js";
 import { normalizeKey, normalizeNodes } from "./normalize.js";
 import type { NodeID, Simplex, SimplicialComplex } from "./types.js";

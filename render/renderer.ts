@@ -1,4 +1,4 @@
-/* global activeWindow */
+/* global activeWindow -- Allow activeWindow for canvas resize handling in Obsidian/Electron environment (ESLint browser globals) */
 import type { LayoutNode, PluginSettings, Rect, RenderFilterMetric, Simplex, Hole } from "../core/types";
 import { normalizeKey } from "../core/normalize";
 import { SimplicialModel } from "../core/model";

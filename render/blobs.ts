@@ -1,4 +1,4 @@
-/* global activeDocument */
+/* global activeDocument -- Allow activeDocument for canvas creation in Obsidian/Electron environment (ESLint browser globals) */
 import type { LayoutNode, Simplex } from "../core/types";
 import { SimplicialModel } from "../core/model";
 import { effectiveColorForSimplex } from "./palette";
