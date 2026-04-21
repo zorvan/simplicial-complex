@@ -291,7 +291,7 @@ export class SimplicialView extends ItemView {
 
     // Rescan button
     const rescanRow = panel.createDiv({ cls: "simplicial-control-row" });
-    const rescanBtn = rescanRow.createEl("button", { cls: "simplicial-control-button", text: "🔄 Rescan vault" });
+    const rescanBtn = rescanRow.createEl("button", { cls: "simplicial-control-button", text: "🔄 rescan vault" });
     rescanBtn.addEventListener("click", () => {
       this.onRescan?.("manual-rescan", 0);
     });
