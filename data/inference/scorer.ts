@@ -1,8 +1,8 @@
-import type { CandidateSimplex, ScoredCandidate, InferenceConfig } from "./types";
-import type { NoteProfile } from "./types";
-import { passesDiversityConstraint } from "./rules/role-diversity";
-import { qualifiesAsCore } from "./rules/domain-cross";
-import { applyTemporalDecay } from "./rules/temporal-decay";
+import type { CandidateSimplex, ScoredCandidate, InferenceConfig } from "./types.js";
+import type { NoteProfile } from "./types.js";
+import { passesDiversityConstraint } from "./rules/role-diversity.js";
+import { qualifiesAsCore } from "./rules/domain-cross.js";
+import { applyTemporalDecay } from "./rules/temporal-decay.js";
 
 export function scoreCandidate(
   candidate: CandidateSimplex,
@@ -25,9 +25,9 @@ export function scoreCandidate(
   const allTags = nodes.flatMap((n) => n.tags);
   const tagCounts = new Map<string, number>();
   for (const t of allTags) tagCounts.set(t, (tagCounts.get(t) ?? 0) + 1);
-  const rareOverlap = [...tagCounts.entries()].filter(([tag, count]) => count > 1 && count <= 2).length;
+  const rareOverlap = [...tagCounts.entries()].filter(([, count]) => count > 1 && count <= 2).length;
   score += rareOverlap * config.rareTagWeight;
-  const commonOverlap = [...tagCounts.entries()].filter(([tag, count]) => count > 2).length;
+  const commonOverlap = [...tagCounts.entries()].filter(([, count]) => count > 2).length;
   score -= commonOverlap * config.commonTagPenalty;
 
   if (!passesDiversityConstraint(nodes, d)) {

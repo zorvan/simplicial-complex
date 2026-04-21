@@ -1,3 +1,4 @@
+/* global activeWindow */
 import { Modal, Notice, Setting, TextAreaComponent, type App } from "obsidian";
 import type { Simplex } from "../core/types";
 
@@ -7,12 +8,12 @@ export class CreateSimplexModal extends Modal {
   private weightInput = 1;
 
   constructor(
-    app: App,
+    _app: App,
     private initialNodes: string[],
     private persistenceLabel: string,
     private onSubmit: (simplex: Pick<Simplex, "nodes" | "label" | "weight">) => Promise<void>,
   ) {
-    super(app);
+    super(_app);
     this.nodesInput = initialNodes.join(", ");
   }
 

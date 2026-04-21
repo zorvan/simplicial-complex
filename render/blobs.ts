@@ -1,3 +1,4 @@
+/* global activeDocument */
 import type { LayoutNode, Simplex } from "../core/types";
 import { SimplicialModel } from "../core/model";
 import { effectiveColorForSimplex } from "./palette";
@@ -150,7 +151,7 @@ export function renderBlob(
   model: SimplicialModel,
   nodes: LayoutNode[],
   baseAlpha: number,
-  focusState: { isActive: boolean; involvesSimplex(simplex: Simplex, key?: string): boolean },
+  focusState: { isActive: boolean; involvesSimplex(_simplex: Simplex, _key?: string): boolean },
 ): void {
   const ns = resolveNodes(simplex, nodes);
   if (!ns.length) return;

@@ -1,3 +1,4 @@
+/* global activeDocument, activeWindow */
 import {
   Menu,
   Notice,

@@ -1,4 +1,4 @@
-import type { InferenceContext } from "./inference/types";
+import type { InferenceContext } from "./inference/types.js";
 
 export interface ClusteringConfig {
   k: number;

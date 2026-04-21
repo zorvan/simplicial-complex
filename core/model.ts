@@ -1,8 +1,8 @@
-import { generateFaces } from "./faces";
-import { hashLabel } from "./hash";
-import { normalizeKey, normalizeNodes, uniqueNodes } from "./normalize";
-import type { AnalysisSummary, LayoutNode, NodeID, Rect, Simplex, SimplexKey, BettiResult } from "./types";
-import { computeBetti } from "./betti";
+import { generateFaces } from "./faces.js";
+import { hashLabel } from "./hash.js";
+import { normalizeKey, normalizeNodes, uniqueNodes } from "./normalize.js";
+import type { AnalysisSummary, LayoutNode, NodeID, Rect, Simplex, SimplexKey, BettiResult } from "./types.js";
+import { computeBetti } from "./betti.js";
 
 function randomInRange(min: number, max: number): number {
   return min + Math.random() * (max - min);

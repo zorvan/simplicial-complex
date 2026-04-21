@@ -1,3 +1,4 @@
+/* global console */
 type LogLevel = "debug" | "info" | "warn" | "error";
 
 function formatDetails(details?: Record<string, unknown>): string {

@@ -1,6 +1,6 @@
-import type { RawGraph, RawEdge, NoteProfile, InferenceContext, InferenceConfig } from "./types";
-import { clusterByContent, assignHybridDomains, buildTFIDFVectors, cosineSimilarity } from "../clustering";
-import type { DocumentVector } from "../clustering";
+import type { RawGraph, RawEdge, NoteProfile, InferenceContext, InferenceConfig } from "./types.js";
+import { clusterByContent, assignHybridDomains, buildTFIDFVectors, cosineSimilarity } from "../clustering.js";
+import type { DocumentVector } from "../clustering.js";
 
 export function normalizeKeyPair(a: string, b: string): string {
   return [a, b].sort().join("|");

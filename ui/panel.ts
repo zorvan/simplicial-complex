@@ -1,3 +1,4 @@
+/* global activeWindow */
 import { ItemView, Notice, Setting, TFile, WorkspaceLeaf, type App } from "obsidian";
 import { SimplicialModel } from "../core/model";
 import type { PluginSettings, Simplex, SimplexKey } from "../core/types";
@@ -8,17 +9,17 @@ import type { NoteProfile } from "../data/inference/types";
 
 export class MetadataPanel extends ItemView {
   private simplexKey: SimplexKey | null = null;
-  private saveMetadata?: (simplexKey: string, updates: { label?: string; weight?: number }) => Promise<void>;
-  private promoteSimplex?: (simplexKey: string) => Promise<void>;
-  private dissolveSimplex?: (simplexKey: string) => Promise<void>;
+  private saveMetadata?: (_simplexKey: string, _updates: { label?: string; weight?: number }) => Promise<void>;
+  private promoteSimplex?: (_simplexKey: string) => Promise<void>;
+  private dissolveSimplex?: (_simplexKey: string) => Promise<void>;
   private settings: PluginSettings | null = null;
   private nodeProfiles: NoteProfile[] = [];
 
   constructor(
-    leaf: WorkspaceLeaf,
+    _leaf: WorkspaceLeaf,
     private model: SimplicialModel,
   ) {
-    super(leaf);
+    super(_leaf);
   }
 
   setSettings(settings: PluginSettings): void {
@@ -38,9 +39,9 @@ export class MetadataPanel extends ItemView {
   }
 
   setActions(actions: {
-    saveMetadata: (simplexKey: string, updates: { label?: string; weight?: number }) => Promise<void>;
-    promoteSimplex: (simplexKey: string) => Promise<void>;
-    dissolveSimplex: (simplexKey: string) => Promise<void>;
+    saveMetadata: (_simplexKey: string, _updates: { label?: string; weight?: number }) => Promise<void>;
+    promoteSimplex: (_simplexKey: string) => Promise<void>;
+    dissolveSimplex: (_simplexKey: string) => Promise<void>;
   }): void {
     this.saveMetadata = actions.saveMetadata;
     this.promoteSimplex = actions.promoteSimplex;

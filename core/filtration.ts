@@ -1,5 +1,5 @@
-import type { SimplicialModel } from "./model";
-import type { NodeID, Simplex, RenderFilterMetric } from "./types";
+import type { SimplicialModel } from "./model.js";
+import type { NodeID, Simplex, RenderFilterMetric } from "./types.js";
 
 export interface FiltrationEvent {
   threshold: number;

@@ -1,10 +1,10 @@
-import type { NoteProfile } from "../types";
-import type { SimplexClass } from "../types";
+import type { NoteProfile } from "../types.js";
+import type { SimplexClass } from "../types.js";
 
 export function qualifiesAsCore(
   nodes: NoteProfile[],
   minDomainsForTetra: number,
-  minRolesForTetra: number,
+  _minRolesForTetra: number,
 ): { qualifies: boolean; isSuper: boolean; class: SimplexClass } {
   const domains = new Set(nodes.map((n) => n.domain));
   const roles = new Set(nodes.map((n) => n.role));

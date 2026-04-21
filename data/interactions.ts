@@ -1,4 +1,4 @@
-import type { NodeID, SimplexKey } from "../core/types";
+import type { NodeID, SimplexKey } from "../core/types.js";
 
 export interface InteractionEvent {
   timestamp: number;

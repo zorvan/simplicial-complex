@@ -1,3 +1,4 @@
+/* global cancelAnimationFrame, requestAnimationFrame */
 import { HOLD_REPULSION } from "../core/types";
 import type { LayoutNode, Rect, Simplex } from "../core/types";
 
@@ -21,13 +22,22 @@ class QuadTreeNode {
   public cy: number = 0;
   public children: (QuadTreeNode | null)[] = [null, null, null, null];
   public node: LayoutNode | null = null;
+  public x: number;
+  public y: number;
+  public width: number;
+  public height: number;
 
   constructor(
-    public x: number,
-    public y: number,
-    public width: number,
-    public height: number
-  ) {}
+    x: number,
+    y: number,
+    width: number,
+    height: number
+  ) {
+    this.x = x;
+    this.y = y;
+    this.width = width;
+    this.height = height;
+  }
 
   insert(node: LayoutNode): void {
     if (this.node === null && this.children[0] === null) {

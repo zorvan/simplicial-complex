@@ -8,7 +8,7 @@ export function renderEdges(
   model: SimplicialModel,
   nodes: Map<NodeID, LayoutNode>,
   showEdges: boolean,
-  focusState: { isActive: boolean; involvesSimplex(simplex: Simplex): boolean },
+  focusState: { isActive: boolean; involvesSimplex(_s: Simplex): boolean },
 ): void {
   if (!showEdges) return;
   const drawn = new Set<string>();

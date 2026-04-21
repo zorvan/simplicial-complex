@@ -1,3 +1,4 @@
+/* global activeWindow */
 import { normalizeKey } from "../core/normalize";
 import type { FocusState, LayoutNode, NodeID, Simplex, SimplexKey } from "../core/types";
 import { SimplicialModel } from "../core/model";

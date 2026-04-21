@@ -1,25 +1,29 @@
 import tsparser from "@typescript-eslint/parser";
+import tseslint from "typescript-eslint";
 import { defineConfig } from "eslint/config";
 import obsidianmd from "eslint-plugin-obsidianmd";
 
 export default defineConfig([
-  ...obsidianmd.configs.recommended,
   {
-    ignores: ["tests/**", "tests-dist/**", "node_modules/**"],
+    ignores: ["tests/**", "tests-dist/**", "node_modules/**", "**/*.mjs", "**/*.js"],
   },
   {
     files: ["**/*.ts"],
+    plugins: { obsidianmd, "@typescript-eslint": tseslint.plugin },
     languageOptions: {
       parser: tsparser,
       parserOptions: { project: "./tsconfig.json" },
     },
-
-    // You can add your own configuration to override or add rules
     rules: {
-      // example: turn off a rule from the recommended set
+      ...obsidianmd.configs.recommended[0].rules,
       "obsidianmd/sample-names": "off",
-      // example: add a rule not in the recommended set and set its severity
       "obsidianmd/prefer-file-manager-trash-file": "error",
+      "no-unused-vars": "off",
+      "@typescript-eslint/no-unused-vars": ["error", {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_",
+        "caughtErrorsIgnorePattern": "^_"
+      }],
     },
   },
 ]);

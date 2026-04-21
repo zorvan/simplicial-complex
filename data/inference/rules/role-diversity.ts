@@ -1,4 +1,4 @@
-import type { NoteProfile } from "../types";
+import type { NoteProfile } from "../types.js";
 
 export function passesDiversityConstraint(nodes: NoteProfile[], dim: number): boolean {
   const roles = new Set(nodes.map((n) => n.role));

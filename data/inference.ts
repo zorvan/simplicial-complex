@@ -1,11 +1,11 @@
 import type { App, CachedMetadata, TFile } from "obsidian";
-import type { PluginSettings, Simplex } from "../core/types";
-import { logger } from "../core/logger";
-import { inferSimplicesEmergentWithMode } from "./inference/engine";
-import { extractRole } from "./inference/roles";
-import type { InferenceContext } from "./inference/types";
-import { isStopword, type Language } from "./stopwords";
-export type { InferenceContext } from "./inference/types";
+import type { PluginSettings, Simplex } from "../core/types.js";
+import { logger } from "../core/logger.js";
+import { inferSimplicesEmergentWithMode } from "./inference/engine.js";
+import { extractRole } from "./inference/roles.js";
+import type { InferenceContext } from "./inference/types.js";
+import { isStopword, type Language } from "./stopwords.js";
+export type { InferenceContext } from "./inference/types.js";
 
 // Default language for tokenization - can be made configurable in settings
 const DEFAULT_TOKENIZE_LANG: Language = "en";
@@ -76,7 +76,7 @@ function buildInvertedIndex(contexts: InferenceContext[]): Map<string, Set<strin
   return index;
 }
 
-function findCandidatePairs(context: InferenceContext, index: Map<string, Set<string>>, allPaths: Set<string>): string[] {
+function findCandidatePairs(context: InferenceContext, index: Map<string, Set<string>>, _allPaths: Set<string>): string[] {
   const candidates = new Set<string>();
 
   // Find candidates via shared tokens
@@ -294,7 +294,7 @@ export function inferSimplicesLegacy(contexts: InferenceContext[], settings: Pic
   // Optimized triad detection - only check triads among documents that have strong pairwise connections
   if (settings.enableInferredEdges) {
     const strongPairs = new Map<string, { partner: string; weight: number; signals: string[] }[]>();
-    pairScores.forEach((pair, key) => {
+    pairScores.forEach((pair) => {
       const [a, b] = pair.nodes;
       if (pair.weight >= Math.max(settings.inferenceThreshold, 0.18)) {
         if (!strongPairs.has(a)) strongPairs.set(a, []);
@@ -306,8 +306,8 @@ export function inferSimplicesLegacy(contexts: InferenceContext[], settings: Pic
 
     // Only check triads among documents with multiple strong connections
     const triadCandidates = Array.from(strongPairs.entries())
-      .filter(([_, partners]) => partners.length >= 2)
-      .map(([path, _]) => path);
+      .filter(([, partners]) => partners.length >= 2)
+      .map(([path]) => path);
 
     triadCandidates.forEach(a => {
       const aPartners = strongPairs.get(a) || [];

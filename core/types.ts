@@ -154,8 +154,8 @@ export interface FocusState {
   hoveredSimplexKey: SimplexKey | null;
   activeNodeIds: Set<NodeID>;
   activeSimplexKeys: Set<SimplexKey>;
-  involvesNode(nodeId: NodeID): boolean;
-  involvesSimplex(simplex: Simplex, key?: SimplexKey): boolean;
+  involvesNode(_nodeId: NodeID): boolean;
+  involvesSimplex(_simplex: Simplex, _key?: SimplexKey): boolean;
 }
 
 export interface ParserContext {

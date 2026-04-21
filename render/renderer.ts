@@ -1,3 +1,4 @@
+/* global activeWindow */
 import type { LayoutNode, PluginSettings, Rect, RenderFilterMetric, Simplex, Hole } from "../core/types";
 import { normalizeKey } from "../core/normalize";
 import { SimplicialModel } from "../core/model";

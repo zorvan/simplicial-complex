@@ -1,6 +1,6 @@
-import type { CandidateSimplex, RawGraph, InferenceConfig } from "../types";
-import type { Hole } from "../../../core/types";
-import { getNeighborsAbove, getEdgeStrength } from "../graph";
+import type { CandidateSimplex, RawGraph, InferenceConfig } from "../types.js";
+import type { Hole } from "../../../core/types.js";
+import { getNeighborsAbove, getEdgeStrength } from "../graph.js";
 
 /**
  * Detect open triads from pre-computed Betti holes (β₁).
@@ -10,7 +10,7 @@ import { getNeighborsAbove, getEdgeStrength } from "../graph";
 export function detectOpenTriadsFromHoles(
   holes: Hole[],
   graph: RawGraph,
-  config: InferenceConfig,
+  _config: InferenceConfig,
 ): CandidateSimplex[] {
   const candidates: CandidateSimplex[] = [];
 

@@ -10,5 +10,6 @@
     "resolveJsonModule": true,
     "types": []
   },
-  "include": ["**/*.ts"]
+  "include": ["**/*.ts"],
+  "exclude": ["tests/**/*.ts", "tests-dist/**/*"]
 }

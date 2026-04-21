@@ -1,4 +1,4 @@
-import type { ColorKey } from "./types";
+import type { ColorKey } from "./types.js";
 
 export function djb2Hash(str: string): number {
   let h = 5381;

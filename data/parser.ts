@@ -1,8 +1,8 @@
 import type { App } from "obsidian";
 import { parseYaml } from "obsidian";
-import { logger } from "../core/logger";
-import { normalizeKey, normalizeNodes, resolveNodeId, uniqueNodes } from "../core/normalize";
-import type { ParsedFileResult, Simplex } from "../core/types";
+import { logger } from "../core/logger.js";
+import { normalizeKey, normalizeNodes, resolveNodeId, uniqueNodes } from "../core/normalize.js";
+import type { ParsedFileResult, Simplex } from "../core/types.js";
 
 const SIMPLEX_MARKER = /^(\u25b3+|simplex:)\s+(.+)$/gim;
 

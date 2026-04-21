@@ -1,5 +1,5 @@
-import { getEdgeStrength, getNeighborsAbove } from "../graph";
-import type { CandidateSimplex, InferenceConfig, RawGraph } from "../types";
+import { getEdgeStrength, getNeighborsAbove } from "../graph.js";
+import type { CandidateSimplex, InferenceConfig, RawGraph } from "../types.js";
 
 function canonicalKey(nodes: string[]): string {
   return [...nodes].sort().join("|");

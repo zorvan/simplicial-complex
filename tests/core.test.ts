@@ -1,43 +1,10 @@
-declare function require(name: string): unknown;
-
-type TestFn = (name: string, fn: () => void | Promise<void>) => void;
-type Assert = {
-  equal: (actual: unknown, expected: unknown, message?: string) => void;
-  ok: (value: unknown, message?: string) => void;
-  deepStrictEqual: (actual: unknown, expected: unknown, message?: string) => void;
-};
-
-const test = require("node:test") as TestFn;
-const assert = require("node:assert/strict") as Assert;
-
-type NormalizeKeyFn = (nodes: string[]) => string;
-type HashLabelFn = (label: string | undefined) => string;
-type GenerateFacesFn = (complex: { simplices: Map<string, unknown> }, simplex: { nodes: string[]; label?: string }) => void;
-type GetFacesLazyFn = (simplex: { nodes: string[] }, dimension: number) => unknown[];
-type SimplicialModelClass = new () => {
-  nodes: Map<string, { isPinned?: boolean; px?: number; py?: number }>;
-  simplices: Map<string, unknown>;
-  setNode: (id: string, props?: { isPinned?: boolean; px?: number; py?: number }) => void;
-  addSimplex: (simplex: { nodes: string[]; userDefined?: boolean }) => void;
-  updateNodeId: (oldId: string, newId: string) => void;
-  getAllNodes: () => { id: string; isPinned: boolean; px: number; py: number }[];
-  removeSimplex: (key: string) => boolean;
-};
-type InferSimplicesFn = (contexts: Array<{
-  path: string;
-  folder: string;
-  topFolder: string;
-  titleTokens: Set<string>;
-  contentTokens: Set<string>;
-  tags: Set<string>;
-  outgoingLinks: Set<string>;
-}>, settings: Record<string, unknown>) => Array<{ nodes: string[]; inferred?: boolean; confidence?: number; label?: string }>;
-
-const { normalizeKey } = require("../core/normalize") as { normalizeKey: NormalizeKeyFn };
-const { hashLabel } = require("../core/hash") as { hashLabel: HashLabelFn };
-const { generateFaces, getFacesLazy } = require("../core/faces") as { generateFaces: GenerateFacesFn; getFacesLazy: GetFacesLazyFn };
-const { SimplicialModel } = require("../core/model") as { SimplicialModel: SimplicialModelClass };
-const { inferSimplices } = require("../data/inference") as { inferSimplices: InferSimplicesFn };
+import { test } from "node:test";
+import { strict as assert } from "node:assert";
+import { normalizeKey } from "../core/normalize.js";
+import { hashLabel } from "../core/hash.js";
+import { generateFaces, getFacesLazy } from "../core/faces.js";
+import { SimplicialModel } from "../core/model.js";
+import { inferSimplices } from "../data/inference.js";
 
 test("normalizeKey lowercases, trims, and canonicalizes order", () => {
   assert.equal(
@@ -90,8 +57,8 @@ test("model rename tracking preserves pinning and rewrites simplex membership", 
 
   const renamed = model.nodes.get("new.md");
   assert.ok(renamed);
-  assert.equal(renamed.isPinned, true);
-  assert.equal(renamed.px, 120);
+  assert.equal(renamed!.isPinned, true);
+  assert.equal(renamed!.px, 120);
   assert.equal(model.simplices.has(normalizeKey(["new.md", "other.md"])), true);
   assert.equal(model.simplices.has(normalizeKey(["old.md", "other.md"])), false);
 });
@@ -106,6 +73,8 @@ test("inferSimplices weights links, tags, titles, content, and folders", () => {
       contentTokens: new Set(["topology", "network", "meaning"]),
       tags: new Set(["graph", "knowledge"]),
       outgoingLinks: new Set(["Ideas/beta.md"]),
+      role: "research",
+      modifiedAt: Date.now(),
     },
     {
       path: "Ideas/beta.md",
@@ -115,6 +84,8 @@ test("inferSimplices weights links, tags, titles, content, and folders", () => {
       contentTokens: new Set(["topology", "network", "clusters"]),
       tags: new Set(["graph"]),
       outgoingLinks: new Set(),
+      role: "research",
+      modifiedAt: Date.now(),
     },
   ], {
     linkGraphBaseline: true,
@@ -128,18 +99,18 @@ test("inferSimplices weights links, tags, titles, content, and folders", () => {
     sameFolderWeight: 0.08,
     sameTopFolderWeight: 0.04,
     suggestionThreshold: 0.34,
-  });
+  } as any);
 
   assert.equal(simplices.length, 1);
-  assert.deepEqual(simplices[0].nodes.sort(), ["Ideas/alpha.md", "Ideas/beta.md"]);
+  assert.deepStrictEqual(simplices[0].nodes.sort(), ["Ideas/alpha.md", "Ideas/beta.md"]);
   assert.equal(simplices[0].inferred, true);
   assert.equal(simplices[0].userDefined, false);
   assert.ok((simplices[0].weight ?? 0) > 0.3);
-  assert.ok(simplices[0].inferredSignals.some((signal: string) => signal.startsWith("link:")));
-  assert.ok(simplices[0].inferredSignals.some((signal: string) => signal.startsWith("tags:")));
-  assert.ok(simplices[0].inferredSignals.some((signal: string) => signal.startsWith("title:")));
-  assert.ok(simplices[0].inferredSignals.some((signal: string) => signal.startsWith("content:")));
-  assert.ok(simplices[0].inferredSignals.includes("folder:same"));
+  assert.ok(simplices[0].inferredSignals!.some((signal: string) => signal.startsWith("link:")));
+  assert.ok(simplices[0].inferredSignals!.some((signal: string) => signal.startsWith("tags:")));
+  assert.ok(simplices[0].inferredSignals!.some((signal: string) => signal.startsWith("title:")));
+  assert.ok(simplices[0].inferredSignals!.some((signal: string) => signal.startsWith("content:")));
+  assert.ok(simplices[0].inferredSignals!.includes("folder:same"));
 });
 
 test("inferSimplices still creates raw link edges when semantic inference is disabled", () => {
@@ -152,6 +123,8 @@ test("inferSimplices still creates raw link edges when semantic inference is dis
       contentTokens: new Set(["one"]),
       tags: new Set(),
       outgoingLinks: new Set(["B.md"]),
+      role: "research",
+      modifiedAt: Date.now(),
     },
     {
       path: "B.md",
@@ -161,6 +134,8 @@ test("inferSimplices still creates raw link edges when semantic inference is dis
       contentTokens: new Set(["two"]),
       tags: new Set(),
       outgoingLinks: new Set(),
+      role: "research",
+      modifiedAt: Date.now(),
     },
   ], {
     linkGraphBaseline: true,
@@ -174,7 +149,7 @@ test("inferSimplices still creates raw link edges when semantic inference is dis
     sameFolderWeight: 0.08,
     sameTopFolderWeight: 0.04,
     suggestionThreshold: 0.34,
-  });
+  } as any);
 
   assert.equal(simplices.length, 1);
   assert.equal(simplices[0].label, "vault link");
@@ -191,6 +166,8 @@ test("inferSimplices supports non-Latin token overlap such as RTL text", () => {
       contentTokens: new Set(["مفاهيم", "ترابط", "معرفة"]),
       tags: new Set(["عربي"]),
       outgoingLinks: new Set(),
+      role: "research",
+      modifiedAt: Date.now(),
     },
     {
       path: "arabic-b.md",
@@ -200,6 +177,8 @@ test("inferSimplices supports non-Latin token overlap such as RTL text", () => {
       contentTokens: new Set(["مفاهيم", "ترابط", "بنية"]),
       tags: new Set(["عربي"]),
       outgoingLinks: new Set(),
+      role: "research",
+      modifiedAt: Date.now(),
     },
   ], {
     linkGraphBaseline: true,
@@ -213,7 +192,7 @@ test("inferSimplices supports non-Latin token overlap such as RTL text", () => {
     sameFolderWeight: 0.08,
     sameTopFolderWeight: 0.04,
     suggestionThreshold: 0.34,
-  });
+  } as any);
 
   assert.equal(simplices.length, 1);
   assert.ok((simplices[0].weight ?? 0) > 0.12);
@@ -229,6 +208,8 @@ test("inferSimplices can emit a soft cluster from three mutually strong relation
       contentTokens: new Set(["network", "emergence"]),
       tags: new Set(["cluster"]),
       outgoingLinks: new Set(["b.md", "c.md"]),
+      role: "research",
+      modifiedAt: Date.now(),
     },
     {
       path: "b.md",
@@ -238,6 +219,8 @@ test("inferSimplices can emit a soft cluster from three mutually strong relation
       contentTokens: new Set(["network", "emergence"]),
       tags: new Set(["cluster"]),
       outgoingLinks: new Set(["a.md", "c.md"]),
+      role: "research",
+      modifiedAt: Date.now(),
     },
     {
       path: "c.md",
@@ -247,6 +230,8 @@ test("inferSimplices can emit a soft cluster from three mutually strong relation
       contentTokens: new Set(["network", "emergence"]),
       tags: new Set(["cluster"]),
       outgoingLinks: new Set(["a.md", "b.md"]),
+      role: "research",
+      modifiedAt: Date.now(),
     },
   ], {
     linkGraphBaseline: true,
@@ -260,7 +245,7 @@ test("inferSimplices can emit a soft cluster from three mutually strong relation
     sameFolderWeight: 0.08,
     sameTopFolderWeight: 0.04,
     suggestionThreshold: 0.34,
-  });
+  } as any);
 
   const softCluster = simplices.find((simplex: { inferredSignals?: string[]; nodes: string[] }) =>
     simplex.nodes.length === 3 && simplex.inferredSignals?.includes("soft-cluster"),
@@ -338,7 +323,7 @@ test("inferSimplices emergent open triad detection yields a 3-simplex", () => {
     sameFolderWeight: 0.08,
     sameTopFolderWeight: 0.04,
     suggestionThreshold: 0.34,
-  });
+  } as any);
 
   const triad = simplices.find((simplex: any) => simplex.nodes.length === 3 && simplex.source === 'inferred-bridge');
   assert.ok(triad);
@@ -354,6 +339,8 @@ test("inferSimplices marks strong inferred relations as suggested with confidenc
       contentTokens: new Set(["shared", "content", "signal"]),
       tags: new Set(["tagged"]),
       outgoingLinks: new Set(["y.md"]),
+      role: "research",
+      modifiedAt: Date.now(),
     },
     {
       path: "y.md",
@@ -363,6 +350,8 @@ test("inferSimplices marks strong inferred relations as suggested with confidenc
       contentTokens: new Set(["shared", "content", "signal"]),
       tags: new Set(["tagged"]),
       outgoingLinks: new Set(["x.md"]),
+      role: "research",
+      modifiedAt: Date.now(),
     },
   ], {
     linkGraphBaseline: true,
@@ -376,7 +365,7 @@ test("inferSimplices marks strong inferred relations as suggested with confidenc
     sameFolderWeight: 0.08,
     sameTopFolderWeight: 0.04,
     suggestionThreshold: 0.34,
-  });
+  } as any);
 
   assert.equal(simplices.length, 1);
   assert.equal(simplices[0].suggested, true);
@@ -464,11 +453,11 @@ test("inferSimplices emergent mode can emit density clusters", () => {
     sameFolderWeight: 0.08,
     sameTopFolderWeight: 0.04,
     suggestionThreshold: 0.34,
-  });
+  } as any);
 
   const densityCluster = simplices.find((simplex: any) => simplex.label === "density cluster");
   assert.ok(densityCluster);
-  assert.ok((densityCluster.decayedWeight ?? 0) > 0);
+  assert.ok((densityCluster!.decayedWeight ?? 0) > 0);
 });
 
 test("model analysis summary reports graph-level metrics", () => {
@@ -483,9 +472,9 @@ test("model analysis summary reports graph-level metrics", () => {
   assert.equal(summary.edgeCount >= 2, true);
   assert.equal(summary.clusterCount >= 1, true);
   assert.equal(summary.connectedComponents, 1);
-  assert.ok(["a.md", "b.md", "c.md"].includes(summary.maxDegreeNodeId));
+  assert.ok(summary.maxDegreeNodeId && ["a.md", "b.md", "c.md"].includes(summary.maxDegreeNodeId));
   assert.ok(summary.maxDegree >= 2);
-  assert.ok(["a.md", "b.md", "c.md"].includes(summary.maxSimplexCentralityNodeId));
+  assert.ok(summary.maxSimplexCentralityNodeId && ["a.md", "b.md", "c.md"].includes(summary.maxSimplexCentralityNodeId));
   assert.equal(summary.maxSimplexCentrality, 3);
   assert.ok(summary.averageSimplexCentrality > 0);
 });

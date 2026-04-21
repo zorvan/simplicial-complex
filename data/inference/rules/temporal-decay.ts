@@ -1,6 +1,6 @@
-import type { NoteProfile } from "../types";
-import type { ReinforcementState } from "../../interactions";
-import { getReinforcementMultiplier } from "../../interactions";
+import type { NoteProfile } from "../types.js";
+import type { ReinforcementState } from "../../interactions.js";
+import { getReinforcementMultiplier } from "../../interactions.js";
 
 export interface DecayConfig {
   halfLifeDays: number;

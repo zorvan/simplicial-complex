@@ -1,4 +1,4 @@
-import type { NoteRole } from "./types";
+import type { NoteRole } from "./types.js";
 import type { TFile, CachedMetadata } from "obsidian";
 
 export function extractRole(file: TFile, cache: CachedMetadata | null, content: string): NoteRole {

@@ -1,7 +1,8 @@
-import { hashLabel } from "./hash";
-import { normalizeKey, normalizeNodes } from "./normalize";
-import type { NodeID, Simplex, SimplicialComplex } from "./types";
-import { MAX_FACE_GEN_DIM } from "./types";
+/* global console */
+import { hashLabel } from "./hash.js";
+import { normalizeKey, normalizeNodes } from "./normalize.js";
+import type { NodeID, Simplex, SimplicialComplex } from "./types.js";
+import { MAX_FACE_GEN_DIM } from "./types.js";
 
 export function dim(simplex: Simplex): number {
   return simplex.nodes.length - 1;

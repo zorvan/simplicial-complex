@@ -1,10 +1,10 @@
-import type { Simplex, Hole } from "../../core/types";
-import type { InferenceConfig, InferenceContext } from "./types";
-import { buildRawGraph } from "./graph";
-import { detectOpenTriads, detectOpenTriadsFromHoles } from "./rules/open-triad";
-import { detectDensityClusters } from "./rules/density-cluster";
-import { scoreCandidate } from "./scorer";
-import type { CandidateSimplex } from "./types";
+import type { Simplex, Hole } from "../../core/types.js";
+import type { InferenceConfig, InferenceContext } from "./types.js";
+import { buildRawGraph } from "./graph.js";
+import { detectOpenTriads, detectOpenTriadsFromHoles } from "./rules/open-triad.js";
+import { detectDensityClusters } from "./rules/density-cluster.js";
+import { scoreCandidate } from "./scorer.js";
+import type { CandidateSimplex } from "./types.js";
 
 export function runEmergentInference(
   contexts: InferenceContext[],

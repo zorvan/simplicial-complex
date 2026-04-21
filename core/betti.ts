@@ -1,5 +1,5 @@
-import type { SimplicialModel } from "./model";
-import type { NodeID, Simplex, BettiResult, Hole } from "./types";
+import type { SimplicialModel } from "./model.js";
+import type { NodeID, Simplex, BettiResult, Hole } from "./types.js";
 
 /**
  * Compute Betti numbers (β₀, β₁, β₂) for a simplicial complex.

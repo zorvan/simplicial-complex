@@ -9,7 +9,7 @@ export class SimplicialView extends ItemView {
   private filtrationEvents: FiltrationEvent[] = [];
   private eventMarkers: HTMLElement[] = [];
 
-  private onRescan?: (reason: string, delayMs: number) => void;
+  private onRescan?: (_reason: string, _delayMs: number) => void;
 
   constructor(
     leaf: WorkspaceLeaf,
@@ -17,7 +17,7 @@ export class SimplicialView extends ItemView {
     private renderer: Renderer,
     private settings: PluginSettings,
     private onSettingsChanged: () => void,
-    onRescan?: (reason: string, delayMs: number) => void,
+    onRescan?: (_reason: string, _delayMs: number) => void,
   ) {
     super(leaf);
     this.onRescan = onRescan;
@@ -27,7 +27,7 @@ export class SimplicialView extends ItemView {
     });
   }
 
-  setRescanCallback(callback: (reason: string, delayMs: number) => void): void {
+  setRescanCallback(callback: (_reason: string, _delayMs: number) => void): void {
     this.onRescan = callback;
   }
 
@@ -85,7 +85,7 @@ export class SimplicialView extends ItemView {
     this.renderer.destroy();
   }
 
-  private addFilterToggle(container: HTMLElement, label: string, getValue: () => boolean, setValue: (value: boolean) => void): void {
+  private addFilterToggle(container: HTMLElement, label: string, getValue: () => boolean, setValue: (_value: boolean) => void): void {
     const button = container.createEl("button", {
       cls: `simplicial-filter ${getValue() ? "is-on" : ""}`,
       text: label,
@@ -309,7 +309,7 @@ export class SimplicialView extends ItemView {
     container: HTMLElement,
     label: string,
     initialValue: boolean,
-    onChange: (value: boolean) => void,
+    onChange: (_value: boolean) => void,
   ): void {
     const row = container.createDiv({ cls: "simplicial-control-row" });
     row.createSpan({ text: label });
@@ -327,7 +327,7 @@ export class SimplicialView extends ItemView {
     min: number,
     max: number,
     step: number,
-    onChange: (value: number) => void,
+    onChange: (_value: number) => void,
   ): void {
     const row = container.createDiv({ cls: "simplicial-control-row" });
     row.createSpan({ text: label });
@@ -352,10 +352,10 @@ export class SimplicialView extends ItemView {
     container: HTMLElement,
     label: string,
     initialValue: number,
-    onChange: (value: number) => void,
+    onChange: (_value: number) => void,
     lowerBound: number,
     upperBound: number,
-    onBoundsChange?: (lower: number, upper: number) => void,
+    onBoundsChange?: (_lower: number, _upper: number) => void,
   ): void {
     const wrap = container.createDiv({ cls: "simplicial-dual-slider-wrap" });
 

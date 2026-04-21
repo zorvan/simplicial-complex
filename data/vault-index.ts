@@ -1,11 +1,12 @@
+/* global activeWindow */
 import { debounce, TFile, type App, type TAbstractFile } from "obsidian";
-import { djb2Hash } from "../core/hash";
-import { logger } from "../core/logger";
-import { SimplicialModel } from "../core/model";
-import type { PluginSettings } from "../core/types";
-import { buildInferenceContext, inferSimplices, inferSimplicesLegacy, type InferenceContext } from "./inference";
-import { runEmergentInferenceWithHoles } from "./inference/engine";
-import { parseSimplices } from "./parser";
+import { djb2Hash } from "../core/hash.js";
+import { logger } from "../core/logger.js";
+import { SimplicialModel } from "../core/model.js";
+import type { PluginSettings } from "../core/types.js";
+import { buildInferenceContext, inferSimplices, inferSimplicesLegacy, type InferenceContext } from "./inference.js";
+import { runEmergentInferenceWithHoles } from "./inference/engine.js";
+import { parseSimplices } from "./parser.js";
 
 export class VaultIndex {
   private readonly fullScanChunkSize = 24;
