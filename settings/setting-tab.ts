@@ -260,7 +260,7 @@ export class SimplicialSettingTab extends PluginSettingTab {
     {
       const setting = new Setting(containerEl)
         .setName("Label density")
-        .setDesc("controls how many non-focused labels are allowed before decluttering hides the rest.");
+        .setDesc("Controls how many non-focused labels are allowed before decluttering hides the rest.");
       this.addNumberSlider(setting, this.plugin.settings.labelDensity, 0.1, 1, 0.05, async (value) => {
         this.plugin.settings.labelDensity = value;
         await this.plugin.saveSettings();
