@@ -53,6 +53,7 @@ export class MetadataPanel extends ItemView {
   }
 
   async onOpen(): Promise<void> {
+    await Promise.resolve();
     this.renderPanel();
   }
 

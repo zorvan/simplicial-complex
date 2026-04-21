@@ -60,6 +60,7 @@ export class SimplicialView extends ItemView {
   }
  
   async onOpen(): Promise<void> {
+    await Promise.resolve();
     const { contentEl } = this;
     contentEl.empty();
     contentEl.addClass("simplicial-view");
@@ -80,6 +81,7 @@ export class SimplicialView extends ItemView {
   }
 
   async onClose(): Promise<void> {
+    await Promise.resolve();
     this.renderer.destroy();
   }
 
