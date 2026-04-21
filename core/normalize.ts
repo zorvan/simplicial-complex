@@ -33,7 +33,7 @@ export function resolveNodeId(rawId: string, sourcePath: string, app: App): TFil
   const files = app.vault.getMarkdownFiles();
   for (const file of files) {
     const cache = app.metadataCache.getFileCache(file);
-    const aliases = cache?.frontmatter?.aliases;
+    const aliases = cache?.frontmatter?.aliases as string[] | string | undefined;
     const aliasList = Array.isArray(aliases) ? aliases : typeof aliases === "string" ? [aliases] : [];
     if (aliasList.some((alias) => normalizeNodeToken(String(alias)) === normalizeNodeToken(trimmed))) {
       return file;

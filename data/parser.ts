@@ -15,7 +15,7 @@ function parseFrontmatterBlock(content: string): Record<string, unknown> | null 
   const match = content.match(/^---\n([\s\S]*?)\n---/);
   if (!match) return null;
   try {
-    return parseYaml(match[1]) ?? null;
+    return (parseYaml(match[1]) as Record<string, unknown> | null) ?? null;
   } catch (error) {
     logger.warn("parser", "Failed to parse frontmatter", { error: error instanceof Error ? error.message : String(error) });
     return null;

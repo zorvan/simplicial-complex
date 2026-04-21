@@ -130,7 +130,7 @@ export class InteractionController {
     this.pressX = mx;
     this.pressY = my;
     this.movedDuringPointerDown = false;
-    this.holdTimer = window.setTimeout(() => {
+    this.holdTimer = activeWindow.setTimeout(() => {
       this.holdNode = nodeId;
       this.onWake?.();
     }, 200);
@@ -183,7 +183,7 @@ export class InteractionController {
 
   private clearHoldTimer(): void {
     if (this.holdTimer !== null) {
-      clearTimeout(this.holdTimer);
+      activeWindow.clearTimeout(this.holdTimer);
       this.holdTimer = null;
     }
   }
@@ -229,7 +229,7 @@ export class InteractionController {
       this.onHoverIntent?.(null);
       return;
     }
-    this.hoverIntentTimer = window.setTimeout(() => {
+    this.hoverIntentTimer = activeWindow.setTimeout(() => {
       const simplexKey = this.model.getSimplicesForNode(this.hoveredNodeId!)
         .sort((a, b) => (b.weight ?? 1) - (a.weight ?? 1))[0];
       const nextKey = simplexKey ? normalizeKey(simplexKey.nodes) : null;
@@ -240,7 +240,7 @@ export class InteractionController {
 
   private clearHoverIntent(): void {
     if (this.hoverIntentTimer !== null) {
-      window.clearTimeout(this.hoverIntentTimer);
+      activeWindow.clearTimeout(this.hoverIntentTimer);
       this.hoverIntentTimer = null;
     }
   }

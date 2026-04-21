@@ -21,7 +21,7 @@ function parseManagedFrontmatter(content: string): { frontmatter: Record<string,
   if (!match) return { frontmatter: {}, body: content };
   try {
     return {
-      frontmatter: parseYaml(match[1]) ?? {},
+      frontmatter: (parseYaml(match[1]) as Record<string, unknown> | null) ?? {},
       body: content.replace(/^---\n[\s\S]*?\n---\n?/, "")
     };
   } catch {
@@ -30,7 +30,7 @@ function parseManagedFrontmatter(content: string): { frontmatter: Record<string,
 }
 
 function updateSimplexArray(frontmatter: Record<string, unknown>, simplexKey: string, nextEntry?: Record<string, unknown>): Record<string, unknown> {
-  const simplices = Array.isArray(frontmatter.simplices) ? [...frontmatter.simplices] : [];
+  const simplices = Array.isArray(frontmatter.simplices) ? [...(frontmatter.simplices as unknown[])] : [];
   const filtered = simplices.filter((entry) => {
     const nodes = Array.isArray((entry as Record<string, unknown>).nodes)
       ? ((entry as Record<string, unknown>).nodes as unknown[]).map(String)

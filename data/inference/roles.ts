@@ -3,7 +3,7 @@ import type { TFile, CachedMetadata } from "obsidian";
 
 export function extractRole(file: TFile, cache: CachedMetadata | null, content: string): NoteRole {
   const tags = (cache?.tags ?? []).map((t: { tag?: string }) => t.tag?.toLowerCase?.() ?? "");
-  const fm = (cache?.frontmatter ?? {}) as Record<string, unknown>;
+  const fm = (cache?.frontmatter ?? {});
 
   if (/- \[ \]/.test(content)) return 'action';
 

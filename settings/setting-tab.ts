@@ -318,7 +318,7 @@ export class SimplicialSettingTab extends PluginSettingTab {
 
   private renderBettiSettings(containerEl: HTMLElement): void {
     new Setting(containerEl)
-      .setName("Enable Betti computation")
+      .setName("Enable betti computation")
       .setDesc("Calculate topological invariants (β₀, β₁, β₂) to detect holes and voids.")
       .addToggle((toggle) => {
         toggle.setValue(this.plugin.settings.enableBettiComputation);
@@ -332,8 +332,8 @@ export class SimplicialSettingTab extends PluginSettingTab {
       });
 
     new Setting(containerEl)
-      .setName("Display Betti on canvas")
-      .setDesc("Show live Betti numbers in the top-left HUD overlay (requires Betti computation to be enabled).")
+      .setName("Display betti on canvas")
+      .setDesc("Show live betti numbers in the top-left hud overlay (requires betti computation to be enabled).")
       .addToggle((toggle) => {
         toggle.setValue(this.plugin.settings.bettiDisplayOnCanvas);
         toggle.onChange(async (value) => {
@@ -345,7 +345,7 @@ export class SimplicialSettingTab extends PluginSettingTab {
       });
 
     new Setting(containerEl)
-      .setName("Max Betti dimension")
+      .setName("Max betti dimension")
       .setDesc("Compute holes up to this dimension (1 = triangles, 2 = tetrahedra).")
       .addDropdown((dropdown) => {
         dropdown.addOption("1", "β₁ only (unfilled triangles)");
@@ -420,7 +420,7 @@ export class SimplicialSettingTab extends PluginSettingTab {
       .setDesc("How note domains are determined for coloring and edge strength.")
       .addDropdown((dropdown) => {
         dropdown.addOption("folder", "Folder structure");
-        dropdown.addOption("content-cluster", "Content clustering (TF-IDF)");
+        dropdown.addOption("content-cluster", "Content clustering (tf-idf)");
         dropdown.addOption("hybrid", "Hybrid (folder + content)");
         dropdown.setValue(this.plugin.settings.domainSource);
         dropdown.onChange(async (value) => {
@@ -551,7 +551,7 @@ export class SimplicialSettingTab extends PluginSettingTab {
       toggle.setTooltip("Enable or disable this inference signal");
       toggle.setValue(this.plugin.settings[enabledKey]);
       toggle.onChange(async (value) => {
-        this.plugin.settings[enabledKey] = value as never;
+        this.plugin.settings[enabledKey] = value;
         sliderRef?.setDisabled(!value);
         await this.plugin.saveSettings();
       });
@@ -566,7 +566,7 @@ export class SimplicialSettingTab extends PluginSettingTab {
       slider.setDisabled(!this.plugin.settings[enabledKey]);
       slider.onChange(async (value) => {
         valueEl.setText(format(value));
-        this.plugin.settings[key] = value as never;
+        this.plugin.settings[key] = value;
         await this.plugin.saveSettings();
       });
     });

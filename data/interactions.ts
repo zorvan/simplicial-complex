@@ -117,13 +117,13 @@ export function deserializeReinforcement(data: unknown): ReinforcementState {
   }
 
   if (Array.isArray(d.nodeScores)) {
-    for (const [k, v] of d.nodeScores) {
+    for (const [k, v] of d.nodeScores as [string, number][]) {
       if (typeof v === 'number') state.nodeScores.set(k, v);
     }
   }
 
   if (Array.isArray(d.simplexScores)) {
-    for (const [k, v] of d.simplexScores) {
+    for (const [k, v] of d.simplexScores as [string, number][]) {
       if (typeof v === 'number') state.simplexScores.set(k, v);
     }
   }

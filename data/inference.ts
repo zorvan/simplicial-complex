@@ -127,7 +127,7 @@ function overlapScore(a: Set<string>, b: Set<string>, maxContribution: number): 
 function extractTags(cache: CachedMetadata | null): Set<string> {
   const tags = new Set<string>();
   cache?.tags?.forEach((tag) => tags.add(normalizeTag(tag.tag)));
-  const frontmatterTags = cache?.frontmatter?.tags;
+  const frontmatterTags = cache?.frontmatter?.tags as string[] | string | undefined;
   const values = Array.isArray(frontmatterTags) ? frontmatterTags : typeof frontmatterTags === "string" ? [frontmatterTags] : [];
   values.forEach((tag) => tags.add(normalizeTag(String(tag))));
   return tags;

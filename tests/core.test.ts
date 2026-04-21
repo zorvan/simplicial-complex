@@ -1,13 +1,43 @@
-declare function require(name: string): any;
+declare function require(name: string): unknown;
 
-const test = require("node:test");
-const assert = require("node:assert/strict");
+type TestFn = (name: string, fn: () => void | Promise<void>) => void;
+type Assert = {
+  equal: (actual: unknown, expected: unknown, message?: string) => void;
+  ok: (value: unknown, message?: string) => void;
+  deepStrictEqual: (actual: unknown, expected: unknown, message?: string) => void;
+};
 
-const { normalizeKey } = require("../core/normalize");
-const { hashLabel } = require("../core/hash");
-const { generateFaces, getFacesLazy } = require("../core/faces");
-const { SimplicialModel } = require("../core/model");
-const { inferSimplices } = require("../data/inference");
+const test = require("node:test") as TestFn;
+const assert = require("node:assert/strict") as Assert;
+
+type NormalizeKeyFn = (nodes: string[]) => string;
+type HashLabelFn = (label: string | undefined) => string;
+type GenerateFacesFn = (complex: { simplices: Map<string, unknown> }, simplex: { nodes: string[]; label?: string }) => void;
+type GetFacesLazyFn = (simplex: { nodes: string[] }, dimension: number) => unknown[];
+type SimplicialModelClass = new () => {
+  nodes: Map<string, { isPinned?: boolean; px?: number; py?: number }>;
+  simplices: Map<string, unknown>;
+  setNode: (id: string, props?: { isPinned?: boolean; px?: number; py?: number }) => void;
+  addSimplex: (simplex: { nodes: string[]; userDefined?: boolean }) => void;
+  updateNodeId: (oldId: string, newId: string) => void;
+  getAllNodes: () => { id: string; isPinned: boolean; px: number; py: number }[];
+  removeSimplex: (key: string) => boolean;
+};
+type InferSimplicesFn = (contexts: Array<{
+  path: string;
+  folder: string;
+  topFolder: string;
+  titleTokens: Set<string>;
+  contentTokens: Set<string>;
+  tags: Set<string>;
+  outgoingLinks: Set<string>;
+}>, settings: Record<string, unknown>) => Array<{ nodes: string[]; inferred?: boolean; confidence?: number; label?: string }>;
+
+const { normalizeKey } = require("../core/normalize") as { normalizeKey: NormalizeKeyFn };
+const { hashLabel } = require("../core/hash") as { hashLabel: HashLabelFn };
+const { generateFaces, getFacesLazy } = require("../core/faces") as { generateFaces: GenerateFacesFn; getFacesLazy: GetFacesLazyFn };
+const { SimplicialModel } = require("../core/model") as { SimplicialModel: SimplicialModelClass };
+const { inferSimplices } = require("../data/inference") as { inferSimplices: InferSimplicesFn };
 
 test("normalizeKey lowercases, trims, and canonicalizes order", () => {
   assert.equal(

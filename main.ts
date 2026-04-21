@@ -42,7 +42,7 @@ export default class SimplicialPlugin extends Plugin {
   private rescanTimer: number | null = null;
 
   async onload(): Promise<void> {
-    const saved = await this.loadData() ?? {};
+    const saved = (await this.loadData() ?? {}) as Partial<PluginSettings>;
     this.settings = { ...getDefaultSettings(), ...saved };
     if (this.settings.maxRenderedDim === 3) {
       this.settings.maxRenderedDim = 12;
@@ -150,7 +150,7 @@ export default class SimplicialPlugin extends Plugin {
       id: "toggle-edges",
       name: "Toggle simplicial edges",
       callback: () => {
-        if (document.activeElement?.tagName === "INPUT" || document.activeElement?.tagName === "TEXTAREA") return;
+        if (activeDocument.activeElement?.tagName === "INPUT" || activeDocument.activeElement?.tagName === "TEXTAREA") return;
         this.settings.showEdges = !this.settings.showEdges;
         void this.saveSettings();
         this.renderer.render();
@@ -160,7 +160,7 @@ export default class SimplicialPlugin extends Plugin {
       id: "toggle-clusters",
       name: "Toggle simplicial clusters",
       callback: () => {
-        if (document.activeElement?.tagName === "INPUT" || document.activeElement?.tagName === "TEXTAREA") return;
+        if (activeDocument.activeElement?.tagName === "INPUT" || activeDocument.activeElement?.tagName === "TEXTAREA") return;
         this.settings.showClusters = !this.settings.showClusters;
         void this.saveSettings();
         this.renderer.render();
@@ -170,7 +170,7 @@ export default class SimplicialPlugin extends Plugin {
       id: "toggle-cores",
       name: "Toggle simplicial cores",
       callback: () => {
-        if (document.activeElement?.tagName === "INPUT" || document.activeElement?.tagName === "TEXTAREA") return;
+        if (activeDocument.activeElement?.tagName === "INPUT" || activeDocument.activeElement?.tagName === "TEXTAREA") return;
         this.settings.showCores = !this.settings.showCores;
         void this.saveSettings();
         this.renderer.render();
@@ -180,8 +180,8 @@ export default class SimplicialPlugin extends Plugin {
       id: "clear-simplicial-focus",
       name: "Clear simplicial focus",
       callback: () => {
-        if (document.activeElement?.tagName === "INPUT" || document.activeElement?.tagName === "TEXTAREA") {
-          (document.activeElement as HTMLElement).blur();
+        if (activeDocument.activeElement?.tagName === "INPUT" || activeDocument.activeElement?.tagName === "TEXTAREA") {
+          (activeDocument.activeElement as HTMLElement).blur();
           return;
         }
         this.controller.clearFocus();
@@ -192,7 +192,7 @@ export default class SimplicialPlugin extends Plugin {
       id: "focus-hovered-node",
       name: "Focus hovered simplicial node",
       callback: () => {
-        if (document.activeElement?.tagName === "INPUT" || document.activeElement?.tagName === "TEXTAREA") return;
+        if (activeDocument.activeElement?.tagName === "INPUT" || activeDocument.activeElement?.tagName === "TEXTAREA") return;
         this.controller.focusHoveredNode();
         this.renderer.render();
       },
@@ -201,7 +201,7 @@ export default class SimplicialPlugin extends Plugin {
       id: "open-hovered-simplex-panel",
       name: "Open metadata panel for hovered simplex",
       callback: () => {
-        if (document.activeElement?.tagName === "INPUT" || document.activeElement?.tagName === "TEXTAREA") return;
+        if (activeDocument.activeElement?.tagName === "INPUT" || activeDocument.activeElement?.tagName === "TEXTAREA") return;
         void this.openPanelForCurrentSelection();
       },
     });
@@ -217,7 +217,7 @@ export default class SimplicialPlugin extends Plugin {
   }
 
   onunload(): void {
-    if (this.rescanTimer !== null) window.clearTimeout(this.rescanTimer);
+    if (this.rescanTimer !== null) activeWindow.clearTimeout(this.rescanTimer);
     logger.info("plugin", "Unloading plugin", {
       indexedNodeCount: this.model.nodes.size,
       simplexCount: this.model.simplices.size
@@ -281,8 +281,8 @@ export default class SimplicialPlugin extends Plugin {
   }
 
   private queueSaveSettings(): void {
-    if (this.saveTimer !== null) window.clearTimeout(this.saveTimer);
-    this.saveTimer = window.setTimeout(() => {
+    if (this.saveTimer !== null) activeWindow.clearTimeout(this.saveTimer);
+    this.saveTimer = activeWindow.setTimeout(() => {
       this.saveTimer = null;
       void this.saveSettings();
     }, 150);
@@ -593,8 +593,8 @@ export default class SimplicialPlugin extends Plugin {
   }
 
   scheduleFullScan(reason: string, delayMs: number): void {
-    if (this.rescanTimer !== null) window.clearTimeout(this.rescanTimer);
-    this.rescanTimer = window.setTimeout(async () => {
+    if (this.rescanTimer !== null) activeWindow.clearTimeout(this.rescanTimer);
+    this.rescanTimer = activeWindow.setTimeout(async () => {
       this.rescanTimer = null;
       logger.info("plugin", "Running full scan", { reason });
       await this.index.fullScan();

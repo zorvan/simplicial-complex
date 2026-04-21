@@ -53,7 +53,7 @@ function simplexPolygon(simplex: Simplex, nodes: LayoutNode[]): Array<{ x: numbe
 export class Renderer {
   private canvas: HTMLCanvasElement | null = null;
   private ctx: CanvasRenderingContext2D | null = null;
-  private dpr = window.devicePixelRatio || 1;
+  private dpr = activeWindow.devicePixelRatio || 1;
   private W = 0;
   private H = 0;
   private userZoom = 1;
@@ -68,7 +68,7 @@ export class Renderer {
   private readonly MIN_NODE_RADIUS = 18;
   private resizeHandler = () => this.resize();
   private isDark = false;
-  private mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+  private mediaQuery = activeWindow.matchMedia("(prefers-color-scheme: dark)");
   private pointer = { x: 0, y: 0 };
   private lassoPath: Array<{ x: number; y: number }> = [];
   private isLassoActive = false;
@@ -272,7 +272,7 @@ export class Renderer {
     this.ctx = this.canvas.getContext("2d");
     this.isDark = this.detectDarkMode();
     this.resize();
-    window.addEventListener("resize", this.resizeHandler);
+    activeWindow.addEventListener("resize", this.resizeHandler);
     this.mediaQuery.addEventListener("change", this.themeHandler);
     this.engine.start(
       () => this.render(),
@@ -550,7 +550,7 @@ export class Renderer {
   private detectDarkMode(): boolean {
     if (this.settings.darkMode === "force-dark") return true;
     if (this.settings.darkMode === "force-light") return false;
-    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+    return activeWindow.matchMedia("(prefers-color-scheme: dark)").matches;
   }
 
   private resize(): void {
@@ -989,7 +989,7 @@ export class Renderer {
 
   destroy(): void {
     this.engine.stop();
-    window.removeEventListener("resize", this.resizeHandler);
+    activeWindow.removeEventListener("resize", this.resizeHandler);
     this.mediaQuery.removeEventListener("change", this.themeHandler);
     this.canvas = null;
     this.ctx = null;

@@ -97,7 +97,7 @@ function renderBlobToOffscreen(simplexKey: string, simplex: Simplex, nodes: Layo
   const y0 = Math.min(...ys) - margin;
   const width = Math.max(...xs) - x0 + margin;
   const height = Math.max(...ys) - y0 + margin;
-  const canvas = document.createElement("canvas");
+  const canvas = activeDocument.createElement("canvas");
   canvas.width = Math.max(1, Math.ceil(width));
   canvas.height = Math.max(1, Math.ceil(height));
   const ctx = canvas.getContext("2d");
