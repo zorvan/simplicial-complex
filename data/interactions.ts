@@ -2,7 +2,7 @@ import type { NodeID, SimplexKey } from "../core/types.js";
 
 export interface InteractionEvent {
   timestamp: number;
-  type: 'hover' | 'select' | 'confirm' | 'reject' | 'promote' | 'dissolve' | 'create';
+  type: "hover" | "select" | "confirm" | "reject" | "promote" | "dissolve" | "create";
   simplexKey?: SimplexKey;
   nodeIds?: NodeID[];
   weight: number;
@@ -25,10 +25,7 @@ export function createInteractionTracker(): ReinforcementState {
   };
 }
 
-export function logInteraction(
-  state: ReinforcementState,
-  event: Omit<InteractionEvent, 'timestamp'>,
-): void {
+export function logInteraction(state: ReinforcementState, event: Omit<InteractionEvent, "timestamp">): void {
   const fullEvent: InteractionEvent = {
     ...event,
     timestamp: Date.now(),
@@ -37,8 +34,8 @@ export function logInteraction(
 
   // Update scores based on interaction type
   const scoreDelta = getScoreDelta(event.type);
-  
-  if (event.simplexKey && event.type !== 'hover') {
+
+  if (event.simplexKey && event.type !== "hover") {
     const current = state.simplexScores.get(event.simplexKey) ?? 1.0;
     state.simplexScores.set(event.simplexKey, Math.min(MAX_SCORE, current + scoreDelta));
   }
@@ -54,22 +51,30 @@ export function logInteraction(
   pruneOldEvents(state);
 }
 
-function getScoreDelta(type: InteractionEvent['type']): number {
+function getScoreDelta(type: InteractionEvent["type"]): number {
   switch (type) {
-    case 'confirm': return 0.5;
-    case 'promote': return 0.8;
-    case 'create': return 0.6;
-    case 'reject': return -0.3;
-    case 'dissolve': return -0.5;
-    case 'select': return 0.1;
-    case 'hover': return 0.02;
-    default: return 0;
+    case "confirm":
+      return 0.5;
+    case "promote":
+      return 0.8;
+    case "create":
+      return 0.6;
+    case "reject":
+      return -0.3;
+    case "dissolve":
+      return -0.5;
+    case "select":
+      return 0.1;
+    case "hover":
+      return 0.02;
+    default:
+      return 0;
   }
 }
 
 function pruneOldEvents(state: ReinforcementState): void {
   const cutoff = Date.now() - REINFORCEMENT_WINDOW_MS;
-  state.events = state.events.filter(e => e.timestamp > cutoff);
+  state.events = state.events.filter((e) => e.timestamp > cutoff);
 }
 
 export function getReinforcementMultiplier(
@@ -85,10 +90,11 @@ export function getReinforcementMultiplier(
   }
 
   if (nodeIds && nodeIds.length > 0) {
-    const avgNodeScore = nodeIds.reduce((sum, id) => {
-      return sum + (state.nodeScores.get(id) ?? 1.0);
-    }, 0) / nodeIds.length;
-    multiplier *= (1 + (avgNodeScore - 1) * 0.3); // Node influence is dampened
+    const avgNodeScore =
+      nodeIds.reduce((sum, id) => {
+        return sum + (state.nodeScores.get(id) ?? 1.0);
+      }, 0) / nodeIds.length;
+    multiplier *= 1 + (avgNodeScore - 1) * 0.3; // Node influence is dampened
   }
 
   return Math.min(MAX_SCORE, Math.max(0.3, multiplier));
@@ -104,27 +110,27 @@ export function serializeReinforcement(state: ReinforcementState): unknown {
 
 export function deserializeReinforcement(data: unknown): ReinforcementState {
   const state = createInteractionTracker();
-  if (typeof data !== 'object' || data === null) return state;
+  if (typeof data !== "object" || data === null) return state;
 
   const d = data as Record<string, unknown>;
-  
+
   if (Array.isArray(d.events)) {
     state.events = d.events.filter((e: unknown) => {
-      if (typeof e !== 'object' || e === null) return false;
+      if (typeof e !== "object" || e === null) return false;
       const ev = e as Record<string, unknown>;
-      return typeof ev.timestamp === 'number' && typeof ev.type === 'string';
+      return typeof ev.timestamp === "number" && typeof ev.type === "string";
     }) as InteractionEvent[];
   }
 
   if (Array.isArray(d.nodeScores)) {
     for (const [k, v] of d.nodeScores as [string, number][]) {
-      if (typeof v === 'number') state.nodeScores.set(k, v);
+      if (typeof v === "number") state.nodeScores.set(k, v);
     }
   }
 
   if (Array.isArray(d.simplexScores)) {
     for (const [k, v] of d.simplexScores as [string, number][]) {
-      if (typeof v === 'number') state.simplexScores.set(k, v);
+      if (typeof v === "number") state.simplexScores.set(k, v);
     }
   }
 

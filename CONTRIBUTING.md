@@ -114,6 +114,7 @@ npm test             # Compile and run tests
 ### PR Description
 
 Include:
+
 - What this changes does
 - Why this change is needed (link to issue if applicable)
 - Screenshots for visual changes
@@ -126,6 +127,7 @@ Include:
 ### Bug Reports
 
 Include:
+
 - Obsidian version
 - Plugin version
 - Steps to reproduce
@@ -136,6 +138,7 @@ Include:
 ### Feature Requests
 
 Include:
+
 - What problem this solves
 - How it fits the simplicial model (vs. tags/groups/links)
 - Any mathematical/topological basis (if applicable)

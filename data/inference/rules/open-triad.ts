@@ -43,7 +43,7 @@ export function detectOpenTriadsFromHoles(
 
     candidates.push({
       nodes: [a, b, c],
-      source: 'inferred-bridge',
+      source: "inferred-bridge",
       bridgeNode,
       triadScore,
       label: null,
@@ -78,7 +78,7 @@ export function detectOpenTriads(graph: RawGraph, config: InferenceConfig): Cand
 
         candidates.push({
           nodes: [a, b, c],
-          source: 'inferred-bridge',
+          source: "inferred-bridge",
           bridgeNode: b,
           triadScore,
           label: null,

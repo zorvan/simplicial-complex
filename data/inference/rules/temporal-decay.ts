@@ -5,7 +5,7 @@ import { getReinforcementMultiplier } from "../../interactions.js";
 export interface DecayConfig {
   halfLifeDays: number;
   minimumWeight: number;
-  roleModifier: Record<NoteProfile['role'], number>;
+  roleModifier: Record<NoteProfile["role"], number>;
   enableReinforcement: boolean;
   reinforcementStrength: number;
 }
@@ -41,7 +41,7 @@ export function applyTemporalDecay(
 
   // Apply reinforcement if enabled
   if (config.enableReinforcement && reinforcement) {
-    const nodeIds = nodes.map(n => n.id);
+    const nodeIds = nodes.map((n) => n.id);
     const multiplier = getReinforcementMultiplier(reinforcement, simplexKey, nodeIds);
     // Blend between 1.0 and multiplier based on reinforcementStrength
     const blendedMultiplier = 1 + (multiplier - 1) * config.reinforcementStrength;

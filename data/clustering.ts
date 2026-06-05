@@ -27,19 +27,19 @@ export function clusterByContent(
   config: Partial<ClusteringConfig> = {},
 ): Map<string, string> {
   const fullConfig = { ...DEFAULT_CLUSTERING_CONFIG, ...config };
-  
+
   if (contexts.length < fullConfig.minClusterSize) {
-    return new Map(contexts.map(c => [c.path, "default"]));
+    return new Map(contexts.map((c) => [c.path, "default"]));
   }
 
   const k = Math.min(fullConfig.k, Math.floor(contexts.length / fullConfig.minClusterSize));
   if (k < 2) {
-    return new Map(contexts.map(c => [c.path, "default"]));
+    return new Map(contexts.map((c) => [c.path, "default"]));
   }
 
   const vectors = buildTFIDFVectors(contexts);
   const clusters = kMeans(vectors, k, fullConfig.maxIterations);
-  
+
   return new Map(clusters.map((clusterId, i) => [vectors[i].path, `cluster-${clusterId}`]));
 }
 
@@ -50,15 +50,15 @@ export function buildTFIDFVectors(contexts: InferenceContext[]): DocumentVector[
 
   for (const ctx of contexts) {
     const termFreq = new Map<string, number>();
-    
+
     for (const token of ctx.titleTokens) {
       termFreq.set(token, (termFreq.get(token) ?? 0) + 3);
     }
-    
+
     for (const token of ctx.contentTokens) {
       termFreq.set(token, (termFreq.get(token) ?? 0) + 1);
     }
-    
+
     for (const tag of ctx.tags) {
       const tagToken = tag.replace(/^#/, "");
       termFreq.set(tagToken, (termFreq.get(tagToken) ?? 0) + 5);
@@ -67,7 +67,7 @@ export function buildTFIDFVectors(contexts: InferenceContext[]): DocumentVector[
     for (const term of termFreq.keys()) {
       termDocFreq.set(term, (termDocFreq.get(term) ?? 0) + 1);
     }
-    
+
     docVectors.push(termFreq);
   }
 
@@ -97,7 +97,7 @@ export function buildTFIDFVectors(contexts: InferenceContext[]): DocumentVector[
 
 export function cosineSimilarity(a: DocumentVector, b: DocumentVector): number {
   if (a.magnitude === 0 || b.magnitude === 0) return 0;
-  
+
   let dotProduct = 0;
   for (const [term, valueA] of a.vector) {
     const valueB = b.vector.get(term);
@@ -105,7 +105,7 @@ export function cosineSimilarity(a: DocumentVector, b: DocumentVector): number {
       dotProduct += valueA * valueB;
     }
   }
-  
+
   return dotProduct / (a.magnitude * b.magnitude);
 }
 
@@ -124,7 +124,7 @@ function kMeans(vectors: DocumentVector[], k: number, maxIterations: number): nu
 
       const centroid = new Map<string, number>();
       const termCounts = new Map<string, number>();
-      
+
       for (const doc of clusterDocs) {
         for (const [term, value] of doc.vector) {
           termCounts.set(term, (termCounts.get(term) ?? 0) + 1);
@@ -135,7 +135,7 @@ function kMeans(vectors: DocumentVector[], k: number, maxIterations: number): nu
       for (const [term, sum] of centroid) {
         centroid.set(term, sum / clusterDocs.length);
       }
-      
+
       centroids[c] = centroid;
     }
 
@@ -151,7 +151,7 @@ function kMeans(vectors: DocumentVector[], k: number, maxIterations: number): nu
           vector: centroids[c],
           magnitude: Math.sqrt([...centroids[c].values()].reduce((a, b) => a + b * b, 0)),
         };
-        
+
         const similarity = cosineSimilarity(vector, centroidVec);
         if (similarity > bestSimilarity) {
           bestSimilarity = similarity;
@@ -180,16 +180,16 @@ export function assignHybridDomains(
   contentClusters: Map<string, string>,
 ): Map<string, string> {
   const result = new Map<string, string>();
-  
+
   for (const ctx of contexts) {
     const contentDomain = contentClusters.get(ctx.path);
-    
+
     if (!contentDomain || contentDomain === "default") {
       result.set(ctx.path, ctx.topFolder || ctx.folder || "misc");
     } else {
       result.set(ctx.path, contentDomain);
     }
   }
-  
+
   return result;
 }

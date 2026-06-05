@@ -27,12 +27,7 @@ class QuadTreeNode {
   public width: number;
   public height: number;
 
-  constructor(
-    x: number,
-    y: number,
-    width: number,
-    height: number
-  ) {
+  constructor(x: number, y: number, width: number, height: number) {
     this.x = x;
     this.y = y;
     this.width = width;
@@ -132,8 +127,8 @@ class QuadTreeNode {
       // Calculate repulsion force
       const f = (repulsion * this.mass) / d2;
       return {
-        fx: f * dx / distance,
-        fy: f * dy / distance
+        fx: (f * dx) / distance,
+        fy: (f * dy) / distance,
       };
     } else {
       // Recurse into children
@@ -194,7 +189,10 @@ export class LayoutEngine {
     if (opts.sparseGravityBoost !== undefined) this.SPARSE_GRAVITY_BOOST = opts.sparseGravityBoost;
   }
 
-  start(renderFn: () => void, getState: () => { nodes: LayoutNode[]; simplices: Simplex[]; bounds: Rect; holdNode: string | null }): void {
+  start(
+    renderFn: () => void,
+    getState: () => { nodes: LayoutNode[]; simplices: Simplex[]; bounds: Rect; holdNode: string | null },
+  ): void {
     this.renderFn = renderFn;
     this.getState = getState;
     if (this.animFrame !== null) cancelAnimationFrame(this.animFrame);
@@ -224,8 +222,8 @@ export class LayoutEngine {
 
   tick(nodes: LayoutNode[], simplices: Simplex[], bounds: Rect, holdNode: string | null): void {
     const edgeLikeSimplices = simplices.filter((simplex) => simplex.nodes.length === 2);
-    const sparseGraph = edgeLikeSimplices.length > 0
-      && simplices.every((simplex) => simplex.nodes.length <= 2 || simplex.inferred);
+    const sparseGraph =
+      edgeLikeSimplices.length > 0 && simplices.every((simplex) => simplex.nodes.length <= 2 || simplex.inferred);
     const nodeById = new Map(nodes.map((node) => [node.id, node]));
     const connectionStrengths = new Map<string, number>();
     const nodeConnectivity = new Map<string, { edgeCount: number; clusterCount: number; maxDim: number }>();
@@ -237,9 +235,7 @@ export class LayoutEngine {
     simplices.forEach((simplex) => {
       const simplexDim = simplex.nodes.length - 1;
       const simplexWeight = simplex.weight ?? 1;
-      const pairBoost = simplex.nodes.length === 2
-        ? 1
-        : 1 + Math.min(1.2, (simplex.nodes.length - 2) * 0.4);
+      const pairBoost = simplex.nodes.length === 2 ? 1 : 1 + Math.min(1.2, (simplex.nodes.length - 2) * 0.4);
       simplex.nodes.forEach((nodeId) => {
         const stats = nodeConnectivity.get(nodeId);
         if (!stats) return;
@@ -259,10 +255,10 @@ export class LayoutEngine {
     // Build Barnes-Hut quad-tree for O(n log n) repulsion calculations
     const quadBounds = nodes.length > 0 ? this.calculateBounds(nodes) : { x: 0, y: 0, width: 1000, height: 1000 };
     const quadTree = new QuadTreeNode(quadBounds.x, quadBounds.y, quadBounds.width, quadBounds.height);
-    nodes.forEach(node => quadTree.insert(node));
+    nodes.forEach((node) => quadTree.insert(node));
 
     // Calculate repulsion forces using Barnes-Hut approximation
-    nodes.forEach(node => {
+    nodes.forEach((node) => {
       if (node.isPinned) return;
       const force = quadTree.calculateForce(node, this.BARNES_HUT_THETA, this.REPULSION);
       node.vx += force.fx;
@@ -296,7 +292,10 @@ export class LayoutEngine {
 
         if (connectionStrength > 0) {
           const closeness = Math.min(1.6, connectionStrength);
-          const targetDistance = Math.max(this.MIN_NODE_SEPARATION * 1.05, this.SPARSE_EDGE_LENGTH * (1.08 - closeness * 0.2));
+          const targetDistance = Math.max(
+            this.MIN_NODE_SEPARATION * 1.05,
+            this.SPARSE_EDGE_LENGTH * (1.08 - closeness * 0.2),
+          );
           const stretch = distance - targetDistance;
           const springForce = stretch * this.COHESION * 0.16 * (1 + connectionStrength * 0.9);
           const personalSpace = targetDistance * 0.68;
@@ -343,12 +342,13 @@ export class LayoutEngine {
       }
     }
 
-    const centroid = nodes.length > 0
-      ? {
-          x: nodes.reduce((sum, node) => sum + node.px, 0) / nodes.length,
-          y: nodes.reduce((sum, node) => sum + node.py, 0) / nodes.length,
-        }
-      : { x: 0, y: 0 };
+    const centroid =
+      nodes.length > 0
+        ? {
+            x: nodes.reduce((sum, node) => sum + node.px, 0) / nodes.length,
+            y: nodes.reduce((sum, node) => sum + node.py, 0) / nodes.length,
+          }
+        : { x: 0, y: 0 };
     nodes.forEach((node) => {
       if (node.isPinned) return;
       const stats = nodeConnectivity.get(node.id) ?? { edgeCount: 0, clusterCount: 0, maxDim: 0 };
@@ -356,12 +356,14 @@ export class LayoutEngine {
       const structuralWeight = stats.clusterCount > 0 ? 1.2 : stats.edgeCount > 0 ? 0.7 : 0.08;
       const centroidPull = stats.clusterCount > 0 ? 0.14 : stats.edgeCount > 0 ? 0.08 : 0.01;
 
-      node.vx += (0 - node.px) * gravity * structuralWeight
-        + (centroid.x - node.px) * gravity * centroidPull
-        + (Math.random() - 0.5) * this.NOISE;
-      node.vy += (0 - node.py) * gravity * structuralWeight
-        + (centroid.y - node.py) * gravity * centroidPull
-        + (Math.random() - 0.5) * this.NOISE;
+      node.vx +=
+        (0 - node.px) * gravity * structuralWeight +
+        (centroid.x - node.px) * gravity * centroidPull +
+        (Math.random() - 0.5) * this.NOISE;
+      node.vy +=
+        (0 - node.py) * gravity * structuralWeight +
+        (centroid.y - node.py) * gravity * centroidPull +
+        (Math.random() - 0.5) * this.NOISE;
 
       if (stats.edgeCount === 0 && stats.clusterCount === 0) {
         const angle = hashToUnitInterval(node.id) * Math.PI * 2;
@@ -404,7 +406,7 @@ export class LayoutEngine {
     let maxX = -Infinity;
     let maxY = -Infinity;
 
-    nodes.forEach(node => {
+    nodes.forEach((node) => {
       minX = Math.min(minX, node.px);
       minY = Math.min(minY, node.py);
       maxX = Math.max(maxX, node.px);
@@ -419,7 +421,7 @@ export class LayoutEngine {
       x: minX - padding,
       y: minY - padding,
       width,
-      height
+      height,
     };
   }
 }

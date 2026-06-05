@@ -19,12 +19,11 @@ export function explainSimplex(
   holes: Hole[],
 ): SimplexExplanation {
   const nodeIds = simplex.nodes;
-  const nodeProfiles = nodeIds.map(id => nodes.find(n => n.id === id)).filter(Boolean) as NoteProfile[];
-  
+  const nodeProfiles = nodeIds.map((id) => nodes.find((n) => n.id === id)).filter(Boolean) as NoteProfile[];
+
   // Check if this simplex fills a hole
-  const filledHole = holes.find(h => 
-    h.missingSimplex.length === nodeIds.length &&
-    h.missingSimplex.every(n => nodeIds.includes(n))
+  const filledHole = holes.find(
+    (h) => h.missingSimplex.length === nodeIds.length && h.missingSimplex.every((n) => nodeIds.includes(n)),
   );
 
   if (simplex.inferred) {
@@ -45,7 +44,7 @@ function explainInferredSimplex(
   filledHole: Hole | undefined,
 ): SimplexExplanation {
   const dim = simplex.nodes.length - 1;
-  const nodeNames = nodes.map(n => n.id.replace(/\.md$/, ""));
+  const nodeNames = nodes.map((n) => n.id.replace(/\.md$/, ""));
   const signals = simplex.inferredSignals ?? [];
 
   // Check for hole-filling
@@ -62,7 +61,7 @@ function explainInferredSimplex(
   if (dim === 2 && nodes.length === 3) {
     const bridgeNode = detectBridgeNode(nodes, contexts);
     if (bridgeNode) {
-      const otherNodes = nodeNames.filter(n => n !== bridgeNode.replace(/\.md$/, ""));
+      const otherNodes = nodeNames.filter((n) => n !== bridgeNode.replace(/\.md$/, ""));
       return {
         headline: "Three notes form a structural bridge through a common connection.",
         tension: `${otherNodes[0]} and ${otherNodes[1]} both connect to ${bridgeNode.replace(/\.md$/, "")}, but have no direct link between them.`,
@@ -73,7 +72,7 @@ function explainInferredSimplex(
   }
 
   // Cross-domain detection
-  const domains = new Set(nodes.map(n => n.domain));
+  const domains = new Set(nodes.map((n) => n.domain));
   if (domains.size > 1) {
     return {
       headline: `Cross-domain ${dim === 1 ? "relation" : dim === 2 ? "triangle" : "synthesis"} spanning ${domains.size} conceptual areas.`,
@@ -92,9 +91,7 @@ function explainInferredSimplex(
   };
 }
 
-function explainAutoFace(
-  simplex: Simplex,
-): SimplexExplanation {
+function explainAutoFace(simplex: Simplex): SimplexExplanation {
   const dim = simplex.nodes.length - 1;
 
   return {
@@ -105,37 +102,30 @@ function explainAutoFace(
   };
 }
 
-function explainUserDefinedSimplex(
-  simplex: Simplex,
-  nodes: NoteProfile[],
-): SimplexExplanation {
+function explainUserDefinedSimplex(simplex: Simplex, nodes: NoteProfile[]): SimplexExplanation {
   const dim = simplex.nodes.length - 1;
-  const nodeNamesList = nodes.map(n => n.id.replace(/\.md$/, ""));
+  const nodeNamesList = nodes.map((n) => n.id.replace(/\.md$/, ""));
 
   return {
     headline: `Confirmed ${dim === 1 ? "relation" : dim === 2 ? "triangle" : dim === 3 ? "tetrahedron" : "simplex"} you defined.`,
     tension: `You explicitly marked ${nodeNamesList.join(" · ")} as forming a meaningful structure.`,
-    prompt: simplex.label 
+    prompt: simplex.label
       ? `Labeled as "${simplex.label}". Does this label still capture the relationship?`
       : `Consider adding a label to capture what binds these notes together.`,
     signals: simplex.label ? [`Label: ${simplex.label}`] : ["User-defined"],
   };
 }
 
-function detectBridgeNode(
-  nodes: NoteProfile[],
-  contexts: Map<string, InferenceContext>,
-): NodeID | null {
+function detectBridgeNode(nodes: NoteProfile[], contexts: Map<string, InferenceContext>): NodeID | null {
   if (nodes.length !== 3) return null;
 
   for (const node of nodes) {
     const ctx = contexts.get(node.id);
     if (!ctx) continue;
 
-    const otherNodes = nodes.filter(n => n.id !== node.id);
-    const connectsToBoth = otherNodes.every(other => 
-      ctx.outgoingLinks.has(other.id) || 
-      contexts.get(other.id)?.outgoingLinks.has(node.id)
+    const otherNodes = nodes.filter((n) => n.id !== node.id);
+    const connectsToBoth = otherNodes.every(
+      (other) => ctx.outgoingLinks.has(other.id) || contexts.get(other.id)?.outgoingLinks.has(node.id),
     );
 
     if (connectsToBoth) {
@@ -145,7 +135,7 @@ function detectBridgeNode(
       const bCtx = contexts.get(b.id);
       const aLinksB = aCtx?.outgoingLinks.has(b.id) ?? false;
       const bLinksA = bCtx?.outgoingLinks.has(a.id) ?? false;
-      
+
       if (!aLinksB && !bLinksA) {
         return node.id;
       }
@@ -158,11 +148,8 @@ function detectBridgeNode(
 /**
  * Generate explanation for a hole (Betti void) rather than a simplex.
  */
-export function explainHole(
-  hole: Hole,
-  _contexts: Map<string, InferenceContext>,
-): SimplexExplanation {
-  const nodeNames = hole.boundaryNodes.map(id => id.replace(/\.md$/, ""));
+export function explainHole(hole: Hole, _contexts: Map<string, InferenceContext>): SimplexExplanation {
+  const nodeNames = hole.boundaryNodes.map((id) => id.replace(/\.md$/, ""));
 
   if (hole.dimension === 1) {
     return {

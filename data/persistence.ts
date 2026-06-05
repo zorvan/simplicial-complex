@@ -22,14 +22,18 @@ function parseManagedFrontmatter(content: string): { frontmatter: Record<string,
   try {
     return {
       frontmatter: (parseYaml(match[1]) as Record<string, unknown> | null) ?? {},
-      body: content.replace(/^---\n[\s\S]*?\n---\n?/, "")
+      body: content.replace(/^---\n[\s\S]*?\n---\n?/, ""),
     };
   } catch {
     return { frontmatter: {}, body: content.replace(/^---\n[\s\S]*?\n---\n?/, "") };
   }
 }
 
-function updateSimplexArray(frontmatter: Record<string, unknown>, simplexKey: string, nextEntry?: Record<string, unknown>): Record<string, unknown> {
+function updateSimplexArray(
+  frontmatter: Record<string, unknown>,
+  simplexKey: string,
+  nextEntry?: Record<string, unknown>,
+): Record<string, unknown> {
   const simplices = Array.isArray(frontmatter.simplices) ? [...(frontmatter.simplices as unknown[])] : [];
   const filtered = simplices.filter((entry) => {
     const nodes = Array.isArray((entry as Record<string, unknown>).nodes)
@@ -42,11 +46,7 @@ function updateSimplexArray(frontmatter: Record<string, unknown>, simplexKey: st
   return frontmatter;
 }
 
-export async function writeSimplexToSourceNote(
-  app: App,
-  file: TFile,
-  simplex: Simplex,
-): Promise<string> {
+export async function writeSimplexToSourceNote(app: App, file: TFile, simplex: Simplex): Promise<string> {
   const content = await app.vault.read(file);
   const { frontmatter, body } = parseManagedFrontmatter(content);
   const key = normalizeKey(simplex.nodes);
@@ -56,7 +56,7 @@ export async function writeSimplexToSourceNote(
     mode: "source-note",
     file: file.path,
     simplexKey: key,
-    simplexCount
+    simplexCount,
   });
   return serializeFrontmatter(frontmatter, body);
 }
@@ -71,7 +71,7 @@ export async function ensureCentralFile(app: App, centralFile: string): Promise<
     "---",
     "",
     "<!-- managed by Simplicial Complex plugin -->",
-    ""
+    "",
   ].join("\n");
   const file = await app.vault.create(centralFile, initial);
   logger.info("persistence", "Created central file", { path: centralFile });
@@ -95,28 +95,27 @@ export async function writeSimplexToCentralFile(
     mode: "central-file",
     file: file.path,
     simplexKey: key,
-    simplexCount
+    simplexCount,
   });
   return { file, content: nextContent };
 }
 
-export async function removeSimplexFromManagedFile(
-  app: App,
-  file: TFile,
-  simplexKey: string,
-): Promise<string> {
+export async function removeSimplexFromManagedFile(app: App, file: TFile, simplexKey: string): Promise<string> {
   const content = await app.vault.read(file);
   const { frontmatter, body } = parseManagedFrontmatter(content);
   updateSimplexArray(frontmatter, simplexKey);
   logger.info("persistence", "Prepared simplex removal", {
     file: file.path,
     simplexKey,
-    remainingSimplexCount: Array.isArray(frontmatter.simplices) ? frontmatter.simplices.length : 0
+    remainingSimplexCount: Array.isArray(frontmatter.simplices) ? frontmatter.simplices.length : 0,
   });
   return serializeFrontmatter(frontmatter, body);
 }
 
-export async function readCentralFileState(app: App, centralFile: string): Promise<{
+export async function readCentralFileState(
+  app: App,
+  centralFile: string,
+): Promise<{
   exists: boolean;
   path: string;
   length: number;
@@ -125,7 +124,7 @@ export async function readCentralFileState(app: App, centralFile: string): Promi
   if (!(file instanceof TFile)) {
     logger.warn("persistence", "Central file does not exist", {
       mode: "central-file",
-      path: centralFile
+      path: centralFile,
     });
     return { exists: false, path: centralFile, length: 0 };
   }
@@ -134,7 +133,7 @@ export async function readCentralFileState(app: App, centralFile: string): Promi
     mode: "central-file",
     path: centralFile,
     exists: true,
-    length: content.length
+    length: content.length,
   });
   return { exists: true, path: file.path, length: content.length };
 }

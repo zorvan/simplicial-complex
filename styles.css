@@ -78,12 +78,24 @@
   display: inline-block;
 }
 
-.simplicial-legend-swatch.is-link { background: rgb(76, 125, 212); }
-.simplicial-legend-swatch.is-tag { background: rgb(214, 151, 52); }
-.simplicial-legend-swatch.is-folder { background: rgb(208, 98, 156); }
-.simplicial-legend-swatch.is-semantic { background: rgb(216, 90, 48); }
-.simplicial-legend-swatch.is-cluster { background: rgb(29, 158, 117); }
-.simplicial-legend-swatch.is-confirmed { background: rgb(127, 119, 221); }
+.simplicial-legend-swatch.is-link {
+  background: rgb(76, 125, 212);
+}
+.simplicial-legend-swatch.is-tag {
+  background: rgb(214, 151, 52);
+}
+.simplicial-legend-swatch.is-folder {
+  background: rgb(208, 98, 156);
+}
+.simplicial-legend-swatch.is-semantic {
+  background: rgb(216, 90, 48);
+}
+.simplicial-legend-swatch.is-cluster {
+  background: rgb(29, 158, 117);
+}
+.simplicial-legend-swatch.is-confirmed {
+  background: rgb(127, 119, 221);
+}
 
 .simplicial-filtration {
   display: flex;

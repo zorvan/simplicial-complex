@@ -45,27 +45,27 @@ export class InteractionController {
   }
 
   logConfirm(simplexKey: SimplexKey, nodeIds: NodeID[]): void {
-    logInteraction(this.interactionTracker, { type: 'confirm', simplexKey, nodeIds, weight: 0.5 });
+    logInteraction(this.interactionTracker, { type: "confirm", simplexKey, nodeIds, weight: 0.5 });
     this.onInteraction?.(this.interactionTracker);
   }
 
   logReject(simplexKey: SimplexKey, nodeIds: NodeID[]): void {
-    logInteraction(this.interactionTracker, { type: 'reject', simplexKey, nodeIds, weight: -0.3 });
+    logInteraction(this.interactionTracker, { type: "reject", simplexKey, nodeIds, weight: -0.3 });
     this.onInteraction?.(this.interactionTracker);
   }
 
   logPromote(simplexKey: SimplexKey, nodeIds: NodeID[]): void {
-    logInteraction(this.interactionTracker, { type: 'promote', simplexKey, nodeIds, weight: 0.8 });
+    logInteraction(this.interactionTracker, { type: "promote", simplexKey, nodeIds, weight: 0.8 });
     this.onInteraction?.(this.interactionTracker);
   }
 
   logDissolve(simplexKey: SimplexKey, nodeIds: NodeID[]): void {
-    logInteraction(this.interactionTracker, { type: 'dissolve', simplexKey, nodeIds, weight: -0.5 });
+    logInteraction(this.interactionTracker, { type: "dissolve", simplexKey, nodeIds, weight: -0.5 });
     this.onInteraction?.(this.interactionTracker);
   }
 
   logCreate(nodeIds: NodeID[]): void {
-    logInteraction(this.interactionTracker, { type: 'create', nodeIds, weight: 0.6 });
+    logInteraction(this.interactionTracker, { type: "create", nodeIds, weight: 0.6 });
     this.onInteraction?.(this.interactionTracker);
   }
 
@@ -210,10 +210,10 @@ export class InteractionController {
       const simplex = this.model.getSimplex(simplexKey);
       if (simplex) {
         logInteraction(this.interactionTracker, {
-          type: 'select',
+          type: "select",
           simplexKey,
           nodeIds: simplex.nodes,
-          weight: 0.1
+          weight: 0.1,
         });
       }
     }
@@ -231,7 +231,8 @@ export class InteractionController {
       return;
     }
     this.hoverIntentTimer = activeWindow.setTimeout(() => {
-      const simplexKey = this.model.getSimplicesForNode(this.hoveredNodeId!)
+      const simplexKey = this.model
+        .getSimplicesForNode(this.hoveredNodeId!)
         .sort((a, b) => (b.weight ?? 1) - (a.weight ?? 1))[0];
       const nextKey = simplexKey ? normalizeKey(simplexKey.nodes) : null;
       this.hoveredSimplexKey = nextKey;

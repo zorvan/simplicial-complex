@@ -6,11 +6,7 @@ export interface BettiNumbers {
   beta2: number;
 }
 
-export function drawBettiHUD(
-  ctx: CanvasRenderingContext2D,
-  model: SimplicialModel,
-  isDark: boolean,
-): void {
+export function drawBettiHUD(ctx: CanvasRenderingContext2D, model: SimplicialModel, isDark: boolean): void {
   const analysis = model.getAnalysisSummary();
   if (!analysis.betti) return;
 
@@ -27,24 +23,18 @@ export function drawBettiHUD(
   const height = 26;
 
   // Background
-  ctx.fillStyle = isDark
-    ? "rgba(20, 24, 32, 0.85)"
-    : "rgba(255, 255, 255, 0.85)";
+  ctx.fillStyle = isDark ? "rgba(20, 24, 32, 0.85)" : "rgba(255, 255, 255, 0.85)";
   ctx.beginPath();
   ctx.roundRect(x, y, width, height, 8);
   ctx.fill();
 
   // Border
-  ctx.strokeStyle = isDark
-    ? "rgba(255, 255, 255, 0.15)"
-    : "rgba(0, 0, 0, 0.1)";
+  ctx.strokeStyle = isDark ? "rgba(255, 255, 255, 0.15)" : "rgba(0, 0, 0, 0.1)";
   ctx.lineWidth = 1;
   ctx.stroke();
 
   // Text
-  ctx.fillStyle = isDark
-    ? "rgba(235, 240, 248, 0.9)"
-    : "rgba(24, 28, 34, 0.85)";
+  ctx.fillStyle = isDark ? "rgba(235, 240, 248, 0.9)" : "rgba(24, 28, 34, 0.85)";
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
   ctx.fillText(text, x + padding, y + height / 2);

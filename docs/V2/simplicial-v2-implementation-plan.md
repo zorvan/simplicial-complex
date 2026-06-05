@@ -9,17 +9,17 @@
 
 ## Context and Thesis
 
-The v1 plugin has a clean architecture and a working inference pipeline, but it solves the wrong problem. It finds and displays clusters of related notes — which reflects what you already know. The stated goal was *generation and discovery of higher-order relations* — which requires surfacing what you do *not* yet know.
+The v1 plugin has a clean architecture and a working inference pipeline, but it solves the wrong problem. It finds and displays clusters of related notes — which reflects what you already know. The stated goal was _generation and discovery of higher-order relations_ — which requires surfacing what you do _not_ yet know.
 
 The core mismatch (from the spec addendum, not yet resolved in code):
 
-| Dimension | What v1 computes | What it should compute |
-|-----------|-----------------|----------------------|
-| 1-simplex | similarity | relation |
-| 2-simplex | stronger similarity | interaction / bridge |
-| 3-simplex | strongest similarity | synthesis / void |
+| Dimension | What v1 computes     | What it should compute |
+| --------- | -------------------- | ---------------------- |
+| 1-simplex | similarity           | relation               |
+| 2-simplex | stronger similarity  | interaction / bridge   |
+| 3-simplex | strongest similarity | synthesis / void       |
 
-The v2 plan makes one fundamental shift: **from detecting presence to detecting absence**. A simplicial complex's topology is defined not just by what simplices exist, but by the *holes* between them. Those holes — Betti numbers β₁ and β₂ — are the shape of questions your thinking has not yet answered.
+The v2 plan makes one fundamental shift: **from detecting presence to detecting absence**. A simplicial complex's topology is defined not just by what simplices exist, but by the _holes_ between them. Those holes — Betti numbers β₁ and β₂ — are the shape of questions your thinking has not yet answered.
 
 ---
 
@@ -30,7 +30,7 @@ The v2 plan makes one fundamental shift: **from detecting presence to detecting 
 **Location:** `data/inference/graph.ts`, `buildRawGraph()`
 
 ```ts
-domain: ctx.topFolder || ctx.folder || ""
+domain: ctx.topFolder || ctx.folder || "";
 ```
 
 `domain` drives diversity scoring in `scoreCandidate()`. But folder structure reflects your existing organizational mental model, not conceptual proximity. Two notes in `/research/` share a domain only because you filed them there. A note on Byzantine fault tolerance and one on distributed consensus belong to the same conceptual domain regardless of folder.
@@ -46,7 +46,7 @@ The analysis summary computes connected components (β₀). β₁ and β₂ are 
 - **β₁** — count of 1-dimensional holes (cycles without interior fillers). Each is a loop of pairwise-connected ideas with no synthesizing note at the center.
 - **β₂** — count of 2-dimensional voids (closed surfaces without interior). Three ideas forming a triangle with no synthesis is a β₁ hole; four ideas forming a hollow tetrahedron is a β₂ void.
 
-These holes are *generative prompts expressed as topology*. The system already builds the simplicial complex. It never asks what shape the emptiness has.
+These holes are _generative prompts expressed as topology_. The system already builds the simplicial complex. It never asks what shape the emptiness has.
 
 ### Gap 3 — No filtration
 
@@ -54,13 +54,13 @@ These holes are *generative prompts expressed as topology*. The system already b
 
 Filtration is the process of building the complex incrementally, adding simplices in order of weight from highest to lowest. Each threshold crossing where a new simplex appears — especially when a triangle or tetrahedron closes — is a topological event. Watching the complex build is where emergence becomes legible.
 
-Without filtration, the user sees a single static snapshot at one threshold. The topology's evolution — and with it, the sense that structure is *emerging* rather than just *being displayed* — is invisible.
+Without filtration, the user sees a single static snapshot at one threshold. The topology's evolution — and with it, the sense that structure is _emerging_ rather than just _being displayed_ — is invisible.
 
 ### Gap 4 — Inferred simplices are silent
 
 **Location:** `ui/panel.ts`, `renderPanel()`
 
-The panel renders node paths, dimension badge, confidence score, and source type. It does not explain *why* the structure was inferred, *what the structural tension is*, or *what question the triangle poses*.
+The panel renders node paths, dimension badge, confidence score, and source type. It does not explain _why_ the structure was inferred, _what the structural tension is_, or _what question the triangle poses_.
 
 An inferred bridge shows `node-a.md · node-b.md · node-c.md / dim 2 / inferred-bridge`. The user sees what was found, not what it means. Without an explanation layer, the system asks the user to judge structures they don't understand.
 
@@ -136,9 +136,9 @@ Build a term-frequency matrix over `contentTokens` (already computed in `Inferen
 // data/clustering.ts
 export function clusterByContent(
   contexts: InferenceContext[],
-  k: number = 8,          // number of clusters
+  k: number = 8, // number of clusters
   minClusterSize: number = 3,
-): Map<string, string>    // path → cluster-id
+): Map<string, string>; // path → cluster-id
 ```
 
 Use k-means over TF-IDF vectors with k configurable in settings. Cache results; rebuild only on full vault rescan.
@@ -152,8 +152,8 @@ Obsidian's `MetadataCache` and search plugin expose note similarity data. If acc
 **Settings addition:**
 
 ```ts
-domainSource: 'folder' | 'content-cluster' | 'hybrid'
-contentClusterCount: number  // default 8
+domainSource: "folder" | "content-cluster" | "hybrid";
+contentClusterCount: number; // default 8
 ```
 
 ---
@@ -184,19 +184,19 @@ For vaults up to ~500 simplices, full boundary matrix rank computation via Gauss
 // core/betti.ts
 
 export interface BettiResult {
-  b0: number;   // connected components
-  b1: number;   // unfilled loops
-  b2: number;   // hollow shells
+  b0: number; // connected components
+  b1: number; // unfilled loops
+  b2: number; // hollow shells
   holes: Hole[];
 }
 
 export interface Hole {
   dimension: 1 | 2;
-  boundaryNodes: NodeID[];    // the nodes forming the boundary
-  missingSimplex: NodeID[];   // the simplex that would fill it
+  boundaryNodes: NodeID[]; // the nodes forming the boundary
+  missingSimplex: NodeID[]; // the simplex that would fill it
 }
 
-export function computeBetti(model: SimplicialModel): BettiResult
+export function computeBetti(model: SimplicialModel): BettiResult;
 ```
 
 For β₁: find all triangles (3-node simplices). A triangle is a β₁ hole if all three edges exist as 1-simplices, but the triangle itself does not exist as a 2-simplex. Each such triangle is a question: these three things connect pairwise, but no synthesizing structure holds them.
@@ -227,20 +227,20 @@ Surface β₁ and β₂ in the panel header and as overlay indicators on the can
 
 A slider (0.0 → 1.0) that sets a weight threshold. Only simplices with `weight >= threshold` (or `decayedWeight >= threshold`) are passed to the renderer. As the slider moves down, the complex builds; as it moves up, it dissolves.
 
-The *topological events* — moments when a new connected component merges, when a triangle closes, when a void appears or fills — should be signaled visually. A brief pulse on the newly appearing simplex.
+The _topological events_ — moments when a new connected component merges, when a triangle closes, when a void appears or fills — should be signaled visually. A brief pulse on the newly appearing simplex.
 
 ```ts
 // ui/filtration-control.ts
 export class FiltrationControl {
   onThresholdChange: (threshold: number) => void;
-  
+
   // marks thresholds where topological events occur
   setEventMarkers(events: FiltrationEvent[]): void;
 }
 
 export interface FiltrationEvent {
   threshold: number;
-  type: 'component-merge' | 'triangle-close' | 'void-open' | 'void-fill';
+  type: "component-merge" | "triangle-close" | "void-open" | "void-fill";
   nodes: NodeID[];
 }
 ```
@@ -259,7 +259,7 @@ Pre-compute `FiltrationEvent` list when the model rebuilds. Mark these on the sl
 
 **What to build:**
 
-Replace the bare path + badge display with a human-readable explanation of *why* the structure was inferred and *what question it poses*.
+Replace the bare path + badge display with a human-readable explanation of _why_ the structure was inferred and _what question it poses_.
 
 ```ts
 // data/explainer.ts
@@ -268,13 +268,13 @@ export function explainSimplex(
   nodes: NoteProfile[],
   contexts: Map<string, InferenceContext>,
   holes: Hole[],
-): SimplexExplanation
+): SimplexExplanation;
 
 export interface SimplexExplanation {
-  headline: string;       // one sentence: what the structure is
-  tension: string;        // one sentence: what the gap/tension is
-  prompt: string;         // one sentence: what writing could fill or use it
-  signals: string[];      // the actual evidence (shared tags, mutual links, etc.)
+  headline: string; // one sentence: what the structure is
+  tension: string; // one sentence: what the gap/tension is
+  prompt: string; // one sentence: what writing could fill or use it
+  signals: string[]; // the actual evidence (shared tags, mutual links, etc.)
 }
 ```
 
@@ -314,7 +314,7 @@ Track user interactions with notes that participate in simplices. Use interactio
 ```ts
 // data/interaction-log.ts
 export interface InteractionEvent {
-  type: 'note-open' | 'link-follow' | 'triad-completion' | 'simplex-hover';
+  type: "note-open" | "link-follow" | "triad-completion" | "simplex-hover";
   involvedPaths: string[];
   timestamp: number;
 }
@@ -336,9 +336,9 @@ When a note is opened that participates in an inferred simplex, add a small weig
 export function applyTemporalDecayWithReinforcement(
   baseWeight: number,
   nodes: NoteProfile[],
-  interactionStrength: number,   // from InteractionLog
+  interactionStrength: number, // from InteractionLog
   config: DecayConfig,
-): number
+): number;
 ```
 
 Interaction strength adds a reinforcement term that partially offsets decay. Ideas you keep returning to stay alive.
@@ -390,48 +390,48 @@ The following settings should be added to `PluginSettings`:
 
 ```ts
 // Domain
-domainSource: 'folder' | 'content-cluster' | 'hybrid';
-contentClusterCount: number;          // default 8
+domainSource: "folder" | "content-cluster" | "hybrid";
+contentClusterCount: number; // default 8
 
 // Betti
-enableBettiComputation: boolean;      // default true
-bettiDisplayOnCanvas: boolean;        // default true (show void outlines)
-maxBettiDim: 1 | 2;                   // default 1 (only triangular holes)
+enableBettiComputation: boolean; // default true
+bettiDisplayOnCanvas: boolean; // default true (show void outlines)
+maxBettiDim: 1 | 2; // default 1 (only triangular holes)
 
 // Filtration
-showFiltrationSlider: boolean;        // default true
-filtrationMetric: 'weight' | 'confidence' | 'decayed-weight';
+showFiltrationSlider: boolean; // default true
+filtrationMetric: "weight" | "confidence" | "decayed-weight";
 
 // Explanation
-enableExplanationPanel: boolean;      // default true
-explanationVerbosity: 'brief' | 'full';
+enableExplanationPanel: boolean; // default true
+explanationVerbosity: "brief" | "full";
 
 // Reinforcement
-enableInteractionReinforcement: boolean;  // default true
-reinforcementStrength: number;            // default 0.05
-reinforcementWindowDays: number;          // default 14
+enableInteractionReinforcement: boolean; // default true
+reinforcementStrength: number; // default 0.05
+reinforcementWindowDays: number; // default 14
 ```
 
 ---
 
 ## File change summary
 
-| File | Change type | Phase |
-|------|------------|-------|
-| `data/clustering.ts` | New | 1 |
-| `data/inference/graph.ts` | Modify (`domain` source) | 1 |
-| `core/betti.ts` | New | 2 |
-| `core/model.ts` | Extend `AnalysisSummary` | 2 |
-| `ui/filtration-control.ts` | New | 3 |
-| `ui/view.ts` | Modify (embed filtration control) | 3 |
-| `render/renderer.ts` | Modify (weight filter, void render) | 3, 6 |
-| `data/explainer.ts` | New | 4 |
-| `ui/panel.ts` | Modify (explanation card) | 4 |
-| `data/interaction-log.ts` | New | 5 |
-| `data/inference/rules/temporal-decay.ts` | Modify (reinforcement term) | 5 |
-| `main.ts` | Modify (interaction event hooks) | 5 |
-| `interaction/controller.ts` | Modify (void click, hover tracking) | 6 |
-| `core/types.ts` | Extend `PluginSettings`, `AnalysisSummary` | all |
+| File                                     | Change type                                | Phase |
+| ---------------------------------------- | ------------------------------------------ | ----- |
+| `data/clustering.ts`                     | New                                        | 1     |
+| `data/inference/graph.ts`                | Modify (`domain` source)                   | 1     |
+| `core/betti.ts`                          | New                                        | 2     |
+| `core/model.ts`                          | Extend `AnalysisSummary`                   | 2     |
+| `ui/filtration-control.ts`               | New                                        | 3     |
+| `ui/view.ts`                             | Modify (embed filtration control)          | 3     |
+| `render/renderer.ts`                     | Modify (weight filter, void render)        | 3, 6  |
+| `data/explainer.ts`                      | New                                        | 4     |
+| `ui/panel.ts`                            | Modify (explanation card)                  | 4     |
+| `data/interaction-log.ts`                | New                                        | 5     |
+| `data/inference/rules/temporal-decay.ts` | Modify (reinforcement term)                | 5     |
+| `main.ts`                                | Modify (interaction event hooks)           | 5     |
+| `interaction/controller.ts`              | Modify (void click, hover tracking)        | 6     |
+| `core/types.ts`                          | Extend `PluginSettings`, `AnalysisSummary` | all   |
 
 No changes to `layout/engine.ts`, `data/inference/engine.ts`, `data/inference/scorer.ts`, or persistence layer. The architectural separation holds cleanly.
 

@@ -1,12 +1,5 @@
 /* global activeDocument, activeWindow -- Allow document/window references for context menu and resize handling in Obsidian/Electron environment (ESLint browser globals) */
-import {
-  Menu,
-  Notice,
-  Plugin,
-  TFile,
-  type Editor,
-  MarkdownView,
-} from "obsidian";
+import { Menu, Notice, Plugin, TFile, type Editor, MarkdownView } from "obsidian";
 import { SimplicialModel } from "./core/model";
 import { normalizeKey, resolveNodeId } from "./core/normalize";
 import { logger } from "./core/logger";
@@ -43,7 +36,7 @@ export default class SimplicialPlugin extends Plugin {
   private rescanTimer: number | null = null;
 
   async onload(): Promise<void> {
-    const saved = (await this.loadData() ?? {}) as Partial<PluginSettings>;
+    const saved = ((await this.loadData()) ?? {}) as Partial<PluginSettings>;
     this.settings = { ...getDefaultSettings(), ...saved };
     if (this.settings.maxRenderedDim === 3) {
       this.settings.maxRenderedDim = 12;
@@ -54,7 +47,7 @@ export default class SimplicialPlugin extends Plugin {
       showEdges: this.settings.showEdges,
       showClusters: this.settings.showClusters,
       showCores: this.settings.showCores,
-      pinnedNodeCount: Object.keys(this.settings.pinnedNodes).length
+      pinnedNodeCount: Object.keys(this.settings.pinnedNodes).length,
     });
     this.model = new SimplicialModel();
     this.engine = new LayoutEngine();
@@ -90,13 +83,13 @@ export default class SimplicialPlugin extends Plugin {
       onHoleHover: (hole, explanation) => {
         if (hole && explanation) {
           // Show subtle notice about the hole on hover
-          const nodeNames = hole.boundaryNodes.map(id => id.split("/").pop()?.replace(/\.md$/, "") ?? id);
+          const nodeNames = hole.boundaryNodes.map((id) => id.split("/").pop()?.replace(/\.md$/, "") ?? id);
           new Notice(`Hole: ${explanation.headline}\n${nodeNames.join(" · ")}`, 3000);
         }
       },
       onHoleClick: (hole, explanation) => {
         // On hole click, show a more prominent notice with the prompt
-        const nodeNames = hole.boundaryNodes.map(id => id.split("/").pop()?.replace(/\.md$/, "") ?? id);
+        const nodeNames = hole.boundaryNodes.map((id) => id.split("/").pop()?.replace(/\.md$/, "") ?? id);
         new Notice(`🕳️ ${explanation.headline}\n\nNotes: ${nodeNames.join(" · ")}\n\n${explanation.prompt}`, 8000);
       },
     });
@@ -104,21 +97,18 @@ export default class SimplicialPlugin extends Plugin {
 
     this.restorePinnedNodes();
 
-    this.registerView(
-      VIEW_TYPE_SIMPLICIAL,
-      (leaf) => {
-        const view = new SimplicialView(
-          leaf,
-          this.model,
-          this.renderer,
-          this.settings,
-          () => this.queueSaveSettings(),
-          (reason, delayMs) => this.scheduleFullScan(reason, delayMs),
-        );
-        this.simplicialView = view;
-        return view;
-      },
-    );
+    this.registerView(VIEW_TYPE_SIMPLICIAL, (leaf) => {
+      const view = new SimplicialView(
+        leaf,
+        this.model,
+        this.renderer,
+        this.settings,
+        () => this.queueSaveSettings(),
+        (reason, delayMs) => this.scheduleFullScan(reason, delayMs),
+      );
+      this.simplicialView = view;
+      return view;
+    });
     this.registerView(VIEW_TYPE_SIMPLICIAL_PANEL, (leaf) => {
       const panel = new MetadataPanel(leaf, this.model);
       panel.setActions({
@@ -151,7 +141,8 @@ export default class SimplicialPlugin extends Plugin {
       id: "toggle-edges",
       name: "Toggle simplicial edges",
       callback: () => {
-        if (activeDocument.activeElement?.tagName === "INPUT" || activeDocument.activeElement?.tagName === "TEXTAREA") return;
+        if (activeDocument.activeElement?.tagName === "INPUT" || activeDocument.activeElement?.tagName === "TEXTAREA")
+          return;
         this.settings.showEdges = !this.settings.showEdges;
         void this.saveSettings();
         this.renderer.render();
@@ -161,7 +152,8 @@ export default class SimplicialPlugin extends Plugin {
       id: "toggle-clusters",
       name: "Toggle simplicial clusters",
       callback: () => {
-        if (activeDocument.activeElement?.tagName === "INPUT" || activeDocument.activeElement?.tagName === "TEXTAREA") return;
+        if (activeDocument.activeElement?.tagName === "INPUT" || activeDocument.activeElement?.tagName === "TEXTAREA")
+          return;
         this.settings.showClusters = !this.settings.showClusters;
         void this.saveSettings();
         this.renderer.render();
@@ -171,7 +163,8 @@ export default class SimplicialPlugin extends Plugin {
       id: "toggle-cores",
       name: "Toggle simplicial cores",
       callback: () => {
-        if (activeDocument.activeElement?.tagName === "INPUT" || activeDocument.activeElement?.tagName === "TEXTAREA") return;
+        if (activeDocument.activeElement?.tagName === "INPUT" || activeDocument.activeElement?.tagName === "TEXTAREA")
+          return;
         this.settings.showCores = !this.settings.showCores;
         void this.saveSettings();
         this.renderer.render();
@@ -193,7 +186,8 @@ export default class SimplicialPlugin extends Plugin {
       id: "focus-hovered-node",
       name: "Focus hovered simplicial node",
       callback: () => {
-        if (activeDocument.activeElement?.tagName === "INPUT" || activeDocument.activeElement?.tagName === "TEXTAREA") return;
+        if (activeDocument.activeElement?.tagName === "INPUT" || activeDocument.activeElement?.tagName === "TEXTAREA")
+          return;
         this.controller.focusHoveredNode();
         this.renderer.render();
       },
@@ -202,7 +196,8 @@ export default class SimplicialPlugin extends Plugin {
       id: "open-hovered-simplex-panel",
       name: "Open metadata panel for hovered simplex",
       callback: () => {
-        if (activeDocument.activeElement?.tagName === "INPUT" || activeDocument.activeElement?.tagName === "TEXTAREA") return;
+        if (activeDocument.activeElement?.tagName === "INPUT" || activeDocument.activeElement?.tagName === "TEXTAREA")
+          return;
         void this.openPanelForCurrentSelection();
       },
     });
@@ -221,7 +216,7 @@ export default class SimplicialPlugin extends Plugin {
     if (this.rescanTimer !== null) activeWindow.clearTimeout(this.rescanTimer);
     logger.info("plugin", "Unloading plugin", {
       indexedNodeCount: this.model.nodes.size,
-      simplexCount: this.model.simplices.size
+      simplexCount: this.model.simplices.size,
     });
     this.renderer.destroy();
     this.index.destroy();
@@ -229,7 +224,7 @@ export default class SimplicialPlugin extends Plugin {
 
   private restorePinnedNodes(): void {
     logger.info("plugin", "Restoring pinned nodes", {
-      pinnedNodeCount: Object.keys(this.settings.pinnedNodes).length
+      pinnedNodeCount: Object.keys(this.settings.pinnedNodes).length,
     });
     Object.entries(this.settings.pinnedNodes).forEach(([nodeId, pos]) => {
       this.model.setNode(nodeId, { isPinned: true, px: pos.px, py: pos.py });
@@ -251,7 +246,7 @@ export default class SimplicialPlugin extends Plugin {
       filters: {
         edges: this.settings.showEdges,
         clusters: this.settings.showClusters,
-        cores: this.settings.showCores
+        cores: this.settings.showCores,
       },
       inference: {
         linkBaseline: this.settings.linkGraphBaseline,
@@ -277,7 +272,7 @@ export default class SimplicialPlugin extends Plugin {
         autoOpenPanel: this.settings.commandAutoOpenPanel,
         metadataHoverDelayMs: this.settings.metadataHoverDelayMs,
         formalMode: this.settings.formalMode,
-      }
+      },
     });
   }
 
@@ -302,17 +297,20 @@ export default class SimplicialPlugin extends Plugin {
     }
   }
 
-  private async persistSimplexMetadata(simplexKey: string, updates: { label?: string; weight?: number }): Promise<void> {
+  private async persistSimplexMetadata(
+    simplexKey: string,
+    updates: { label?: string; weight?: number },
+  ): Promise<void> {
     logger.info("plugin", "Persisting simplex metadata", {
       simplexKey,
       updates,
-      persistenceMode: this.settings.persistenceMode
+      persistenceMode: this.settings.persistenceMode,
     });
     this.model.updateMetadata(simplexKey, updates);
     const simplex = this.model.getSimplex(simplexKey);
     if (!simplex?.sourcePath) {
       logger.warn("plugin", "Simplex has no sourcePath; only settings state will be saved", {
-        simplexKey
+        simplexKey,
       });
       await this.saveSettings();
       return;
@@ -339,7 +337,7 @@ export default class SimplicialPlugin extends Plugin {
       sourcePath: file.path,
       linkCount: links.length,
       desiredSize,
-      proposedNodes: nodes
+      proposedNodes: nodes,
     });
     if (nodes.length < desiredSize) {
       new Notice(`Need at least ${desiredSize - 1} resolvable outgoing links to form this simplex.`);
@@ -397,7 +395,7 @@ export default class SimplicialPlugin extends Plugin {
           weight: draft.weight,
           sourcePath: this.settings.persistenceMode === "central-file" ? this.settings.centralFile : sourcePath,
           userDefined: true,
-          autoGenerated: false
+          autoGenerated: false,
         };
         const key = this.model.addSimplex(simplex);
         await this.persistSimplex(this.model.getSimplex(key)!);
@@ -408,7 +406,7 @@ export default class SimplicialPlugin extends Plugin {
         logger.info("plugin", "Simplex created from guided modal", {
           simplexKey: key,
           sourcePath: simplex.sourcePath,
-          simplexCount: this.model.simplices.size
+          simplexCount: this.model.simplices.size,
         });
         new Notice(
           this.settings.persistenceMode === "central-file"
@@ -420,8 +418,9 @@ export default class SimplicialPlugin extends Plugin {
   }
 
   private async openPanelForCurrentSelection(): Promise<void> {
-    const simplexKey = this.controller.hoveredSimplexKey
-      ?? (this.controller.hoveredNodeId
+    const simplexKey =
+      this.controller.hoveredSimplexKey ??
+      (this.controller.hoveredNodeId
         ? this.model.getSimplicesForNode(this.controller.hoveredNodeId)[0]?.nodes
           ? normalizeKey(this.model.getSimplicesForNode(this.controller.hoveredNodeId)[0].nodes)
           : null
@@ -432,30 +431,31 @@ export default class SimplicialPlugin extends Plugin {
   private async logPersistenceState(): Promise<void> {
     logger.info("plugin", "Persistence state", {
       mode: this.settings.persistenceMode,
-      centralFile: this.settings.centralFile
+      centralFile: this.settings.centralFile,
     });
     if (this.settings.persistenceMode === "central-file") {
       await readCentralFileState(this.app, this.settings.centralFile);
     } else {
       logger.info("persistence", "Source-note persistence active", {
-        mode: this.settings.persistenceMode
+        mode: this.settings.persistenceMode,
       });
     }
   }
 
   private async persistSimplex(simplex: Simplex): Promise<void> {
-    const shouldWriteCentral = simplex.sourcePath === this.settings.centralFile
-      || (!simplex.sourcePath && this.settings.persistenceMode === "central-file");
+    const shouldWriteCentral =
+      simplex.sourcePath === this.settings.centralFile ||
+      (!simplex.sourcePath && this.settings.persistenceMode === "central-file");
     if (shouldWriteCentral) {
       const { file, content } = await writeSimplexToCentralFile(this.app, this.settings.centralFile, {
         ...simplex,
-        sourcePath: this.settings.centralFile
+        sourcePath: this.settings.centralFile,
       });
       await this.app.vault.modify(file, content);
       this.index.recordWrite(file.path, content);
       logger.info("plugin", "Persisted simplex to central file", {
         simplexKey: normalizeKey(simplex.nodes),
-        path: file.path
+        path: file.path,
       });
       return;
     }
@@ -463,7 +463,7 @@ export default class SimplicialPlugin extends Plugin {
     if (!(file instanceof TFile)) {
       logger.warn("plugin", "Unable to persist simplex to source note", {
         simplexKey: normalizeKey(simplex.nodes),
-        sourcePath: simplex.sourcePath
+        sourcePath: simplex.sourcePath,
       });
       return;
     }
@@ -472,59 +472,75 @@ export default class SimplicialPlugin extends Plugin {
     this.index.recordWrite(file.path, content);
     logger.info("plugin", "Persisted simplex to source note", {
       simplexKey: normalizeKey(simplex.nodes),
-      path: file.path
+      path: file.path,
     });
   }
 
   private openCanvasContextMenu(target: { nodeId?: string; simplexKey?: string }, event: MouseEvent): void {
     const menu = new Menu();
     if (target.nodeId) {
-      menu.addItem((item) => item
-        .setTitle("Open note")
-        .setIcon("file-text")
-        .onClick(() => void this.openNodeNote(target.nodeId!)));
-      menu.addItem((item) => item
-        .setTitle("Focus node")
-        .setIcon("crosshair")
-        .onClick(() => {
-          this.controller.hoveredNodeId = target.nodeId!;
-          this.controller.focusHoveredNode();
-          this.renderer.render();
-        }));
-      menu.addItem((item) => item
-        .setTitle("Create simplex from node + neighbors")
-        .setIcon("plus-circle")
-        .onClick(() => void this.createSimplexFromNode(target.nodeId!)));
-      menu.addItem((item) => item
-        .setTitle(this.model.nodes.get(target.nodeId!)?.isPinned ? "Unpin node" : "Pin node")
-        .setIcon("pin")
-        .onClick(() => {
-          this.controller.togglePin(target.nodeId!);
-          this.renderer.render();
-        }));
+      menu.addItem((item) =>
+        item
+          .setTitle("Open note")
+          .setIcon("file-text")
+          .onClick(() => void this.openNodeNote(target.nodeId!)),
+      );
+      menu.addItem((item) =>
+        item
+          .setTitle("Focus node")
+          .setIcon("crosshair")
+          .onClick(() => {
+            this.controller.hoveredNodeId = target.nodeId!;
+            this.controller.focusHoveredNode();
+            this.renderer.render();
+          }),
+      );
+      menu.addItem((item) =>
+        item
+          .setTitle("Create simplex from node + neighbors")
+          .setIcon("plus-circle")
+          .onClick(() => void this.createSimplexFromNode(target.nodeId!)),
+      );
+      menu.addItem((item) =>
+        item
+          .setTitle(this.model.nodes.get(target.nodeId!)?.isPinned ? "Unpin node" : "Pin node")
+          .setIcon("pin")
+          .onClick(() => {
+            this.controller.togglePin(target.nodeId!);
+            this.renderer.render();
+          }),
+      );
     }
     if (target.simplexKey) {
-      menu.addItem((item) => item
-        .setTitle("Open metadata")
-        .setIcon("info")
-        .onClick(() => void this.openPanel(target.simplexKey!, true)));
-      menu.addItem((item) => item
-        .setTitle("Promote to note")
-        .setIcon("up-right-from-square")
-        .onClick(() => void this.promoteSimplex(target.simplexKey!)));
-      menu.addItem((item) => item
-        .setTitle("Dissolve simplex")
-        .setIcon("trash")
-        .onClick(() => void this.dissolveSimplex(target.simplexKey!)));
-      menu.addItem((item) => item
-        .setTitle("Show in formal view")
-        .setIcon("sigma")
-        .onClick(async () => {
-          this.settings.formalMode = true;
-          await this.saveSettings();
-          this.controller.selectSimplex(target.simplexKey!);
-          this.renderer.render();
-        }));
+      menu.addItem((item) =>
+        item
+          .setTitle("Open metadata")
+          .setIcon("info")
+          .onClick(() => void this.openPanel(target.simplexKey!, true)),
+      );
+      menu.addItem((item) =>
+        item
+          .setTitle("Promote to note")
+          .setIcon("up-right-from-square")
+          .onClick(() => void this.promoteSimplex(target.simplexKey!)),
+      );
+      menu.addItem((item) =>
+        item
+          .setTitle("Dissolve simplex")
+          .setIcon("trash")
+          .onClick(() => void this.dissolveSimplex(target.simplexKey!)),
+      );
+      menu.addItem((item) =>
+        item
+          .setTitle("Show in formal view")
+          .setIcon("sigma")
+          .onClick(async () => {
+            this.settings.formalMode = true;
+            await this.saveSettings();
+            this.controller.selectSimplex(target.simplexKey!);
+            this.renderer.render();
+          }),
+      );
     }
     menu.showAtMouseEvent(event);
   }
@@ -554,8 +570,9 @@ export default class SimplicialPlugin extends Plugin {
     if (!simplex || simplex.autoGenerated) return;
     // Log interaction
     this.controller.logDissolve(simplexKey, simplex.nodes);
-    const shouldWriteCentral = simplex.sourcePath === this.settings.centralFile
-      || (!simplex.sourcePath && this.settings.persistenceMode === "central-file");
+    const shouldWriteCentral =
+      simplex.sourcePath === this.settings.centralFile ||
+      (!simplex.sourcePath && this.settings.persistenceMode === "central-file");
     if (shouldWriteCentral) {
       const file = await ensureCentralFile(this.app, this.settings.centralFile);
       const content = await removeSimplexFromManagedFile(this.app, file, simplexKey);
@@ -574,7 +591,7 @@ export default class SimplicialPlugin extends Plugin {
     this.panelView?.setSelection(null);
     logger.info("plugin", "Dissolved simplex", {
       simplexKey,
-      persistenceMode: this.settings.persistenceMode
+      persistenceMode: this.settings.persistenceMode,
     });
   }
 
@@ -585,7 +602,7 @@ export default class SimplicialPlugin extends Plugin {
     this.panelView?.setSelection(simplexKey);
     logger.info("plugin", "Opened metadata panel", {
       simplexKey,
-      active
+      active,
     });
   }
 
@@ -603,7 +620,7 @@ export default class SimplicialPlugin extends Plugin {
       logger.info("plugin", "Full scan complete", {
         reason,
         indexedNodeCount: this.model.nodes.size,
-        simplexCount: this.model.simplices.size
+        simplexCount: this.model.simplices.size,
       });
     }, delayMs);
   }

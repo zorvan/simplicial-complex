@@ -62,19 +62,20 @@ export function detectDensityClusters(graph: RawGraph, config: InferenceConfig):
     if (cluster.size < 3) continue;
 
     const sortedCluster = [...cluster].sort();
-    const trimmedCluster = sortedCluster.length > 5
-      ? sortedCluster
-          .map((id) => ({
-            id,
-            strength: getNeighborsAbove(id, denseThreshold, graph)
-              .filter((neighbor) => cluster.has(neighbor))
-              .reduce((sum, neighbor) => sum + getEdgeStrength(id, neighbor, graph), 0),
-          }))
-          .sort((a, b) => b.strength - a.strength)
-          .slice(0, 5)
-          .map(({ id }) => id)
-          .sort()
-      : sortedCluster;
+    const trimmedCluster =
+      sortedCluster.length > 5
+        ? sortedCluster
+            .map((id) => ({
+              id,
+              strength: getNeighborsAbove(id, denseThreshold, graph)
+                .filter((neighbor) => cluster.has(neighbor))
+                .reduce((sum, neighbor) => sum + getEdgeStrength(id, neighbor, graph), 0),
+            }))
+            .sort((a, b) => b.strength - a.strength)
+            .slice(0, 5)
+            .map(({ id }) => id)
+            .sort()
+        : sortedCluster;
 
     const stats = averageInternalStrength(trimmedCluster, graph);
     if (stats.density < minDensity || stats.average < minAverageStrength) continue;
@@ -87,7 +88,7 @@ export function detectDensityClusters(graph: RawGraph, config: InferenceConfig):
       nodes: trimmedCluster,
       source: "inferred-cross",
       label: "density cluster",
-      weight: Math.min(0.95, Math.max(0.35, (stats.average * 0.7) + (stats.density * 0.3))),
+      weight: Math.min(0.95, Math.max(0.35, stats.average * 0.7 + stats.density * 0.3)),
       triadScore: Number((stats.average * trimmedCluster.length).toFixed(2)),
     });
   }

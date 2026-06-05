@@ -29,8 +29,7 @@ function pointInPolygon(point: { x: number; y: number }, polygon: Array<{ x: num
     const yi = polygon[i].y;
     const xj = polygon[j].x;
     const yj = polygon[j].y;
-    const intersects = ((yi > point.y) !== (yj > point.y))
-      && point.x < ((xj - xi) * (point.y - yi)) / ((yj - yi) || 1e-6) + xi;
+    const intersects = yi > point.y !== yj > point.y && point.x < ((xj - xi) * (point.y - yi)) / (yj - yi || 1e-6) + xi;
     if (intersects) inside = !inside;
   }
   return inside;
@@ -123,11 +122,9 @@ export class Renderer {
     const viewportRight = (-this.viewOffsetX + this.W) / this.viewZoom + this.viewportPadding;
     const viewportBottom = (-this.viewOffsetY + this.H) / this.viewZoom + this.viewportPadding;
 
-    return nodes.filter(node =>
-      node.px >= viewportLeft &&
-      node.px <= viewportRight &&
-      node.py >= viewportTop &&
-      node.py <= viewportBottom
+    return nodes.filter(
+      (node) =>
+        node.px >= viewportLeft && node.px <= viewportRight && node.py >= viewportTop && node.py <= viewportBottom,
     );
   }
 
@@ -176,16 +173,18 @@ export class Renderer {
       const aNetworkPriority = aVisual.bucket * 10 + Math.min(4, aVisual.simplexCount);
       const bNetworkPriority = bVisual.bucket * 10 + Math.min(4, bVisual.simplexCount);
 
-      const aPriority = (a.id === hovered ? 6 : 0)
-        + (a.id === locked ? 5 : 0)
-        + (focusNodeIds.has(a.id) ? 4 : 0)
-        + (a.isPinned ? 2 : 0)
-        + aNetworkPriority;
-      const bPriority = (b.id === hovered ? 6 : 0)
-        + (b.id === locked ? 5 : 0)
-        + (focusNodeIds.has(b.id) ? 4 : 0)
-        + (b.isPinned ? 2 : 0)
-        + bNetworkPriority;
+      const aPriority =
+        (a.id === hovered ? 6 : 0) +
+        (a.id === locked ? 5 : 0) +
+        (focusNodeIds.has(a.id) ? 4 : 0) +
+        (a.isPinned ? 2 : 0) +
+        aNetworkPriority;
+      const bPriority =
+        (b.id === hovered ? 6 : 0) +
+        (b.id === locked ? 5 : 0) +
+        (focusNodeIds.has(b.id) ? 4 : 0) +
+        (b.isPinned ? 2 : 0) +
+        bNetworkPriority;
 
       if (aPriority !== bPriority) return bPriority - aPriority;
 
@@ -224,17 +223,19 @@ export class Renderer {
         const dimPriorityA = simplexA.nodes.length >= 3 ? 20 : simplexA.nodes.length === 2 ? 10 : 0;
         const dimPriorityB = simplexB.nodes.length >= 3 ? 20 : simplexB.nodes.length === 2 ? 10 : 0;
 
-        const scoreA = (focusSimplexKeys.has(keyA) ? 6 : 0)
-          + (simplexA.suggested ? 2 : 0)
-          + this.simplexStrength(simplexA, this.settings.renderFilterMetric)
-          + simplexA.nodes.length * 0.05
-          + dimPriorityA;
+        const scoreA =
+          (focusSimplexKeys.has(keyA) ? 6 : 0) +
+          (simplexA.suggested ? 2 : 0) +
+          this.simplexStrength(simplexA, this.settings.renderFilterMetric) +
+          simplexA.nodes.length * 0.05 +
+          dimPriorityA;
 
-        const scoreB = (focusSimplexKeys.has(keyB) ? 6 : 0)
-          + (simplexB.suggested ? 2 : 0)
-          + this.simplexStrength(simplexB, this.settings.renderFilterMetric)
-          + simplexB.nodes.length * 0.05
-          + dimPriorityB;
+        const scoreB =
+          (focusSimplexKeys.has(keyB) ? 6 : 0) +
+          (simplexB.suggested ? 2 : 0) +
+          this.simplexStrength(simplexB, this.settings.renderFilterMetric) +
+          simplexB.nodes.length * 0.05 +
+          dimPriorityB;
 
         return scoreB - scoreA;
       });
@@ -243,12 +244,7 @@ export class Renderer {
   }
 
   // Optimized label placement using spatial hashing
-  private canPlaceLabelFast(
-    occupied: Box[],
-    text: string,
-    x: number,
-    y: number,
-  ): boolean {
+  private canPlaceLabelFast(occupied: Box[], text: string, x: number, y: number): boolean {
     if (!this.ctx) return false;
     const width = this.measureTextWidth(this.ctx, text) + 12;
     const left = x - width / 2;
@@ -256,11 +252,12 @@ export class Renderer {
     const candidate = { left, top, right: left + width, bottom: top + 18 };
 
     // Quick spatial check - only check against nearby occupied boxes
-    return !occupied.some((box) =>
-      candidate.left < box.right &&
-      candidate.right > box.left &&
-      candidate.top < box.bottom &&
-      candidate.bottom > box.top,
+    return !occupied.some(
+      (box) =>
+        candidate.left < box.right &&
+        candidate.right > box.left &&
+        candidate.top < box.bottom &&
+        candidate.bottom > box.top,
     );
   }
 
@@ -289,16 +286,20 @@ export class Renderer {
 
   private bindCanvasEvents(): void {
     if (!this.canvas) return;
-    this.canvas.addEventListener("wheel", (event) => {
-      event.preventDefault();
-      const rect = this.canvas!.getBoundingClientRect();
-      const screenPoint = {
-        x: ((event.clientX - rect.left) * this.W) / rect.width,
-        y: ((event.clientY - rect.top) * this.H) / rect.height,
-      };
-      this.zoomAt(screenPoint, event.deltaY);
-      this.render();
-    }, { passive: false });
+    this.canvas.addEventListener(
+      "wheel",
+      (event) => {
+        event.preventDefault();
+        const rect = this.canvas!.getBoundingClientRect();
+        const screenPoint = {
+          x: ((event.clientX - rect.left) * this.W) / rect.width,
+          y: ((event.clientY - rect.top) * this.H) / rect.height,
+        };
+        this.zoomAt(screenPoint, event.deltaY);
+        this.render();
+      },
+      { passive: false },
+    );
     this.canvas.addEventListener("mousemove", (event) => {
       const rect = this.canvas!.getBoundingClientRect();
       const screenPoint = {
@@ -451,7 +452,10 @@ export class Renderer {
 
   private findNodeNearPoint(point: { x: number; y: number }): LayoutNode | null {
     const radius = this.worldRadius(20);
-    return this.model.getAllNodes().find((node) => (node.px - point.x) ** 2 + (node.py - point.y) ** 2 <= radius * radius) ?? null;
+    return (
+      this.model.getAllNodes().find((node) => (node.px - point.x) ** 2 + (node.py - point.y) ** 2 <= radius * radius) ??
+      null
+    );
   }
 
   private findSimplexAtPoint(point: { x: number; y: number }): Simplex | null {
@@ -467,19 +471,20 @@ export class Renderer {
         const distance = Math.abs(dy * point.x - dx * point.y + b.x * a.y - b.y * a.x) / (Math.hypot(dx, dy) || 1);
         const padding = this.worldRadius(8);
         if (
-          point.x >= Math.min(a.x, b.x) - padding
-          && point.x <= Math.max(a.x, b.x) + padding
-          && point.y >= Math.min(a.y, b.y) - padding
-          && point.y <= Math.max(a.y, b.y) + padding
-          && distance <= this.worldRadius(10)
-        ) return simplex;
+          point.x >= Math.min(a.x, b.x) - padding &&
+          point.x <= Math.max(a.x, b.x) + padding &&
+          point.y >= Math.min(a.y, b.y) - padding &&
+          point.y <= Math.max(a.y, b.y) + padding &&
+          distance <= this.worldRadius(10)
+        )
+          return simplex;
         continue;
       }
       if (polygon.length >= 3 && pointInPolygon(point, polygon)) return simplex;
     }
     const hovered = this.findNodeNearPoint(point);
     return hovered
-      ? this.model.getSimplicesForNode(hovered.id).sort((a, b) => b.nodes.length - a.nodes.length)[0] ?? null
+      ? (this.model.getSimplicesForNode(hovered.id).sort((a, b) => b.nodes.length - a.nodes.length)[0] ?? null)
       : null;
   }
 
@@ -489,32 +494,28 @@ export class Renderer {
     if (!betti?.holes?.length) return null;
 
     const allNodes = this.model.getAllNodes();
-    const nodeMap = new Map(allNodes.map(n => [n.id, n]));
+    const nodeMap = new Map(allNodes.map((n) => [n.id, n]));
     const clickRadius = this.worldRadius(15); // Tolerance for hole clicking
 
     for (const hole of betti.holes) {
-      const nodes = hole.boundaryNodes
-        .map(id => nodeMap.get(id))
-        .filter(Boolean) as Array<{ px: number; py: number }>;
+      const nodes = hole.boundaryNodes.map((id) => nodeMap.get(id)).filter(Boolean) as Array<{
+        px: number;
+        py: number;
+      }>;
 
       if (nodes.length < 3) continue;
 
       // Check if all nodes are placed (same check as drawSingleHole)
-      const placedNodes = nodes.filter(n => Math.hypot(n.px, n.py) > 80);
+      const placedNodes = nodes.filter((n) => Math.hypot(n.px, n.py) > 80);
       if (placedNodes.length < nodes.length) continue;
 
       // Calculate centroid
-      const centroid = placedNodes.reduce(
-        (sum, n) => ({ x: sum.x + n.px, y: sum.y + n.py }),
-        { x: 0, y: 0 }
-      );
+      const centroid = placedNodes.reduce((sum, n) => ({ x: sum.x + n.px, y: sum.y + n.py }), { x: 0, y: 0 });
       centroid.x /= placedNodes.length;
       centroid.y /= placedNodes.length;
 
       // Check spread
-      const spread = Math.max(...placedNodes.map(n =>
-        Math.hypot(n.px - centroid.x, n.py - centroid.y)
-      ));
+      const spread = Math.max(...placedNodes.map((n) => Math.hypot(n.px - centroid.x, n.py - centroid.y)));
       if (spread < 40) continue;
 
       // Check if point is near the hole centroid or inside the hole polygon
@@ -524,7 +525,7 @@ export class Renderer {
       }
 
       // Also check if point is inside the hole polygon
-      const polygon = placedNodes.map(n => ({ x: n.px, y: n.py }));
+      const polygon = placedNodes.map((n) => ({ x: n.px, y: n.py }));
       if (pointInPolygon(point, polygon)) {
         return hole;
       }
@@ -534,9 +535,13 @@ export class Renderer {
 
   private finishLasso(): void {
     const points = this.lassoPath.length >= 3 ? this.lassoPath : [];
-    const selected = points.length >= 3
-      ? this.model.getAllNodes().filter((node) => pointInPolygon({ x: node.px, y: node.py }, points)).map((node) => node.id)
-      : [];
+    const selected =
+      points.length >= 3
+        ? this.model
+            .getAllNodes()
+            .filter((node) => pointInPolygon({ x: node.px, y: node.py }, points))
+            .map((node) => node.id)
+        : [];
     this.cancelLasso();
     this.suppressNextClick = true;
     if (selected.length >= 2) this.callbacks.onLassoCreate?.(selected);
@@ -661,7 +666,8 @@ export class Renderer {
   }
 
   private largestNodeContext(nodeId: string): string | null {
-    const containing = this.model.getSimplicesForNode(nodeId)
+    const containing = this.model
+      .getSimplicesForNode(nodeId)
       .sort((a, b) => b.nodes.length - a.nodes.length || (b.weight ?? 1) - (a.weight ?? 1));
     if (containing.length > 0) return this.simplexDescriptor(containing[0]);
     return null;
@@ -701,9 +707,7 @@ export class Renderer {
     const title = this.formatNodeLabel(targetNodeId);
     const path = this.largestNodeContext(targetNodeId);
     const primarySimplex = this.model.getSimplicesForNode(targetNodeId)[0];
-    const [r, g, b] = primarySimplex
-      ? effectiveColorForSimplex(this.model, primarySimplex)
-      : [136, 135, 128];
+    const [r, g, b] = primarySimplex ? effectiveColorForSimplex(this.model, primarySimplex) : [136, 135, 128];
     const screenPoint = this.worldToScreen({ x: node.px, y: node.py });
 
     ctx.save();
@@ -819,7 +823,7 @@ export class Renderer {
 
     // Track rendered nodes for debugging
     this.lastRenderedNodes.clear();
-    renderableNodes.forEach(node => this.lastRenderedNodes.add(node.id));
+    renderableNodes.forEach((node) => this.lastRenderedNodes.add(node.id));
 
     const occupiedLabels: Box[] = [];
     let placedFreeLabels = 0;
@@ -828,9 +832,11 @@ export class Renderer {
     if (this.settings.formalMode) {
       renderableSimplices.forEach(([key, simplex]) => {
         const simplexDim = simplex.nodes.length - 1;
-        if ((simplexDim === 1 && !this.settings.showEdges)
-          || (simplexDim === 2 && !this.settings.showClusters)
-          || (simplexDim >= 3 && !this.settings.showCores)) {
+        if (
+          (simplexDim === 1 && !this.settings.showEdges) ||
+          (simplexDim === 2 && !this.settings.showClusters) ||
+          (simplexDim >= 3 && !this.settings.showCores)
+        ) {
           return;
         }
         this.drawFormalSimplex(ctx, simplex, !focusState.isActive || focusState.involvesSimplex(simplex, key));
@@ -839,18 +845,35 @@ export class Renderer {
     } else {
       renderableSimplices.forEach(([key, simplex]) => {
         const simplexDim = simplex.nodes.length - 1;
-        if ((simplexDim === 1 && !this.settings.showEdges)
-          || (simplexDim === 2 && !this.settings.showClusters)
-          || (simplexDim >= 3 && !this.settings.showCores)) {
+        if (
+          (simplexDim === 1 && !this.settings.showEdges) ||
+          (simplexDim === 2 && !this.settings.showClusters) ||
+          (simplexDim >= 3 && !this.settings.showCores)
+        ) {
           return;
         }
-        renderBlob(ctx, key, simplex, this.model, allNodes, this.alphaForDimension(simplexDim, focusState.isActive), focusState);
+        renderBlob(
+          ctx,
+          key,
+          simplex,
+          this.model,
+          allNodes,
+          this.alphaForDimension(simplexDim, focusState.isActive),
+          focusState,
+        );
         this.drawSuggestionOverlay(ctx, key, simplex);
       });
     }
 
     if (!this.settings.formalMode) {
-      renderEdges(ctx, renderableSimplices.map(([, simplex]) => simplex), this.model, this.model.nodes, this.settings.showEdges, focusState);
+      renderEdges(
+        ctx,
+        renderableSimplices.map(([, simplex]) => simplex),
+        this.model,
+        this.model.nodes,
+        this.settings.showEdges,
+        focusState,
+      );
     }
 
     // Only render progressively loaded visible nodes
@@ -895,11 +918,11 @@ export class Renderer {
       const canPlace = this.canPlaceLabelFast(occupiedLabels, label, node.px, node.py - 13);
       const width = this.measureTextWidth(ctx, label) + 12;
       const visualPriority = this.nodeVisualPriority(node);
-      
+
       // Determine if this label should be forced to show
       // - Always show hovered, pinned nodes
       // - Show on focus only for the focused node itself, not all connected nodes
-      const isFocusedNode = isHovered || (focusState.lockedNodeId === node.id);
+      const isFocusedNode = isHovered || focusState.lockedNodeId === node.id;
       const forceLabel = isFocusedNode || node.isPinned;
       const isClusterNode = visualPriority.bucket >= 3;
       const isEdgeNode = visualPriority.bucket === 2;
@@ -907,10 +930,11 @@ export class Renderer {
 
       // keep disconnected nodes from flooding labels in large graphs;
       // clusters > edges > disconnected is the UX priority.
-      const shouldDrawLabel = forceLabel
-        || (isClusterNode && freeBudgetAvailable && canPlace)
-        || (isEdgeNode && placedFreeLabels < Math.max(2, Math.floor(freeLabelBudget * 0.45)) && canPlace)
-        || (!isDisconnected && focusState.isActive && freeBudgetAvailable && canPlace);
+      const shouldDrawLabel =
+        forceLabel ||
+        (isClusterNode && freeBudgetAvailable && canPlace) ||
+        (isEdgeNode && placedFreeLabels < Math.max(2, Math.floor(freeLabelBudget * 0.45)) && canPlace) ||
+        (!isDisconnected && focusState.isActive && freeBudgetAvailable && canPlace);
 
       if (!shouldDrawLabel) return;
       if (!forceLabel) placedFreeLabels++;
@@ -918,14 +942,14 @@ export class Renderer {
       const left = node.px - width / 2;
       const top = node.py - 27;
       occupiedLabels.push({ left, top, right: left + width, bottom: top + height });
-      
+
       // Reduce text background opacity significantly to allow links/fields to show through
       // Dark: reduced from 0.55 to 0.28, Light: reduced from 0.78 to 0.42
       ctx.fillStyle = this.isDark ? "rgba(7,10,18,0.28)" : "rgba(255,255,255,0.42)";
       ctx.beginPath();
       ctx.roundRect(left, top, width, height, 9);
       ctx.fill();
-      
+
       ctx.fillStyle = this.isDark
         ? `rgba(255,255,255,${isActive ? 0.88 : 0.32})`
         : `rgba(0,0,0,${isActive ? 0.72 : 0.28})`;
@@ -974,13 +998,7 @@ export class Renderer {
     };
   }
 
-  private canPlaceLabel(
-    ctx: CanvasRenderingContext2D,
-    occupied: Box[],
-    text: string,
-    x: number,
-    y: number,
-  ): boolean {
+  private canPlaceLabel(ctx: CanvasRenderingContext2D, occupied: Box[], text: string, x: number, y: number): boolean {
     return this.canPlaceLabelFast(occupied, text, x, y);
   }
 

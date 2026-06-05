@@ -48,25 +48,26 @@ function dominantSignal(signals: string[]): string | undefined {
 function buildInvertedIndex(contexts: InferenceContext[]): Map<string, Set<string>> {
   const index = new Map<string, Set<string>>();
 
-  contexts.forEach(context => {
+  contexts.forEach((context) => {
     // Index title tokens
-    context.titleTokens.forEach(token => {
+    context.titleTokens.forEach((token) => {
       if (!index.has(token)) index.set(token, new Set());
       index.get(token)!.add(context.path);
     });
 
     // Index content tokens (but only rare ones to avoid noise)
-    context.contentTokens.forEach(token => {
+    context.contentTokens.forEach((token) => {
       // Only index tokens that appear in few documents to focus on distinctive terms
       const docCount = index.get(token)?.size ?? 0;
-      if (docCount < Math.max(3, contexts.length * 0.1)) { // Max 10% of documents or 3 docs
+      if (docCount < Math.max(3, contexts.length * 0.1)) {
+        // Max 10% of documents or 3 docs
         if (!index.has(token)) index.set(token, new Set());
         index.get(token)!.add(context.path);
       }
     });
 
     // Index tags
-    context.tags.forEach(tag => {
+    context.tags.forEach((tag) => {
       const tagKey = `tag:${tag}`;
       if (!index.has(tagKey)) index.set(tagKey, new Set());
       index.get(tagKey)!.add(context.path);
@@ -76,25 +77,29 @@ function buildInvertedIndex(contexts: InferenceContext[]): Map<string, Set<strin
   return index;
 }
 
-function findCandidatePairs(context: InferenceContext, index: Map<string, Set<string>>, _allPaths: Set<string>): string[] {
+function findCandidatePairs(
+  context: InferenceContext,
+  index: Map<string, Set<string>>,
+  _allPaths: Set<string>,
+): string[] {
   const candidates = new Set<string>();
 
   // Find candidates via shared tokens
-  context.titleTokens.forEach(token => {
-    index.get(token)?.forEach(path => {
+  context.titleTokens.forEach((token) => {
+    index.get(token)?.forEach((path) => {
       if (path !== context.path) candidates.add(path);
     });
   });
 
-  context.contentTokens.forEach(token => {
-    index.get(token)?.forEach(path => {
+  context.contentTokens.forEach((token) => {
+    index.get(token)?.forEach((path) => {
       if (path !== context.path) candidates.add(path);
     });
   });
 
-  context.tags.forEach(tag => {
+  context.tags.forEach((tag) => {
     const tagKey = `tag:${tag}`;
-    index.get(tagKey)?.forEach(path => {
+    index.get(tagKey)?.forEach((path) => {
       if (path !== context.path) candidates.add(path);
     });
   });
@@ -102,7 +107,7 @@ function findCandidatePairs(context: InferenceContext, index: Map<string, Set<st
   // Add candidates from same folder (limited to avoid explosion)
   const folderKey = `folder:${context.folder}`;
   if (index.has(folderKey)) {
-    index.get(folderKey)!.forEach(path => {
+    index.get(folderKey)!.forEach((path) => {
       if (path !== context.path) candidates.add(path);
     });
   }
@@ -128,7 +133,11 @@ function extractTags(cache: CachedMetadata | null): Set<string> {
   const tags = new Set<string>();
   cache?.tags?.forEach((tag) => tags.add(normalizeTag(tag.tag)));
   const frontmatterTags = cache?.frontmatter?.tags as string[] | string | undefined;
-  const values = Array.isArray(frontmatterTags) ? frontmatterTags : typeof frontmatterTags === "string" ? [frontmatterTags] : [];
+  const values = Array.isArray(frontmatterTags)
+    ? frontmatterTags
+    : typeof frontmatterTags === "string"
+      ? [frontmatterTags]
+      : [];
   values.forEach((tag) => tags.add(normalizeTag(String(tag))));
   return tags;
 }
@@ -160,27 +169,30 @@ export function buildInferenceContext(app: App, file: TFile, content: string): I
   };
 }
 
-export function inferSimplicesLegacy(contexts: InferenceContext[], settings: Pick<
-  PluginSettings,
-  | "linkGraphBaseline"
-  | "enableInferredEdges"
-  | "inferenceThreshold"
-  | "enableLinkInference"
-  | "enableMutualLinkBonus"
-  | "enableSharedTags"
-  | "enableTitleOverlap"
-  | "enableContentOverlap"
-  | "enableSameFolderInference"
-  | "enableSameTopFolderInference"
-  | "linkWeight"
-  | "mutualLinkBonus"
-  | "sharedTagWeight"
-  | "titleOverlapWeight"
-  | "contentOverlapWeight"
-  | "sameFolderWeight"
-  | "sameTopFolderWeight"
-  | "suggestionThreshold"
->): Simplex[] {
+export function inferSimplicesLegacy(
+  contexts: InferenceContext[],
+  settings: Pick<
+    PluginSettings,
+    | "linkGraphBaseline"
+    | "enableInferredEdges"
+    | "inferenceThreshold"
+    | "enableLinkInference"
+    | "enableMutualLinkBonus"
+    | "enableSharedTags"
+    | "enableTitleOverlap"
+    | "enableContentOverlap"
+    | "enableSameFolderInference"
+    | "enableSameTopFolderInference"
+    | "linkWeight"
+    | "mutualLinkBonus"
+    | "sharedTagWeight"
+    | "titleOverlapWeight"
+    | "contentOverlapWeight"
+    | "sameFolderWeight"
+    | "sameTopFolderWeight"
+    | "suggestionThreshold"
+  >,
+): Simplex[] {
   if (!settings.enableInferredEdges && !settings.linkGraphBaseline) {
     logger.info("inference", "Inferred simplices disabled by settings");
     return [];
@@ -188,24 +200,24 @@ export function inferSimplicesLegacy(contexts: InferenceContext[], settings: Pic
 
   const simplices: Simplex[] = [];
   const pairScores = new Map<string, { nodes: [string, string]; weight: number; signals: string[] }>();
-  const contextMap = new Map(contexts.map(ctx => [ctx.path, ctx]));
+  const contextMap = new Map(contexts.map((ctx) => [ctx.path, ctx]));
 
   // Build inverted index for efficient candidate finding
   const invertedIndex = buildInvertedIndex(contexts);
-  const allPaths = new Set(contexts.map(ctx => ctx.path));
+  const allPaths = new Set(contexts.map((ctx) => ctx.path));
 
   // Add folder indexing for same-folder inference
-  contexts.forEach(ctx => {
+  contexts.forEach((ctx) => {
     const folderKey = `folder:${ctx.folder}`;
     if (!invertedIndex.has(folderKey)) invertedIndex.set(folderKey, new Set());
     invertedIndex.get(folderKey)!.add(ctx.path);
   });
 
   // Process each document and its candidates (O(n * k) where k << n)
-  contexts.forEach(context => {
+  contexts.forEach((context) => {
     const candidates = findCandidatePairs(context, invertedIndex, allPaths);
 
-    candidates.forEach(candidatePath => {
+    candidates.forEach((candidatePath) => {
       const otherContext = contextMap.get(candidatePath);
       if (!otherContext) return;
 
@@ -244,26 +256,38 @@ export function inferSimplicesLegacy(contexts: InferenceContext[], settings: Pic
         signals.push(`tags:${sharedTags}`);
       }
 
-      const titleContribution = settings.enableInferredEdges && settings.enableTitleOverlap !== false
-        ? overlapScore(a.titleTokens, b.titleTokens, settings.titleOverlapWeight)
-        : 0;
+      const titleContribution =
+        settings.enableInferredEdges && settings.enableTitleOverlap !== false
+          ? overlapScore(a.titleTokens, b.titleTokens, settings.titleOverlapWeight)
+          : 0;
       if (titleContribution > 0) {
         score += titleContribution;
         signals.push(`title:${titleContribution.toFixed(2)}`);
       }
 
-      const contentContribution = settings.enableInferredEdges && settings.enableContentOverlap !== false
-        ? overlapScore(a.contentTokens, b.contentTokens, settings.contentOverlapWeight)
-        : 0;
+      const contentContribution =
+        settings.enableInferredEdges && settings.enableContentOverlap !== false
+          ? overlapScore(a.contentTokens, b.contentTokens, settings.contentOverlapWeight)
+          : 0;
       if (contentContribution > 0) {
         score += contentContribution;
         signals.push(`content:${contentContribution.toFixed(2)}`);
       }
 
-      if (settings.enableInferredEdges && settings.enableSameFolderInference !== false && a.folder && a.folder === b.folder) {
+      if (
+        settings.enableInferredEdges &&
+        settings.enableSameFolderInference !== false &&
+        a.folder &&
+        a.folder === b.folder
+      ) {
         score += settings.sameFolderWeight;
         signals.push("folder:same");
-      } else if (settings.enableInferredEdges && settings.enableSameTopFolderInference !== false && a.topFolder && a.topFolder === b.topFolder) {
+      } else if (
+        settings.enableInferredEdges &&
+        settings.enableSameTopFolderInference !== false &&
+        a.topFolder &&
+        a.topFolder === b.topFolder
+      ) {
         score += settings.sameTopFolderWeight;
         signals.push("folder:top");
       }
@@ -309,7 +333,7 @@ export function inferSimplicesLegacy(contexts: InferenceContext[], settings: Pic
       .filter(([, partners]) => partners.length >= 2)
       .map(([path]) => path);
 
-    triadCandidates.forEach(a => {
+    triadCandidates.forEach((a) => {
       const aPartners = strongPairs.get(a) || [];
       for (let i = 0; i < aPartners.length; i++) {
         for (let j = i + 1; j < aPartners.length; j++) {
@@ -326,15 +350,10 @@ export function inferSimplicesLegacy(contexts: InferenceContext[], settings: Pic
 
           if (!ab || !ac || !bc) continue;
 
-          const mergedSignals = new Set<string>([
-            ...ab.signals,
-            ...ac.signals,
-            ...bc.signals,
-            "soft-cluster",
-          ]);
+          const mergedSignals = new Set<string>([...ab.signals, ...ac.signals, ...bc.signals, "soft-cluster"]);
           simplices.push({
             nodes: [a, b, c],
-            weight: Math.min(1, Number((((ab.weight + ac.weight + bc.weight) / 3) + 0.05).toFixed(2))),
+            weight: Math.min(1, Number(((ab.weight + ac.weight + bc.weight) / 3 + 0.05).toFixed(2))),
             label: "soft cluster",
             inferred: true,
             userDefined: false,
@@ -342,7 +361,7 @@ export function inferSimplicesLegacy(contexts: InferenceContext[], settings: Pic
             colorKey: "neutral",
             inferredSignals: [...mergedSignals],
             dominantSignal: "soft-cluster",
-            confidence: Math.min(1, Number((((ab.weight + ac.weight + bc.weight) / 3) + 0.05).toFixed(2))),
+            confidence: Math.min(1, Number(((ab.weight + ac.weight + bc.weight) / 3 + 0.05).toFixed(2))),
             suggested: true,
           });
         }
@@ -352,20 +371,20 @@ export function inferSimplicesLegacy(contexts: InferenceContext[], settings: Pic
 
   logger.debug("inference", "Rebuilt inferred simplices (optimized)", {
     fileCount: contexts.length,
-    inferredSimplexCount: simplices.length
+    inferredSimplexCount: simplices.length,
   });
   return simplices;
 }
 
 export function inferSimplices(contexts: InferenceContext[], settings: PluginSettings): Simplex[] {
-  const mode = settings.inferenceMode ?? 'taxonomic';
+  const mode = settings.inferenceMode ?? "taxonomic";
   const results: Simplex[] = [];
 
-  if (mode === 'taxonomic' || mode === 'hybrid') {
+  if (mode === "taxonomic" || mode === "hybrid") {
     results.push(...inferSimplicesLegacy(contexts, settings));
   }
 
-  if (mode === 'emergent' || mode === 'hybrid') {
+  if (mode === "emergent" || mode === "hybrid") {
     results.push(...inferSimplicesEmergentWithMode(contexts, settings));
   }
 

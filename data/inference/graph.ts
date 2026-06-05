@@ -42,7 +42,7 @@ export function computeEdgeStrength(
   const sharedCommon = shared.filter((tag) => common.has(tag));
 
   strength += sharedRare.length * 0.15;
-  strength -= sharedCommon.length * 0.10;
+  strength -= sharedCommon.length * 0.1;
 
   // Same domain bonus (notes in same conceptual area are more likely related)
   if (a.domain && b.domain && a.domain === b.domain) {
@@ -55,21 +55,18 @@ export function computeEdgeStrength(
   return Math.max(0, Math.min(1, strength));
 }
 
-export function buildRawGraph(
-  contexts: InferenceContext[],
-  config: InferenceConfig,
-): RawGraph {
+export function buildRawGraph(contexts: InferenceContext[], config: InferenceConfig): RawGraph {
   const nodes = new Map<string, NoteProfile>();
   const ctxMap = new Map<string, InferenceContext>(contexts.map((c) => [c.path, c]));
 
   let domainMap: Map<string, string>;
-  if (config.domainSource === 'content-cluster') {
+  if (config.domainSource === "content-cluster") {
     domainMap = clusterByContent(contexts, { k: config.contentClusterCount });
-  } else if (config.domainSource === 'hybrid') {
+  } else if (config.domainSource === "hybrid") {
     const contentClusters = clusterByContent(contexts, { k: config.contentClusterCount });
     domainMap = assignHybridDomains(contexts, contentClusters);
   } else {
-    domainMap = new Map(contexts.map(c => [c.path, c.topFolder || c.folder || ""]));
+    domainMap = new Map(contexts.map((c) => [c.path, c.topFolder || c.folder || ""]));
   }
 
   for (const ctx of contexts) {
@@ -88,7 +85,7 @@ export function buildRawGraph(
 
   // Pre-compute TF-IDF vectors for semantic similarity
   const tfidfVectors = buildTFIDFVectors(contexts);
-  const vectorMap = new Map<string, DocumentVector>(tfidfVectors.map(v => [v.path, v]));
+  const vectorMap = new Map<string, DocumentVector>(tfidfVectors.map((v) => [v.path, v]));
 
   for (let i = 0; i < nodeArr.length; i++) {
     for (let j = i + 1; j < nodeArr.length; j++) {

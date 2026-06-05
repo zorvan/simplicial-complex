@@ -30,11 +30,11 @@ const context = await esbuild.context({
     "@codemirror/panel",
     "@lezer/common",
     "@lezer/highlight",
-    "@lezer/lr"
+    "@lezer/lr",
   ],
   define: {
-    "process.env.NODE_ENV": JSON.stringify(production ? "production" : "development")
-  }
+    "process.env.NODE_ENV": JSON.stringify(production ? "production" : "development"),
+  },
 });
 
 if (watch) {

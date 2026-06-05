@@ -1,4 +1,5 @@
 # Obsidian Simplicial Complex Plugin
+
 ### Product Specification — Engineering Handoff
 
 **Version:** 0.2 (Engineering Review Incorporated)  
@@ -26,7 +27,7 @@
 
 ### 1.1 What This Is
 
-A plugin for [Obsidian](https://obsidian.md) that overlays a **simplicial complex** representation on top of your vault — a parallel graph system that models *coherent clusters of meaning* rather than pairwise links.
+A plugin for [Obsidian](https://obsidian.md) that overlays a **simplicial complex** representation on top of your vault — a parallel graph system that models _coherent clusters of meaning_ rather than pairwise links.
 
 Where Obsidian's native graph says:
 
@@ -52,19 +53,19 @@ The primary interface is **organic and ambient** (soft blobs, breathing layout).
 ### 1.3 What This Is Not
 
 - **Not a replacement for Obsidian's native graph.** It is a parallel view.
-- **Not a tag or grouping system.** Simplices encode *coherence*, not categorization.
+- **Not a tag or grouping system.** Simplices encode _coherence_, not categorization.
 - **Not a full topology engine** (in v1). That's v3 territory.
 - **Not a database.** No schema enforcement, no forms, no required fields.
 
 ### 1.4 Design Principles
 
-| Principle | Implementation |
-|---|---|
-| Structure lives underneath, atmosphere on top | Organic blobs = projection. Simplices = source of truth. |
-| Metadata is discovered, not entered | Labels and weights are optional and delayed, never required at creation time. |
-| Interaction reveals, not manipulates | Hover and focus expose structure. No physics dragging. |
-| Future math must be possible without redesign | Data model is mathematically valid from day one. |
-| One data model, two views | Organic (v1) and Formal/Geometric (v3) are projections of the same simplex store. |
+| Principle                                     | Implementation                                                                    |
+| --------------------------------------------- | --------------------------------------------------------------------------------- |
+| Structure lives underneath, atmosphere on top | Organic blobs = projection. Simplices = source of truth.                          |
+| Metadata is discovered, not entered           | Labels and weights are optional and delayed, never required at creation time.     |
+| Interaction reveals, not manipulates          | Hover and focus expose structure. No physics dragging.                            |
+| Future math must be possible without redesign | Data model is mathematically valid from day one.                                  |
+| One data model, two views                     | Organic (v1) and Formal/Geometric (v3) are projections of the same simplex store. |
 
 ---
 
@@ -78,26 +79,26 @@ type NodeID = string; // e.g. "startup" or "Philosophy/emergence"
 
 // A simplex: the fundamental unit of meaning
 interface Simplex {
-  nodes: NodeID[];      // sorted, normalized — ["capital", "startup", "talent"]
-  weight?: number;      // optional float [0.1, 1.0] — defaults to 1.0 if absent
-  label?: string;       // optional human name — "founding engine"
-  colorKey?: string;    // stable color bucket — derived from label hash, never user-set directly
+  nodes: NodeID[]; // sorted, normalized — ["capital", "startup", "talent"]
+  weight?: number; // optional float [0.1, 1.0] — defaults to 1.0 if absent
+  label?: string; // optional human name — "founding engine"
+  colorKey?: string; // stable color bucket — derived from label hash, never user-set directly
 }
 
 // The full complex: what the plugin stores and reasons over
 interface SimplicialComplex {
-  simplices: Map<string, Simplex>;  // key = normalizedKey(nodes)
+  simplices: Map<string, Simplex>; // key = normalizedKey(nodes)
 }
 
 // A vault node: position + velocity for layout
 interface LayoutNode {
   id: NodeID;
-  px: number;           // canvas x position
-  py: number;           // canvas y position
-  vx: number;           // velocity x
-  vy: number;           // velocity y
-  isVirtual: boolean;   // TRUE if no markdown file exists for this node
-  isPinned: boolean;    // TRUE if user double-clicked to fix position
+  px: number; // canvas x position
+  py: number; // canvas y position
+  vx: number; // velocity x
+  vy: number; // velocity y
+  isVirtual: boolean; // TRUE if no markdown file exists for this node
+  isPinned: boolean; // TRUE if user double-clicked to fix position
   displayAlpha: number; // current alpha for smooth 150ms lerp transitions
 }
 ```
@@ -110,7 +111,10 @@ Every simplex is **canonically identified** by its sorted, lowercased node set. 
 function normalizeKey(nodes: NodeID[]): string {
   // CRITICAL: toLowerCase() — Obsidian is case-insensitive for note titles.
   // "Startup" and "startup" must resolve to the same node.
-  return [...nodes].map(n => n.toLowerCase().trim()).sort().join('|');
+  return [...nodes]
+    .map((n) => n.toLowerCase().trim())
+    .sort()
+    .join("|");
 }
 // ["Talent", "Startup", "Capital"] → "capital|startup|talent"
 // ["startup", "capital", "talent"] → "capital|startup|talent"  ← same key ✓
@@ -134,7 +138,8 @@ When a simplex `[A, B, C]` is added, all its faces must also exist in the comple
 **⚠ Subset Explosion Guard:** A 10-node simplex generates 2¹⁰ − 11 = 1,013 faces. A 15-node simplex generates 32,756. Without a cap, an accidentally large cluster causes a UI freeze.
 
 **Rules:**
-- **Hard cap:** Only auto-generate faces for simplices of dimension ≤ 4 (5 nodes). For anything larger, store the top-level simplex only and log a warning: `"Simplex too large for face generation (dim > 4). Faces not expanded."` 
+
+- **Hard cap:** Only auto-generate faces for simplices of dimension ≤ 4 (5 nodes). For anything larger, store the top-level simplex only and log a warning: `"Simplex too large for face generation (dim > 4). Faces not expanded."`
 - **Lazy evaluation:** Do not store all sub-faces at parse time for dim-4 simplices. Instead, compute faces on-demand when `InteractionController` or the renderer requests membership queries for a specific high-order simplex.
 
 ```typescript
@@ -170,7 +175,10 @@ function getFacesLazy(simplex: Simplex, targetDim: number): NodeID[][] {
 
 // Combination utility
 function* combinations<T>(arr: T[], k: number): Generator<T[]> {
-  if (k === 0) { yield []; return; }
+  if (k === 0) {
+    yield [];
+    return;
+  }
   for (let i = 0; i <= arr.length - k; i++) {
     for (const rest of combinations(arr.slice(i + 1), k - 1)) {
       yield [arr[i], ...rest];
@@ -243,21 +251,21 @@ If no matching file exists, create a virtual node (see §2.1 `isVirtual: true`),
 
 ### 2.6 Metadata Schema
 
-| Field | Type | Default | Semantics |
-|---|---|---|---|
-| `weight` | `number` (0.1–1) | `1.0` | Cohesion intensity. Affects blob density and force strength. Minimum 0.1 — zero weight is invisible and confusing. |
-| `label` | `string \| null` | `null` | Optional human name for the simplex. Shown on hover in side panel. |
-| `colorKey` | `string \| null` | `null` | Stable color bucket, derived from label hash on creation. Never user-set directly. Ensures "founding engine" is always the same color across restarts. |
-| `autoGenerated` | `boolean` | `false` | Set to `true` for faces auto-created by face generation. Not user-editable. |
-| `userDefined` | `boolean` | `true` | `false` for system-inferred suggestions not yet confirmed by user. |
+| Field           | Type             | Default | Semantics                                                                                                                                              |
+| --------------- | ---------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `weight`        | `number` (0.1–1) | `1.0`   | Cohesion intensity. Affects blob density and force strength. Minimum 0.1 — zero weight is invisible and confusing.                                     |
+| `label`         | `string \| null` | `null`  | Optional human name for the simplex. Shown on hover in side panel.                                                                                     |
+| `colorKey`      | `string \| null` | `null`  | Stable color bucket, derived from label hash on creation. Never user-set directly. Ensures "founding engine" is always the same color across restarts. |
+| `autoGenerated` | `boolean`        | `false` | Set to `true` for faces auto-created by face generation. Not user-editable.                                                                            |
+| `userDefined`   | `boolean`        | `true`  | `false` for system-inferred suggestions not yet confirmed by user.                                                                                     |
 
 **LayoutNode fields** (see §2.1 interface):
 
-| Field | Type | Default | Semantics |
-|---|---|---|---|
-| `isVirtual` | `boolean` | `false` | Node exists in a simplex but has no corresponding vault file. |
-| `isPinned` | `boolean` | `false` | User double-clicked — forces are ignored for this node. Persisted to plugin data. |
-| `displayAlpha` | `number` | `1.0` | Current rendered opacity. Lerped toward target on each frame. Never set directly from interaction — always lerped. |
+| Field          | Type      | Default | Semantics                                                                                                          |
+| -------------- | --------- | ------- | ------------------------------------------------------------------------------------------------------------------ |
+| `isVirtual`    | `boolean` | `false` | Node exists in a simplex but has no corresponding vault file.                                                      |
+| `isPinned`     | `boolean` | `false` | User double-clicked — forces are ignored for this node. Persisted to plugin data.                                  |
+| `displayAlpha` | `number`  | `1.0`   | Current rendered opacity. Lerped toward target on each frame. Never set directly from interaction — always lerped. |
 
 Weight is **felt, not displayed** — it drives visual density and force strength, never shown as a number in the UI.
 
@@ -266,11 +274,11 @@ Weight is **felt, not displayed** — it drives visual density and force strengt
 Colors must be **deterministic across restarts**. A simplex should not change color because the plugin reloaded. Assign `colorKey` once at simplex creation time using a hash of the label:
 
 ```typescript
-const COLOR_PALETTE = ['purple', 'teal', 'coral', 'pink', 'blue', 'amber'] as const;
-type ColorKey = typeof COLOR_PALETTE[number];
+const COLOR_PALETTE = ["purple", "teal", "coral", "pink", "blue", "amber"] as const;
+type ColorKey = (typeof COLOR_PALETTE)[number];
 
 function hashLabel(label: string | undefined): ColorKey {
-  if (!label) return 'purple'; // default for unlabeled simplices
+  if (!label) return "purple"; // default for unlabeled simplices
   // Simple, stable djb2 hash
   let h = 5381;
   for (let i = 0; i < label.length; i++) {
@@ -287,6 +295,7 @@ function assignColor(simplex: Simplex): Simplex {
 ```
 
 **Rules:**
+
 - `colorKey` is set on creation and updated only when the `label` changes.
 - Auto-generated faces inherit the `colorKey` of their parent simplex.
 - Unlabeled user-defined simplices use `'purple'` as neutral default.
@@ -377,29 +386,25 @@ export default class SimplicialPlugin extends Plugin {
   controller: InteractionController;
 
   async onload() {
-    this.model   = new SimplicialModel();
-    this.index   = new VaultIndex(this.app, this.model);
-    this.engine  = new LayoutEngine(this.model);
+    this.model = new SimplicialModel();
+    this.index = new VaultIndex(this.app, this.model);
+    this.engine = new LayoutEngine(this.model);
     this.controller = new InteractionController(this.model);
     this.renderer = new Renderer(this.model, this.engine, this.controller);
 
     // Register the canvas view
-    this.registerView('simplicial-view', leaf =>
-      new SimplicialView(leaf, this.renderer, this.controller)
-    );
+    this.registerView("simplicial-view", (leaf) => new SimplicialView(leaf, this.renderer, this.controller));
 
     // Register the metadata panel
-    this.registerView('simplicial-panel', leaf =>
-      new MetadataPanel(leaf, this.model)
-    );
+    this.registerView("simplicial-panel", (leaf) => new MetadataPanel(leaf, this.model));
 
-    this.addRibbonIcon('network', 'Simplicial Graph', () => {
+    this.addRibbonIcon("network", "Simplicial Graph", () => {
       this.activateView();
     });
 
     this.addCommand({
-      id: 'open-simplicial',
-      name: 'Open simplicial graph',
+      id: "open-simplicial",
+      name: "Open simplicial graph",
       callback: () => this.activateView(),
     });
 
@@ -408,9 +413,9 @@ export default class SimplicialPlugin extends Plugin {
   }
 
   async activateView() {
-    this.app.workspace.detachLeavesOfType('simplicial-view');
+    this.app.workspace.detachLeavesOfType("simplicial-view");
     await this.app.workspace.getLeaf(true).setViewState({
-      type: 'simplicial-view',
+      type: "simplicial-view",
       active: true,
     });
   }
@@ -425,6 +430,7 @@ export default class SimplicialPlugin extends Plugin {
 ### 3.4 VaultIndex — Real-Time Vault Watcher
 
 Responsibilities:
+
 - Listen to `vault.on('modify')`, `vault.on('create')`, `vault.on('delete')`, **and `vault.on('rename')`**
 - Parse simplex syntax from changed files
 - Emit normalized `VaultEvent` objects to the model
@@ -433,21 +439,24 @@ Responsibilities:
 
 ```typescript
 type VaultEvent =
-  | { type: 'node:add';    nodeId: NodeID }
-  | { type: 'node:remove'; nodeId: NodeID }
-  | { type: 'node:rename'; oldId: NodeID; newId: NodeID }  // NEW
-  | { type: 'simplex:add'; simplex: Simplex }
-  | { type: 'simplex:remove'; key: string };
+  | { type: "node:add"; nodeId: NodeID }
+  | { type: "node:remove"; nodeId: NodeID }
+  | { type: "node:rename"; oldId: NodeID; newId: NodeID } // NEW
+  | { type: "simplex:add"; simplex: Simplex }
+  | { type: "simplex:remove"; key: string };
 
 class VaultIndex {
   // Content hashing — key: file path, value: hash of last content written by this plugin
   private lastWrittenHash: Map<string, number> = new Map();
 
-  constructor(private app: App, private model: SimplicialModel) {
-    this.app.vault.on('modify', debounce(this.onFileChange.bind(this), 100));
-    this.app.vault.on('create', debounce(this.onFileChange.bind(this), 100));
-    this.app.vault.on('delete', this.onFileDelete.bind(this));
-    this.app.vault.on('rename', this.onFileRename.bind(this)); // NEW
+  constructor(
+    private app: App,
+    private model: SimplicialModel,
+  ) {
+    this.app.vault.on("modify", debounce(this.onFileChange.bind(this), 100));
+    this.app.vault.on("create", debounce(this.onFileChange.bind(this), 100));
+    this.app.vault.on("delete", this.onFileDelete.bind(this));
+    this.app.vault.on("rename", this.onFileRename.bind(this)); // NEW
   }
 
   // Call this after writing to a vault file — stores content hash to suppress own events
@@ -470,7 +479,7 @@ class VaultIndex {
   private onFileRename(file: TFile, oldPath: string) {
     // oldPath is the full path before rename
     const oldId = oldPath;
-    const newId  = file.path;
+    const newId = file.path;
     this.model.updateNodeId(oldId, newId); // preserves px, py, pinned state
   }
 
@@ -485,7 +494,7 @@ class VaultIndex {
   private processFile(file: TFile, content: string) {
     this.model.setNode(file.path, { isVirtual: false });
     const simplices = parseSimplices(content, file.path, this.app);
-    simplices.forEach(s => this.model.addSimplex(s));
+    simplices.forEach((s) => this.model.addSimplex(s));
   }
 }
 
@@ -552,20 +561,21 @@ class SimplicialModel {
 
 ### 3.6 Obsidian API Surface Used
 
-| API | Where Used | Purpose |
-|---|---|---|
-| `vault.on('modify/create/delete')` | VaultIndex | Real-time file watching |
-| `vault.read(file)` | VaultIndex | Read file content for parsing |
-| `vault.getMarkdownFiles()` | VaultIndex | Full vault scan on load |
-| `Plugin.registerView()` | main.ts | Register canvas view + panel |
-| `WorkspaceLeaf` | view.ts | Host the canvas element |
-| `ItemView` | panel.ts | Side panel for metadata |
-| `Plugin.addCommand()` | main.ts | Command palette integration |
-| `Plugin.addRibbonIcon()` | main.ts | Sidebar button |
-| `app.workspace.getLeaf()` | main.ts | Open views |
-| `Menu` (ContextMenu) | controller.ts | Right-click → "Form simplex" |
+| API                                | Where Used    | Purpose                       |
+| ---------------------------------- | ------------- | ----------------------------- |
+| `vault.on('modify/create/delete')` | VaultIndex    | Real-time file watching       |
+| `vault.read(file)`                 | VaultIndex    | Read file content for parsing |
+| `vault.getMarkdownFiles()`         | VaultIndex    | Full vault scan on load       |
+| `Plugin.registerView()`            | main.ts       | Register canvas view + panel  |
+| `WorkspaceLeaf`                    | view.ts       | Host the canvas element       |
+| `ItemView`                         | panel.ts      | Side panel for metadata       |
+| `Plugin.addCommand()`              | main.ts       | Command palette integration   |
+| `Plugin.addRibbonIcon()`           | main.ts       | Sidebar button                |
+| `app.workspace.getLeaf()`          | main.ts       | Open views                    |
+| `Menu` (ContextMenu)               | controller.ts | Right-click → "Form simplex"  |
 
 Do **not** use:
+
 - `MetadataCache` for link resolution — use your own node resolution
 - Obsidian's built-in graph API — it's pairwise and not extensible
 
@@ -585,11 +595,11 @@ class Renderer {
   private animFrame: number | null = null;
 
   init(container: HTMLElement) {
-    this.canvas = container.createEl('canvas');
-    this.ctx = this.canvas.getContext('2d')!;
+    this.canvas = container.createEl("canvas");
+    this.ctx = this.canvas.getContext("2d")!;
     this.dpr = window.devicePixelRatio || 1;
     this.resize();
-    window.addEventListener('resize', this.resize.bind(this));
+    window.addEventListener("resize", this.resize.bind(this));
     this.startLoop();
   }
 
@@ -597,9 +607,9 @@ class Renderer {
     const r = this.canvas.parentElement!.getBoundingClientRect();
     this.W = r.width;
     this.H = r.height;
-    this.canvas.width  = this.W * this.dpr;
+    this.canvas.width = this.W * this.dpr;
     this.canvas.height = this.H * this.dpr;
-    this.canvas.style.width  = `${this.W}px`;
+    this.canvas.style.width = `${this.W}px`;
     this.canvas.style.height = `${this.H}px`;
     this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
   }
@@ -629,14 +639,14 @@ The layout is a **continuous simulation** — never fully settled, always breath
 
 ```typescript
 class LayoutEngine {
-  private REPULSION   = 2400;
-  private COHESION    = 0.005;
-  private GRAVITY     = 0.0007;
-  private NOISE       = 0.12;
-  private DAMPING     = 0.84;
+  private REPULSION = 2400;
+  private COHESION = 0.005;
+  private GRAVITY = 0.0007;
+  private NOISE = 0.12;
+  private DAMPING = 0.84;
 
   // Sleep mode
-  private SLEEP_THRESHOLD = 0.01;  // total kinetic energy below this → sleep
+  private SLEEP_THRESHOLD = 0.01; // total kinetic energy below this → sleep
   private isAsleep = false;
   private animFrame: number | null = null;
 
@@ -671,6 +681,7 @@ class LayoutEngine {
 ```
 
 **Wake triggers:** Call `engine.wake()` from `InteractionController` on:
+
 - `mousemove` entering canvas
 - `vault.on('modify')` / `vault.on('create')` events
 - Any simplex add/remove in model
@@ -721,6 +732,7 @@ class LayoutEngine {
 ```
 
 **Tuning notes:**
+
 - If nodes are too clustered → increase `REPULSION`
 - If clusters feel loose → increase `COHESION` or `weight` values
 - If layout sleeps too quickly / feels stiff → decrease `SLEEP_THRESHOLD`
@@ -735,27 +747,27 @@ The convex hull approach fails for non-convex node arrangements (L-shapes, rings
 
 ```typescript
 // Blob rendering into offscreen canvas — called once per simplex per frame
-function renderBlobToOffscreen(
-  simplex: Simplex,
-  nodes: LayoutNode[],
-  blobR: number
-): HTMLCanvasElement {
+function renderBlobToOffscreen(simplex: Simplex, nodes: LayoutNode[], blobR: number): HTMLCanvasElement {
   const ns = resolveNodes(simplex, nodes);
   if (!ns.length) return emptyCanvas();
 
   // Size the offscreen canvas to the bounding box + margin
-  const xs = ns.map(n => n.px), ys = ns.map(n => n.py);
+  const xs = ns.map((n) => n.px),
+    ys = ns.map((n) => n.py);
   const margin = blobR * 2.5;
-  const x0 = Math.min(...xs) - margin, y0 = Math.min(...ys) - margin;
-  const w  = Math.max(...xs) - x0 + margin, h = Math.max(...ys) - y0 + margin;
+  const x0 = Math.min(...xs) - margin,
+    y0 = Math.min(...ys) - margin;
+  const w = Math.max(...xs) - x0 + margin,
+    h = Math.max(...ys) - y0 + margin;
 
-  const oc = document.createElement('canvas');
-  oc.width = w; oc.height = h;
-  const octx = oc.getContext('2d')!;
+  const oc = document.createElement("canvas");
+  oc.width = w;
+  oc.height = h;
+  const octx = oc.getContext("2d")!;
   octx.translate(-x0, -y0);
 
   // Draw a capsule for every pair of nodes
-  octx.fillStyle = '#ffffff';
+  octx.fillStyle = "#ffffff";
   if (ns.length === 1) {
     octx.beginPath();
     octx.arc(ns[0].px, ns[0].py, blobR, 0, Math.PI * 2);
@@ -783,20 +795,20 @@ function renderBlobToOffscreen(
 function compositeBlob(
   ctx: CanvasRenderingContext2D,
   oc: HTMLCanvasElement,
-  color: [number,number,number],
+  color: [number, number, number],
   alpha: number,
-  offset: { x: number, y: number }
+  offset: { x: number; y: number },
 ) {
   ctx.save();
   ctx.globalAlpha = alpha;
   ctx.filter = `blur(${12}px)`; // softening pass on composite
   ctx.drawImage(oc, offset.x, offset.y);
-  ctx.filter = 'none';
+  ctx.filter = "none";
   // Tint: multiply mode approximated via globalCompositeOperation
-  ctx.globalCompositeOperation = 'source-atop';
+  ctx.globalCompositeOperation = "source-atop";
   ctx.fillStyle = `rgb(${color[0]},${color[1]},${color[2]})`;
   ctx.fillRect(offset.x, offset.y, oc.width, oc.height);
-  ctx.globalCompositeOperation = 'source-over';
+  ctx.globalCompositeOperation = "source-over";
   ctx.restore();
 }
 ```
@@ -815,18 +827,16 @@ function renderBlob(
   simplex: Simplex,
   nodes: LayoutNode[],
   baseAlpha: number,
-  focusState: FocusState
+  focusState: FocusState,
 ): void {
-  const ns  = resolveNodes(simplex, nodes);
+  const ns = resolveNodes(simplex, nodes);
   if (!ns.length) return;
 
   const [r, g, b] = colorForSimplex(simplex);
-  const blobR     = 36 + (simplex.weight ?? 1.0) * 24 + (dim(simplex) === 3 ? 20 : 0);
+  const blobR = 36 + (simplex.weight ?? 1.0) * 24 + (dim(simplex) === 3 ? 20 : 0);
 
   // Determine effective alpha based on focus state
-  const alpha = focusState.isActive
-    ? (focusState.involvesSimplex(simplex) ? baseAlpha : baseAlpha * 0.18)
-    : baseAlpha;
+  const alpha = focusState.isActive ? (focusState.involvesSimplex(simplex) ? baseAlpha : baseAlpha * 0.18) : baseAlpha;
 
   // Pass 1 — outer haze
   ctx.fillStyle = `rgba(${r},${g},${b},${alpha * 0.15})`;
@@ -844,12 +854,8 @@ function renderBlob(
   ctx.fill();
 }
 
-function drawBlobShape(
-  ctx: CanvasRenderingContext2D,
-  ns: LayoutNode[],
-  blobR: number
-): void {
-  const pts = ns.map(n => ({ x: n.px, y: n.py }));
+function drawBlobShape(ctx: CanvasRenderingContext2D, ns: LayoutNode[], blobR: number): void {
+  const pts = ns.map((n) => ({ x: n.px, y: n.py }));
   if (ns.length === 1) {
     ctx.beginPath();
     ctx.arc(pts[0].x, pts[0].y, blobR, 0, Math.PI * 2);
@@ -867,25 +873,26 @@ Colors are fixed per semantic role, not dynamically assigned. Use these as defau
 
 ```typescript
 const SIMPLEX_COLORS: Record<string, [number, number, number]> = {
-  'default-purple': [127, 119, 221],   // cognitive / foundational clusters
-  'default-teal':   [29,  158, 117],   // growth / product clusters
-  'default-coral':  [216, 90,  48],    // context / constraint clusters
-  'neutral':        [136, 135, 128],   // auto-generated faces, unclassified
+  "default-purple": [127, 119, 221], // cognitive / foundational clusters
+  "default-teal": [29, 158, 117], // growth / product clusters
+  "default-coral": [216, 90, 48], // context / constraint clusters
+  neutral: [136, 135, 128], // auto-generated faces, unclassified
 };
 ```
 
 Color assignment strategy:
+
 1. If simplex has a `label`, map to a semantic color bucket (user-defined mapping or auto-assigned on creation)
 2. If auto-generated face → `neutral`
 3. Future v2: let users assign colors per simplex via metadata
 
 ### 4.7 Base Alpha Values by Dimension
 
-| Dimension | Default Alpha | Focused Alpha | Unfocused Alpha |
-|---|---|---|---|
-| dim 1 (edge/capsule) | 0.10 | 0.18 | 0.03 |
-| dim 2 (cluster/triangle) | 0.13 | 0.18 | 0.03 |
-| dim 3 (core/tetrahedron) | 0.07 | 0.11 | 0.02 |
+| Dimension                | Default Alpha | Focused Alpha | Unfocused Alpha |
+| ------------------------ | ------------- | ------------- | --------------- |
+| dim 1 (edge/capsule)     | 0.10          | 0.18          | 0.03            |
+| dim 2 (cluster/triangle) | 0.13          | 0.18          | 0.03            |
+| dim 3 (core/tetrahedron) | 0.07          | 0.11          | 0.02            |
 
 Dim-3 simplices are intentionally more transparent — they span many nodes and would overwhelm the visual if too opaque.
 
@@ -898,11 +905,11 @@ function renderNode(
   isHovered: boolean,
   isActive: boolean,
   primarySimplex: Simplex | null,
-  isDark: boolean
+  isDark: boolean,
 ): void {
-  const alpha  = isActive ? 1.0 : 0.20;
+  const alpha = isActive ? 1.0 : 0.2;
   const radius = isHovered ? 7 : 5;
-  const [r, g, b] = primarySimplex ? colorForSimplex(primarySimplex) : SIMPLEX_COLORS['neutral'];
+  const [r, g, b] = primarySimplex ? colorForSimplex(primarySimplex) : SIMPLEX_COLORS["neutral"];
 
   // Halo for hovered node
   if (isHovered) {
@@ -919,11 +926,9 @@ function renderNode(
   ctx.fill();
 
   // Label
-  ctx.font    = `${isHovered ? '500' : '400'} 12px system-ui, sans-serif`;
-  ctx.fillStyle  = isDark
-    ? `rgba(255,255,255,${isActive ? 0.78 : 0.16})`
-    : `rgba(0,0,0,${isActive ? 0.62 : 0.16})`;
-  ctx.textAlign  = 'center';
+  ctx.font = `${isHovered ? "500" : "400"} 12px system-ui, sans-serif`;
+  ctx.fillStyle = isDark ? `rgba(255,255,255,${isActive ? 0.78 : 0.16})` : `rgba(0,0,0,${isActive ? 0.62 : 0.16})`;
+  ctx.textAlign = "center";
   ctx.fillText(node.id, node.px, node.py - 13);
 }
 ```
@@ -938,23 +943,23 @@ function renderEdges(
   simplices: Simplex[],
   nodes: Map<NodeID, LayoutNode>,
   showEdges: boolean,
-  focusState: FocusState
+  focusState: FocusState,
 ): void {
   if (!showEdges) return;
   const drawn = new Set<string>();
 
-  simplices.forEach(s => {
-    const ns = s.nodes.map(id => nodes.get(id)).filter(Boolean) as LayoutNode[];
+  simplices.forEach((s) => {
+    const ns = s.nodes.map((id) => nodes.get(id)).filter(Boolean) as LayoutNode[];
     const isActive = !focusState.isActive || focusState.involvesSimplex(s);
     const [r, g, b] = colorForSimplex(s);
 
     for (let i = 0; i < ns.length; i++)
       for (let j = i + 1; j < ns.length; j++) {
-        const key = [ns[i].id, ns[j].id].sort().join('|');
+        const key = [ns[i].id, ns[j].id].sort().join("|");
         if (drawn.has(key)) continue;
         drawn.add(key);
         ctx.strokeStyle = `rgba(${r},${g},${b},${isActive ? 0.22 : 0.06})`;
-        ctx.lineWidth   = isActive ? 1 : 0.5;
+        ctx.lineWidth = isActive ? 1 : 0.5;
         ctx.beginPath();
         ctx.moveTo(ns[i].px, ns[i].py);
         ctx.lineTo(ns[j].px, ns[j].py);
@@ -981,6 +986,7 @@ All interactions have **no required actions**: you can open the view and just wa
 **Trigger:** Cursor within 20px of a node center.
 
 **Effect:**
+
 - Hovered node: full opacity, halo ring, enlarged (r=7)
 - Simplices containing hovered node: full opacity
 - Nodes connected to hovered node (via any shared simplex): full opacity
@@ -1004,6 +1010,7 @@ function lerp(a: number, b: number, t: number): number {
 **Solution — two-part interaction:**
 
 **Part A: Click-and-hold repulsion**
+
 - User clicks and holds a node (> 200ms hold threshold)
 - `InteractionController` applies a temporary `HOLD_REPULSION` force (3× normal repulsion) radially outward from that node to all neighbors
 - Neighbors push away gently; labels become readable
@@ -1039,6 +1046,7 @@ if (controller.holdNode) {
 ```
 
 **Part B: Double-click to pin**
+
 - Double-click a node → `node.isPinned = true`
 - Pin indicator: small lock icon (or filled diamond) rendered above the node label
 - Pinned node ignores all LayoutEngine forces (see §4.3 tick — `if (n.isPinned) return`)
@@ -1057,6 +1065,7 @@ interface PinnedState {
 **UI element:** Three toggle buttons at bottom-left: `edges` / `clusters` / `cores`
 
 **Behavior:**
+
 - `edges` on/off → show/hide dim-1 simplex capsules and all edge lines
 - `clusters` on/off → show/hide dim-2 simplex blobs
 - `cores` on/off → show/hide dim-3 simplex blobs
@@ -1070,24 +1079,28 @@ All three default to **on**. State persists in plugin settings (`app.saveData()`
 This is the primary creative interaction.
 
 **Method 1 — Lasso select (v2, optional)**
+
 - Hold `Shift`, click-drag a region
 - All nodes within lasso are selected
 - "Form simplex" prompt appears
 - User confirms → simplex created in model + written to a designated vault file
 
 **Method 2 — Command palette (v1, ship this first)**
+
 - Open command palette: `Simplicial: Form simplex from open note`
 - Plugin reads current note's links → suggests candidate simplex
 - User confirms or modifies node list
 - Simplex written to note's frontmatter
 
 **Method 3 — Suggestion + click (v2)**
+
 - Plugin detects closed triads (A–B, B–C, A–C) automatically
 - Renders a faint dotted outline around the potential simplex
 - "Form?" label on hover
 - Click to confirm
 
 **On confirmation:**
+
 - Simplex added to `SimplicialModel`
 - Written to persistent storage (see §5.7)
 - Visual: existing blob solidifies slightly (damping noise reduced for that simplex for ~2 seconds)
@@ -1121,16 +1134,19 @@ This is the primary creative interaction.
 ```
 
 **Label field behavior:**
+
 - Optional — shows placeholder "unnamed" if empty
 - On change: updates model + saves to frontmatter of the note that defined this simplex
 - 500ms debounce before write
 
 **Weight slider behavior:**
+
 - Changes `simplex.weight` in model immediately (live preview in canvas)
 - Saves to frontmatter on `mouseup`
 - Minimum value: 0.1 (do not allow 0 — zero weight simplex is invisible and confusing)
 
 **Promote to note button:**
+
 - Creates a new Obsidian note titled after the simplex label (or `simplex-<key>` if no label)
 - The new note's content is pre-filled with links to all member nodes
 - The simplex entry in the source note is updated to reference this new node too
@@ -1218,21 +1234,21 @@ weight: 0.5
 ```typescript
 interface PluginSettings {
   // Persistence
-  persistenceMode: 'source-note' | 'central-file'; // default: 'source-note'
-  centralFile: string;                              // default: '_simplicial.md'
+  persistenceMode: "source-note" | "central-file"; // default: 'source-note'
+  centralFile: string; // default: '_simplicial.md'
 
   // Rendering filters (persisted)
-  showEdges: boolean;                               // default: true
-  showClusters: boolean;                            // default: true
-  showCores: boolean;                               // default: true
-  maxRenderedDim: number;                           // default: 3 (cap at 3, store higher)
+  showEdges: boolean; // default: true
+  showClusters: boolean; // default: true
+  showCores: boolean; // default: true
+  maxRenderedDim: number; // default: 3 (cap at 3, store higher)
 
   // Layout behaviour
-  noiseAmount: number;                              // default: 0.12 (breathing intensity)
-  sleepThreshold: number;                           // default: 0.01 (kinetic energy cutoff)
+  noiseAmount: number; // default: 0.12 (breathing intensity)
+  sleepThreshold: number; // default: 0.01 (kinetic energy cutoff)
 
   // Appearance
-  darkMode: 'auto' | 'force-light' | 'force-dark'; // default: 'auto'
+  darkMode: "auto" | "force-light" | "force-dark"; // default: 'auto'
 
   // Node state (persisted across sessions)
   pinnedNodes: { [nodeId: string]: { px: number; py: number } };
@@ -1241,18 +1257,18 @@ interface PluginSettings {
 
 ### 5.9 Keyboard Shortcuts
 
-| Shortcut | Action |
-|---|---|
-| `Ctrl/Cmd + Shift + G` | Open simplicial graph view |
+| Shortcut               | Action                                                    |
+| ---------------------- | --------------------------------------------------------- |
+| `Ctrl/Cmd + Shift + G` | Open simplicial graph view                                |
 | `Ctrl/Cmd + Shift + S` | Insert `△ ` at cursor in active note (△ input workaround) |
-| `Escape` | Clear focus / deselect / unpin pinned focus |
-| `1` | Toggle edges |
-| `2` | Toggle clusters |
-| `3` | Toggle cores |
-| `F` | Focus on hovered node (locks focus until Escape) |
-| `P` | Open metadata panel for hovered simplex |
-| Double-click node | Toggle pin (fixes position, persists across reload) |
-| Click-and-hold node | Momentary repulsion — push overlapping neighbors apart |
+| `Escape`               | Clear focus / deselect / unpin pinned focus               |
+| `1`                    | Toggle edges                                              |
+| `2`                    | Toggle clusters                                           |
+| `3`                    | Toggle cores                                              |
+| `F`                    | Focus on hovered node (locks focus until Escape)          |
+| `P`                    | Open metadata panel for hovered simplex                   |
+| Double-click node      | Toggle pin (fixes position, persists across reload)       |
+| Click-and-hold node    | Momentary repulsion — push overlapping neighbors apart    |
 
 The `Ctrl/Cmd + Shift + S` shortcut is registered as an Obsidian editor command (not a global command), so it only fires when a markdown editor is focused. It inserts the literal `△ ` character followed by a space, leaving the cursor ready to type node names.
 
@@ -1304,17 +1320,17 @@ The `Ctrl/Cmd + Shift + S` shortcut is registered as an Obsidian editor command 
 
 ### Constraints
 
-| Area | Constraint | Status |
-|---|---|---|
-| **Performance — layout** | Force simulation is O(n²). Sleep mode (§4.3) mitigates CPU drain at rest. For n > 150, replace with Barnes–Hut quad-tree. | Mitigated in v1, full fix in v3 |
-| **Performance — blobs** | Offscreen canvas + blur per simplex is expensive if redrawn every frame. Cache offscreen canvas; only redraw when any member node moves > 2px. | Must implement cache |
-| **Face explosion** | A k-node simplex generates 2ᵏ − k − 1 faces. Hard cap at dim ≤ 4 + lazy evaluation above that (§2.3). | Resolved |
-| **Concave blobs** | Convex hull misrepresents L-shaped node groups. Replaced with capsule-union metaball renderer (§4.4). | Resolved |
-| **Rename tracking** | Notes renamed in Obsidian would break simplex references. `vault.on('rename')` → `model.updateNodeId()` preserves positions (§3.4). | Resolved |
-| **Write→parse loop** | Plugin writes to vault file, triggering its own `modify` event. Content hashing in `VaultIndex.recordWrite()` suppresses own events (§3.4, §5.7). | Resolved |
-| **Canvas text + dark mode** | Canvas 2D text doesn't inherit CSS variables. Detect via `matchMedia('(prefers-color-scheme:dark)')` at init; re-detect on Obsidian theme change event. | Must implement |
-| **`△` input** | U+25B3 is not typeable on most keyboards. `Ctrl/Cmd + Shift + S` editor command inserts it (§5.9). Also accept `simplex:` as alternative keyword in parser. | Resolved |
-| **Node ID canonicalization** | `normalizeKey` must use `.toLowerCase().trim()` — Obsidian is case-insensitive for titles. Canonical ID = TFile path, not display title. | Resolved |
+| Area                         | Constraint                                                                                                                                                  | Status                          |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| **Performance — layout**     | Force simulation is O(n²). Sleep mode (§4.3) mitigates CPU drain at rest. For n > 150, replace with Barnes–Hut quad-tree.                                   | Mitigated in v1, full fix in v3 |
+| **Performance — blobs**      | Offscreen canvas + blur per simplex is expensive if redrawn every frame. Cache offscreen canvas; only redraw when any member node moves > 2px.              | Must implement cache            |
+| **Face explosion**           | A k-node simplex generates 2ᵏ − k − 1 faces. Hard cap at dim ≤ 4 + lazy evaluation above that (§2.3).                                                       | Resolved                        |
+| **Concave blobs**            | Convex hull misrepresents L-shaped node groups. Replaced with capsule-union metaball renderer (§4.4).                                                       | Resolved                        |
+| **Rename tracking**          | Notes renamed in Obsidian would break simplex references. `vault.on('rename')` → `model.updateNodeId()` preserves positions (§3.4).                         | Resolved                        |
+| **Write→parse loop**         | Plugin writes to vault file, triggering its own `modify` event. Content hashing in `VaultIndex.recordWrite()` suppresses own events (§3.4, §5.7).           | Resolved                        |
+| **Canvas text + dark mode**  | Canvas 2D text doesn't inherit CSS variables. Detect via `matchMedia('(prefers-color-scheme:dark)')` at init; re-detect on Obsidian theme change event.     | Must implement                  |
+| **`△` input**                | U+25B3 is not typeable on most keyboards. `Ctrl/Cmd + Shift + S` editor command inserts it (§5.9). Also accept `simplex:` as alternative keyword in parser. | Resolved                        |
+| **Node ID canonicalization** | `normalizeKey` must use `.toLowerCase().trim()` — Obsidian is case-insensitive for titles. Canonical ID = TFile path, not display title.                    | Resolved                        |
 
 ### Open Questions — Decisions Made
 
@@ -1374,11 +1390,9 @@ These are the items most likely to cause hard-to-debug failures if skipped or do
 
 ---
 
-*End of specification — v0.2*
+_End of specification — v0.2_
 
-*Implementation entry point: `core/types.ts` → `core/normalize.ts` → `core/hash.ts` → `core/faces.ts` → `core/model.ts`. These five files have zero Obsidian API dependencies and are fully unit-testable. Write tests for them before touching the plugin scaffolding.*
-
-
+_Implementation entry point: `core/types.ts` → `core/normalize.ts` → `core/hash.ts` → `core/faces.ts` → `core/model.ts`. These five files have zero Obsidian API dependencies and are fully unit-testable. Write tests for them before touching the plugin scaffolding._
 
 # Appendix A: Layout Engine Physics & Implementation Details
 
@@ -1393,11 +1407,11 @@ To prevent node overlap and ensure visual clarity, a global repulsion force is a
 **Formula:**
 $$F_r = \frac{G}{d^2 + \epsilon}$$
 
-| Variable | Value | Description |
-| :--- | :--- | :--- |
-| $G$ | 2400 | Global repulsion constant |
-| $d$ | $dist(a, b)$ | Euclidean distance between nodes $a$ and $b$ |
-| $\epsilon$ | 1.0 | Softening constant to prevent division by zero |
+| Variable   | Value        | Description                                    |
+| :--------- | :----------- | :--------------------------------------------- |
+| $G$        | 2400         | Global repulsion constant                      |
+| $d$        | $dist(a, b)$ | Euclidean distance between nodes $a$ and $b$   |
+| $\epsilon$ | 1.0          | Softening constant to prevent division by zero |
 
 ---
 
@@ -1406,7 +1420,8 @@ $$F_r = \frac{G}{d^2 + \epsilon}$$
 Simplices act as "gravitational wells". Nodes belonging to the same simplex are pulled toward the geometric center (**centroid**) of that cluster rather than toward each other individually.
 
 **Implementation Logic:**
-1.  **Calculate Centroid ($C$):** The arithmetic mean of all node positions in the simplex: 
+
+1.  **Calculate Centroid ($C$):** The arithmetic mean of all node positions in the simplex:
     $$C = \frac{1}{k} \sum_{i=1}^{k} n_i$$
 2.  **Apply Attraction Force:** Each node $n_i$ is pulled toward $C$ with a force vector:
     $$F_{attraction} = (C - n_i) \cdot \text{CohesionMultiplier} \cdot w$$
@@ -1418,11 +1433,11 @@ Simplices act as "gravitational wells". Nodes belonging to the same simplex are 
 
 As the vault grows, the $O(n^2)$ repulsion calculation becomes a performance bottleneck. The following strategies ensure the plugin remains responsive:
 
-* **Barnes-Hut Approximation:** Utilize a Quadtree to group distant nodes. Instead of calculating individual forces for every pair, treat distant clusters as a single center of mass with a total aggregate repulsion.
-* **Kinetic Energy Sleep:** To preserve system resources (CPU/Battery), monitor the total kinetic energy of the system:
-    $$E_k = \sum (v_x^2 + v_y^2)$$
-    If $E_k$ drops below a threshold (e.g., $0.01$), the `LayoutEngine` loop is suspended until a user interaction or vault modification occurs.
-* **Breathing Noise:** A small random vector (Noise = $0.12$) is added to every node per tick to maintain the organic "breathing" effect and prevent the layout from reaching a static, "dead" state.
+- **Barnes-Hut Approximation:** Utilize a Quadtree to group distant nodes. Instead of calculating individual forces for every pair, treat distant clusters as a single center of mass with a total aggregate repulsion.
+- **Kinetic Energy Sleep:** To preserve system resources (CPU/Battery), monitor the total kinetic energy of the system:
+  $$E_k = \sum (v_x^2 + v_y^2)$$
+  If $E_k$ drops below a threshold (e.g., $0.01$), the `LayoutEngine` loop is suspended until a user interaction or vault modification occurs.
+- **Breathing Noise:** A small random vector (Noise = $0.12$) is added to every node per tick to maintain the organic "breathing" effect and prevent the layout from reaching a static, "dead" state.
 
 ---
 
@@ -1432,7 +1447,7 @@ The following logic is executed within the `requestAnimationFrame` loop to updat
 
 ```typescript
 // Velocity integration with damping and breathing noise
-nodes.forEach(n => {
+nodes.forEach((n) => {
   // Add random perturbation for the "breathing" effect
   n.fx += (Math.random() - 0.5) * NOISE;
   n.fy += (Math.random() - 0.5) * NOISE;
@@ -1442,10 +1457,10 @@ nodes.forEach(n => {
   n.vy = (n.vy + n.fy) * DAMPING;
 
   // Update positions and clamp to canvas bounds
-  n.px = Math.max(50, Math.min(bounds.width  - 50, n.px + n.vx));
+  n.px = Math.max(50, Math.min(bounds.width - 50, n.px + n.vx));
   n.py = Math.max(50, Math.min(bounds.height - 50, n.py + n.vy));
 });
-``` 
+```
 
 # Appendix B : Emergent Engine
 
@@ -1456,7 +1471,6 @@ TODO
 - influences blob density before formalization
 - density-based cluster hints (not just triads)
 - temporal strengthening (based on edits)
-
 
 ## ⚠️ 1. Limited Emergence Layer
 
@@ -1472,16 +1486,17 @@ Underutilizes the organic, cognitive interface
 Reduces the sense of discovery in the system
 
 ### Why It Matters
+
 The system is intended to feel like structure emerges from thought.
 Right now, emergence is too discrete and rule-based.
 
 ### Recommendation
+
 Introduce a lightweight emergence layer:
 
 Density-based cluster hints (beyond strict triangles)
 Soft grouping based on co-occurrence and proximity
 Temporal reinforcement (clusters strengthen with repeated edits)
-
 
 ## ⚠️ 2. Layout May Drift Toward Traditional Graph Behavior
 
@@ -1496,6 +1511,7 @@ Visual output may resemble conventional graph tools
 Weakens the intended “ambient conceptual space” feel
 
 ### Why It Matters
+
 The goal is not to visualize connections, but to feel conceptual fields.
 
 ### Missing Piece
@@ -1503,6 +1519,7 @@ The goal is not to visualize connections, but to feel conceptual fields.
 No true field-based layout model
 
 ### Recommendation
+
 Shift toward simplex-driven spatial influence:
 
 Treat simplices as field generators, not just constraints
@@ -1522,9 +1539,11 @@ Lacks progressive feedback loops
 Misses opportunities for guided discovery
 
 ### Why It Matters
+
 A cognitive system should guide recognition, not just respond to commands.
 
 ### Recommendation
+
 Add progressive interaction patterns:
 
 “This region feels cohesive” → suggest naming
@@ -1543,6 +1562,7 @@ Jumps too quickly from detection to formalization
 Misses intermediate cognitive states
 
 ### Why It Matters
+
 The system should support progressive formalization, not abrupt structure creation.
 
 ### Desired Flow
@@ -1550,6 +1570,7 @@ The system should support progressive formalization, not abrupt structure creati
 weak cluster → suggested → explored → confirmed → labeled → promoted
 
 ### Recommendation
+
 Introduce intermediate states:
 
 “Soft clusters” that persist without being formal simplices

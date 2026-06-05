@@ -22,12 +22,7 @@
     "eqeqeq": ["error", "always"],
     "curly": ["error", "all"]
   },
-  "ignorePatterns": [
-    "node_modules/",
-    "tests-dist/",
-    "main.js",
-    "*.js"
-  ],
+  "ignorePatterns": ["node_modules/", "tests-dist/", "main.js", "*.js"],
   "env": {
     "browser": true,
     "node": true,

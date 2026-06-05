@@ -2,25 +2,27 @@ import { djb2Hash } from "../core/hash";
 import { SimplicialModel } from "../core/model";
 import type { ColorKey, Simplex } from "../core/types";
 
-const SIMPLEX_COLORS: Record<ColorKey | "default-purple" | "default-teal" | "default-coral", [number, number, number]> = {
-  purple: [127, 119, 221],
-  teal: [29, 158, 117],
-  coral: [216, 90, 48],
-  pink: [208, 98, 156],
-  blue: [76, 125, 212],
-  amber: [214, 151, 52],
-  neutral: [136, 135, 128],
-  "default-purple": [127, 119, 221],
-  "default-teal": [29, 158, 117],
-  "default-coral": [216, 90, 48],
-};
+const SIMPLEX_COLORS: Record<ColorKey | "default-purple" | "default-teal" | "default-coral", [number, number, number]> =
+  {
+    purple: [127, 119, 221],
+    teal: [29, 158, 117],
+    coral: [216, 90, 48],
+    pink: [208, 98, 156],
+    blue: [76, 125, 212],
+    amber: [214, 151, 52],
+    neutral: [136, 135, 128],
+    "default-purple": [127, 119, 221],
+    "default-teal": [29, 158, 117],
+    "default-coral": [216, 90, 48],
+  };
 
 function inferredColor(simplex: Simplex): [number, number, number] {
   const signals = simplex.inferredSignals ?? [];
   if (signals.includes("soft-cluster")) return SIMPLEX_COLORS.teal;
   if (signals.some((signal) => signal.startsWith("tags:"))) return SIMPLEX_COLORS.amber;
   if (signals.some((signal) => signal === "folder:same" || signal === "folder:top")) return SIMPLEX_COLORS.pink;
-  if (signals.some((signal) => signal.startsWith("title:") || signal.startsWith("content:"))) return SIMPLEX_COLORS.coral;
+  if (signals.some((signal) => signal.startsWith("title:") || signal.startsWith("content:")))
+    return SIMPLEX_COLORS.coral;
   if (signals.some((signal) => signal.startsWith("link:"))) return SIMPLEX_COLORS.blue;
   return SIMPLEX_COLORS.neutral;
 }
@@ -72,13 +74,14 @@ function intrinsicColorForSimplex(simplex: Simplex): [number, number, number] {
 }
 
 function inheritedColorSource(model: SimplicialModel, simplex: Simplex): Simplex | null {
-  const containing = [...model.simplices.values()].filter((candidate) =>
-    candidate.nodes.length > simplex.nodes.length && isSubset(simplex.nodes, candidate.nodes),
+  const containing = [...model.simplices.values()].filter(
+    (candidate) => candidate.nodes.length > simplex.nodes.length && isSubset(simplex.nodes, candidate.nodes),
   );
   if (!containing.length) return null;
 
-  const highest = containing
-    .sort((a, b) => b.nodes.length - a.nodes.length || a.nodes.join("|").localeCompare(b.nodes.join("|")))[0];
+  const highest = containing.sort(
+    (a, b) => b.nodes.length - a.nodes.length || a.nodes.join("|").localeCompare(b.nodes.join("|")),
+  )[0];
 
   const leaksOutsideHighest = containing.some((candidate) => !isSubset(candidate.nodes, highest.nodes));
   return leaksOutsideHighest ? null : highest;

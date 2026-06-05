@@ -13,9 +13,9 @@ My blog post about the motivation and process of creating this plugin : [blog po
 
 ## What This Is
 
-Obsidian's built-in graph says: *"Note A links to Note B."*
+Obsidian's built-in graph says: _"Note A links to Note B."_
 
-This plugin says: *"Notes A, B, and C form a unit that only makes sense together."*
+This plugin says: _"Notes A, B, and C form a unit that only makes sense together."_
 
 That difference — between connection and coherence — is the entire idea. The underlying structure is a [simplicial complex](https://en.wikipedia.org/wiki/Simplicial_complex): a mathematical object that encodes higher-order relationships between notes using triangles, tetrahedra, and beyond, rather than simple edges.
 
@@ -28,13 +28,13 @@ The interface is deliberately **organic and ambient**. Clusters appear as soft f
 
 ## Why Not Just Use Tags or Groups?
 
-| | Tags | Groups | Links | **Simplices** |
-|---|---|---|---|---|
-| One-to-many | ✅ | ✅ | — | — |
-| Pairwise connection | — | — | ✅ | ✅ |
-| Higher-order coherence | — | — | — | ✅ |
-| Overlapping clusters | ✅ | — | — | ✅ |
-| Future topological analysis | — | — | — | ✅ |
+|                             | Tags | Groups | Links | **Simplices** |
+| --------------------------- | ---- | ------ | ----- | ------------- |
+| One-to-many                 | ✅   | ✅     | —     | —             |
+| Pairwise connection         | —    | —      | ✅    | ✅            |
+| Higher-order coherence      | —    | —      | —     | ✅            |
+| Overlapping clusters        | ✅   | —      | —     | ✅            |
+| Future topological analysis | —    | —      | —     | ✅            |
 
 Tags classify. Links connect. **Simplices encode coherence** — the idea that a set of notes, taken together, forms a meaningful unit that its members alone do not.
 
@@ -69,7 +69,7 @@ Both views are projections of the same underlying simplicial model. Toggle betwe
 
 **Emergent Inference (v3):** Semantic clustering with TF-IDF, emergent edge detection, hybrid inference modes, domain-aware coloring.
 
-*See [Technical Details](#technical-details) for complete feature documentation.*
+_See [Technical Details](#technical-details) for complete feature documentation._
 
 ---
 
@@ -89,11 +89,13 @@ Copy `main.js`, `manifest.json`, and `styles.css` to `.obsidian/plugins/simplici
 **Create your first simplex:**
 
 In any note, type:
+
 ```markdown
 △ startup capital talent
 ```
 
 Or use YAML frontmatter:
+
 ```yaml
 ---
 simplices:
@@ -154,16 +156,16 @@ When you define `[A, B, C]`, the plugin automatically generates all sub-faces: `
 
 The plugin follows one principle: **interaction reveals structure, it does not manipulate it.**
 
-| Action | Effect |
-|---|---|
-| Hover node | Focus mode — simplex fields intensify, unrelated nodes fade |
-| Move away | Focus releases with a 150ms fade |
-| Click-and-hold node | Momentary repulsion — push overlapping neighbors apart |
-| Double-click node | Pin/unpin — fixes position across sessions |
-| Toggle `1` / `2` / `3` | Show/hide edges, clusters, cores |
-| `F` | Lock focus on hovered node until Escape |
-| `P` | Open metadata panel for hovered simplex |
-| `Escape` | Clear all focus and selection |
+| Action                 | Effect                                                      |
+| ---------------------- | ----------------------------------------------------------- |
+| Hover node             | Focus mode — simplex fields intensify, unrelated nodes fade |
+| Move away              | Focus releases with a 150ms fade                            |
+| Click-and-hold node    | Momentary repulsion — push overlapping neighbors apart      |
+| Double-click node      | Pin/unpin — fixes position across sessions                  |
+| Toggle `1` / `2` / `3` | Show/hide edges, clusters, cores                            |
+| `F`                    | Lock focus on hovered node until Escape                     |
+| `P`                    | Open metadata panel for hovered simplex                     |
+| `Escape`               | Clear all focus and selection                               |
 
 ---
 
@@ -244,62 +246,62 @@ Open Settings → Simplicial Complex to configure:
 
 ### Display & Interaction
 
-| Setting | Default | Description |
-|---|---|---|
-| Persistence mode | `source-note` | Where simplex definitions are written — note frontmatter or a central file |
-| Central file | `_simplicial.md` | Path for central file mode |
-| Show edges | On | Render dim-1 simplex capsules and edge lines |
-| Show clusters | On | Render dim-2 simplex blobs |
-| Show cores | On | Render simplices with dimension 3 and higher |
-| Max rendered dimension | 12 | Cap visual rendering (higher-order still stored) |
-| Noise amount | 0.12 | Breathing intensity of the layout |
-| Sleep threshold | 0.01 | Kinetic energy level at which the layout pauses |
-| Dark mode | Auto | Follow system, or force light/dark |
-| Formal mode | Off | Switch from ambient blobs to geometric rendering with analysis overlays |
-| Label density | 0.5 | How many non-focused labels render before decluttering hides the rest |
-| Metadata hover delay | 300ms | Time before metadata panel updates on node hover |
+| Setting                | Default          | Description                                                                |
+| ---------------------- | ---------------- | -------------------------------------------------------------------------- |
+| Persistence mode       | `source-note`    | Where simplex definitions are written — note frontmatter or a central file |
+| Central file           | `_simplicial.md` | Path for central file mode                                                 |
+| Show edges             | On               | Render dim-1 simplex capsules and edge lines                               |
+| Show clusters          | On               | Render dim-2 simplex blobs                                                 |
+| Show cores             | On               | Render simplices with dimension 3 and higher                               |
+| Max rendered dimension | 12               | Cap visual rendering (higher-order still stored)                           |
+| Noise amount           | 0.12             | Breathing intensity of the layout                                          |
+| Sleep threshold        | 0.01             | Kinetic energy level at which the layout pauses                            |
+| Dark mode              | Auto             | Follow system, or force light/dark                                         |
+| Formal mode            | Off              | Switch from ambient blobs to geometric rendering with analysis overlays    |
+| Label density          | 0.5              | How many non-focused labels render before decluttering hides the rest      |
+| Metadata hover delay   | 300ms            | Time before metadata panel updates on node hover                           |
 
 ### Vault Linking
 
-| Setting | Default | Description |
-|---|---|---|
-| Link graph baseline | Off | Always show note-to-note vault links as 1-simplices |
-| Enable inferred edges | On | Use tags, links, titles, content, and folders to infer lightweight edges |
-| Inference threshold | 0.25 | Minimum combined signal before an inferred edge is created |
+| Setting               | Default | Description                                                              |
+| --------------------- | ------- | ------------------------------------------------------------------------ |
+| Link graph baseline   | Off     | Always show note-to-note vault links as 1-simplices                      |
+| Enable inferred edges | On      | Use tags, links, titles, content, and folders to infer lightweight edges |
+| Inference threshold   | 0.25    | Minimum combined signal before an inferred edge is created               |
 
 ### Edge Inference Weights (when enabled)
 
-| Setting | Default | Description |
-|---|---|---|
-| Link weight | 0.25 | Strength added by a resolved outbound link |
-| Mutual link bonus | 0.1 | Extra weight when both notes link each other |
-| Shared tag weight | 0.15 | Weight contributed by each shared tag |
-| Title overlap weight | 0.2 | Maximum title-token overlap contribution |
-| Content overlap weight | 0.15 | Maximum body-text overlap contribution |
-| Same folder weight | 0.1 | Boost when two notes share the same folder |
-| Top folder weight | 0.05 | Boost when two notes share the same top-level folder |
+| Setting                | Default | Description                                          |
+| ---------------------- | ------- | ---------------------------------------------------- |
+| Link weight            | 0.25    | Strength added by a resolved outbound link           |
+| Mutual link bonus      | 0.1     | Extra weight when both notes link each other         |
+| Shared tag weight      | 0.15    | Weight contributed by each shared tag                |
+| Title overlap weight   | 0.2     | Maximum title-token overlap contribution             |
+| Content overlap weight | 0.15    | Maximum body-text overlap contribution               |
+| Same folder weight     | 0.1     | Boost when two notes share the same folder           |
+| Top folder weight      | 0.05    | Boost when two notes share the same top-level folder |
 
 ### Suggestions & Analysis
 
-| Setting | Default | Description |
-|---|---|---|
-| Show suggestions | On | Render closure and soft-cluster suggestions directly on the canvas |
-| Suggestion threshold | 0.6 | Confidence level required before a suggestion is surfaced |
-| Command simplex size | 3 | How many nodes the create-from-open-note command tries to include |
+| Setting              | Default | Description                                                        |
+| -------------------- | ------- | ------------------------------------------------------------------ |
+| Show suggestions     | On      | Render closure and soft-cluster suggestions directly on the canvas |
+| Suggestion threshold | 0.6     | Confidence level required before a suggestion is surfaced          |
+| Command simplex size | 3       | How many nodes the create-from-open-note command tries to include  |
 
 ### Layout Optimization
 
-| Setting | Default | Description |
-|---|---|---|
-| Sparse edge length | 150 | Preferred spacing for sparse link-only graphs |
-| Sparse gravity boost | 1.5 | Extra centering force when the graph is mostly pairwise and sparse |
+| Setting              | Default | Description                                                        |
+| -------------------- | ------- | ------------------------------------------------------------------ |
+| Sparse edge length   | 150     | Preferred spacing for sparse link-only graphs                      |
+| Sparse gravity boost | 1.5     | Extra centering force when the graph is mostly pairwise and sparse |
 
 ### Filtration
 
-| Setting | Default | Description |
-|---|---|---|
-| Filtration metric | `weight` | Which simplex strength field the live filtration slider uses: weight, confidence, or decayed-weight |
-| Filtration threshold | 0 | Hide simplices below this threshold in the active metric |
+| Setting              | Default  | Description                                                                                         |
+| -------------------- | -------- | --------------------------------------------------------------------------------------------------- |
+| Filtration metric    | `weight` | Which simplex strength field the live filtration slider uses: weight, confidence, or decayed-weight |
+| Filtration threshold | 0        | Hide simplices below this threshold in the active metric                                            |
 
 ---
 
@@ -371,4 +373,4 @@ MIT — see [`LICENSE`](./LICENSE)
 
 ---
 
-*"Standard knowledge graphs are fundamentally pairwise. This is not."*
+_"Standard knowledge graphs are fundamentally pairwise. This is not."_

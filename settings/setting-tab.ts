@@ -4,7 +4,10 @@ import { ensureCentralFile } from "../data/persistence";
 import type { PluginSettings } from "../core/types";
 
 export class SimplicialSettingTab extends PluginSettingTab {
-  constructor(app: App, private plugin: SimplicialPlugin) {
+  constructor(
+    app: App,
+    private plugin: SimplicialPlugin,
+  ) {
     super(app, plugin);
   }
 
@@ -41,18 +44,16 @@ export class SimplicialSettingTab extends PluginSettingTab {
         });
       });
 
-    new Setting(containerEl)
-      .setName("Central file")
-      .addText((text) => {
-        text.setValue(this.plugin.settings.centralFile);
-        text.onChange(async (value) => {
-          this.plugin.settings.centralFile = value || "_simplicial.md";
-          if (this.plugin.settings.persistenceMode === "central-file") {
-            await ensureCentralFile(this.app, this.plugin.settings.centralFile);
-          }
-          await this.plugin.saveSettings();
-        });
+    new Setting(containerEl).setName("Central file").addText((text) => {
+      text.setValue(this.plugin.settings.centralFile);
+      text.onChange(async (value) => {
+        this.plugin.settings.centralFile = value || "_simplicial.md";
+        if (this.plugin.settings.persistenceMode === "central-file") {
+          await ensureCentralFile(this.app, this.plugin.settings.centralFile);
+        }
+        await this.plugin.saveSettings();
       });
+    });
   }
 
   private renderLayoutSettings(containerEl: HTMLElement): void {
@@ -68,8 +69,7 @@ export class SimplicialSettingTab extends PluginSettingTab {
     }
 
     {
-      const setting = new Setting(containerEl)
-        .setName("Noise amount");
+      const setting = new Setting(containerEl).setName("Noise amount");
       this.addNumberSlider(setting, this.plugin.settings.noiseAmount, 0, 0.5, 0.01, async (value) => {
         this.plugin.settings.noiseAmount = value;
         this.plugin.engine.configure({ noiseAmount: value });
@@ -133,8 +133,7 @@ export class SimplicialSettingTab extends PluginSettingTab {
     }
 
     {
-      const setting = new Setting(containerEl)
-        .setName("Sleep threshold");
+      const setting = new Setting(containerEl).setName("Sleep threshold");
       this.addNumberSlider(setting, this.plugin.settings.sleepThreshold, 0.001, 0.1, 0.001, async (value) => {
         this.plugin.settings.sleepThreshold = value;
         this.plugin.engine.configure({ sleepThreshold: value });
@@ -142,18 +141,16 @@ export class SimplicialSettingTab extends PluginSettingTab {
       });
     }
 
-    new Setting(containerEl)
-      .setName("Dark mode")
-      .addDropdown((dropdown) => {
-        dropdown.addOption("auto", "Auto");
-        dropdown.addOption("force-light", "Force light");
-        dropdown.addOption("force-dark", "Force dark");
-        dropdown.setValue(this.plugin.settings.darkMode);
-        dropdown.onChange(async (value) => {
-          this.plugin.settings.darkMode = value as PluginSettings["darkMode"];
-          await this.plugin.saveSettings();
-        });
+    new Setting(containerEl).setName("Dark mode").addDropdown((dropdown) => {
+      dropdown.addOption("auto", "Auto");
+      dropdown.addOption("force-light", "Force light");
+      dropdown.addOption("force-dark", "Force dark");
+      dropdown.setValue(this.plugin.settings.darkMode);
+      dropdown.onChange(async (value) => {
+        this.plugin.settings.darkMode = value as PluginSettings["darkMode"];
+        await this.plugin.saveSettings();
       });
+    });
   }
 
   private renderInferenceSettings(containerEl: HTMLElement): void {
@@ -390,7 +387,7 @@ export class SimplicialSettingTab extends PluginSettingTab {
     new Setting(containerEl).setName("Inference engine (v2)").setHeading();
     containerEl.createEl("p", {
       cls: "setting-item-description",
-      text: "The plugin has two inference systems: emergent (graph-based with semantic clustering) and legacy (rule-based). Choose which to use."
+      text: "The plugin has two inference systems: emergent (graph-based with semantic clustering) and legacy (rule-based). Choose which to use.",
     });
 
     new Setting(containerEl)
@@ -448,7 +445,9 @@ export class SimplicialSettingTab extends PluginSettingTab {
     {
       const setting = new Setting(emergentSettingsDiv)
         .setName("Link strength threshold")
-        .setDesc("Minimum edge strength for emergent mode to create a visible link (0.0 = all edges, 1.0 = only strongest).");
+        .setDesc(
+          "Minimum edge strength for emergent mode to create a visible link (0.0 = all edges, 1.0 = only strongest).",
+        );
       this.addNumberSlider(setting, this.plugin.settings.linkStrengthThreshold, 0, 1, 0.01, async (value) => {
         this.plugin.settings.linkStrengthThreshold = value;
         await this.plugin.saveSettings();
@@ -458,7 +457,7 @@ export class SimplicialSettingTab extends PluginSettingTab {
     }
 
     // Store reference to emergent settings div for visibility toggling
-    (this as unknown as Record<string, HTMLElement>)['_emergentSettingsDiv'] = emergentSettingsDiv;
+    (this as unknown as Record<string, HTMLElement>)["_emergentSettingsDiv"] = emergentSettingsDiv;
   }
 
   private renderLegacySettings(containerEl: HTMLElement): void {
@@ -466,23 +465,87 @@ export class SimplicialSettingTab extends PluginSettingTab {
     new Setting(containerEl).setName("Legacy inference weights").setHeading();
     containerEl.createEl("p", {
       cls: "setting-item-description",
-      text: "These weights only apply when using legacy or hybrid inference mode. They control rule-based edge detection."
+      text: "These weights only apply when using legacy or hybrid inference mode. They control rule-based edge detection.",
     });
 
-    this.addWeightSlider(containerEl, "Link weight", "Strength added by a resolved outbound link.", "linkWeight", "enableLinkInference", 0, 0.6, 0.01);
-    this.addWeightSlider(containerEl, "Mutual link bonus", "Extra weight when both notes link each other.", "mutualLinkBonus", "enableMutualLinkBonus", 0, 0.6, 0.01);
-    this.addWeightSlider(containerEl, "Shared tag weight", "Weight contributed by each shared tag.", "sharedTagWeight", "enableSharedTags", 0, 0.2, 0.01);
-    this.addWeightSlider(containerEl, "Title overlap weight", "Maximum title-token overlap contribution.", "titleOverlapWeight", "enableTitleOverlap", 0, 0.3, 0.01);
-    this.addWeightSlider(containerEl, "Content overlap weight", "Maximum body-text overlap contribution.", "contentOverlapWeight", "enableContentOverlap", 0, 0.3, 0.01);
-    this.addWeightSlider(containerEl, "Same folder weight", "Boost when two notes share the same folder (Legacy mode only).", "sameFolderWeight", "enableSameFolderInference", 0, 0.2, 0.01);
-    this.addWeightSlider(containerEl, "Top folder weight", "Boost when two notes share the same top-level folder (Legacy mode only).", "sameTopFolderWeight", "enableSameTopFolderInference", 0, 0.2, 0.01);
+    this.addWeightSlider(
+      containerEl,
+      "Link weight",
+      "Strength added by a resolved outbound link.",
+      "linkWeight",
+      "enableLinkInference",
+      0,
+      0.6,
+      0.01,
+    );
+    this.addWeightSlider(
+      containerEl,
+      "Mutual link bonus",
+      "Extra weight when both notes link each other.",
+      "mutualLinkBonus",
+      "enableMutualLinkBonus",
+      0,
+      0.6,
+      0.01,
+    );
+    this.addWeightSlider(
+      containerEl,
+      "Shared tag weight",
+      "Weight contributed by each shared tag.",
+      "sharedTagWeight",
+      "enableSharedTags",
+      0,
+      0.2,
+      0.01,
+    );
+    this.addWeightSlider(
+      containerEl,
+      "Title overlap weight",
+      "Maximum title-token overlap contribution.",
+      "titleOverlapWeight",
+      "enableTitleOverlap",
+      0,
+      0.3,
+      0.01,
+    );
+    this.addWeightSlider(
+      containerEl,
+      "Content overlap weight",
+      "Maximum body-text overlap contribution.",
+      "contentOverlapWeight",
+      "enableContentOverlap",
+      0,
+      0.3,
+      0.01,
+    );
+    this.addWeightSlider(
+      containerEl,
+      "Same folder weight",
+      "Boost when two notes share the same folder (Legacy mode only).",
+      "sameFolderWeight",
+      "enableSameFolderInference",
+      0,
+      0.2,
+      0.01,
+    );
+    this.addWeightSlider(
+      containerEl,
+      "Top folder weight",
+      "Boost when two notes share the same top-level folder (Legacy mode only).",
+      "sameTopFolderWeight",
+      "enableSameTopFolderInference",
+      0,
+      0.2,
+      0.01,
+    );
   }
 
   private refreshSettingVisibility(): void {
-    const emergentDiv = (this as unknown as Record<string, HTMLElement>)['_emergentSettingsDiv'];
+    const emergentDiv = (this as unknown as Record<string, HTMLElement>)["_emergentSettingsDiv"];
     if (!emergentDiv) return;
-    const isEmergentMode = this.plugin.settings.inferenceMode === 'emergent' || this.plugin.settings.inferenceMode === 'hybrid';
-    emergentDiv.style.display = isEmergentMode ? 'block' : 'none';
+    const isEmergentMode =
+      this.plugin.settings.inferenceMode === "emergent" || this.plugin.settings.inferenceMode === "hybrid";
+    emergentDiv.style.display = isEmergentMode ? "block" : "none";
   }
 
   private addNumberSlider(
@@ -496,8 +559,11 @@ export class SimplicialSettingTab extends PluginSettingTab {
     setting.addSlider((slider) => {
       const valueEl = setting.controlEl.createSpan({ cls: "simplicial-setting-value" });
       const format = (value: number): string => {
-        const decimals = step >= 1 ? 0 : `${step}`.split(".")[1]?.length ?? 0;
-        return value.toFixed(decimals).replace(/\.0+$/, "").replace(/(\.\d*?)0+$/, "$1");
+        const decimals = step >= 1 ? 0 : (`${step}`.split(".")[1]?.length ?? 0);
+        return value
+          .toFixed(decimals)
+          .replace(/\.0+$/, "")
+          .replace(/(\.\d*?)0+$/, "$1");
       };
 
       valueEl.setText(format(initialValue));
@@ -538,13 +604,14 @@ export class SimplicialSettingTab extends PluginSettingTab {
     max: number,
     step: number,
   ): void {
-    const setting = new Setting(containerEl)
-      .setName(name)
-      .setDesc(desc);
+    const setting = new Setting(containerEl).setName(name).setDesc(desc);
     let sliderRef: SliderComponent | null = null;
     const format = (value: number): string => {
-      const decimals = step >= 1 ? 0 : `${step}`.split(".")[1]?.length ?? 0;
-      return value.toFixed(decimals).replace(/\.0+$/, "").replace(/(\.\d*?)0+$/, "$1");
+      const decimals = step >= 1 ? 0 : (`${step}`.split(".")[1]?.length ?? 0);
+      return value
+        .toFixed(decimals)
+        .replace(/\.0+$/, "")
+        .replace(/(\.\d*?)0+$/, "$1");
     };
 
     setting.addToggle((toggle) => {

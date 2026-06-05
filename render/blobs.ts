@@ -21,9 +21,7 @@ function centroid(points: Point[]): Point {
 
 function sortByAngle(points: Point[]): Point[] {
   const c = centroid(points);
-  return [...points].sort(
-    (a, b) => Math.atan2(a.y - c.y, a.x - c.x) - Math.atan2(b.y - c.y, b.x - c.x),
-  );
+  return [...points].sort((a, b) => Math.atan2(a.y - c.y, a.x - c.x) - Math.atan2(b.y - c.y, b.x - c.x));
 }
 
 function expandPoints(points: Point[], radius: number): Point[] {
@@ -82,12 +80,22 @@ function areCollinear(points: Point[]): boolean {
   return true;
 }
 
-function renderBlobToOffscreen(simplexKey: string, simplex: Simplex, nodes: LayoutNode[], blobR: number): BlobCacheEntry | null {
+function renderBlobToOffscreen(
+  simplexKey: string,
+  simplex: Simplex,
+  nodes: LayoutNode[],
+  blobR: number,
+): BlobCacheEntry | null {
   const ns = resolveNodes(simplex, nodes);
   if (!ns.length) return null;
   const positions = ns.map((node) => ({ x: node.px, y: node.py }));
   const existing = cache.get(simplexKey);
-  if (existing && positions.every((point, index) => Math.hypot(point.x - existing.positions[index].x, point.y - existing.positions[index].y) <= 2)) {
+  if (
+    existing &&
+    positions.every(
+      (point, index) => Math.hypot(point.x - existing.positions[index].x, point.y - existing.positions[index].y) <= 2,
+    )
+  ) {
     return existing;
   }
 
@@ -158,7 +166,9 @@ export function renderBlob(
   const [r, g, b] = effectiveColorForSimplex(model, simplex);
   const blobR = 36 + (simplex.weight ?? 1) * 24 + (simplex.nodes.length - 1 === 3 ? 20 : 0);
   const alpha = focusState.isActive
-    ? focusState.involvesSimplex(simplex, simplexKey) ? baseAlpha : baseAlpha * 0.18
+    ? focusState.involvesSimplex(simplex, simplexKey)
+      ? baseAlpha
+      : baseAlpha * 0.18
     : baseAlpha;
 
   const entry = renderBlobToOffscreen(simplexKey, simplex, nodes, blobR);

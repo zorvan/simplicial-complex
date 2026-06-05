@@ -17,7 +17,9 @@ function parseFrontmatterBlock(content: string): Record<string, unknown> | null 
   try {
     return (parseYaml(match[1]) as Record<string, unknown> | null) ?? null;
   } catch (error) {
-    logger.warn("parser", "Failed to parse frontmatter", { error: error instanceof Error ? error.message : String(error) });
+    logger.warn("parser", "Failed to parse frontmatter", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return null;
   }
 }
@@ -52,7 +54,7 @@ export function parseSimplices(content: string, sourcePath: string, app: App): P
     logger.info("parser", "Parsed frontmatter simplices", {
       sourcePath,
       simplexCount: result.simplices.length,
-      nodeCount: result.nodeIds.size
+      nodeCount: result.nodeIds.size,
     });
     return dedupeParsed(result);
   }
@@ -78,7 +80,7 @@ export function parseSimplices(content: string, sourcePath: string, app: App): P
   logger.info("parser", "Parsed inline simplices", {
     sourcePath,
     simplexCount: result.simplices.length,
-    nodeCount: result.nodeIds.size
+    nodeCount: result.nodeIds.size,
   });
   return dedupeParsed(result);
 }

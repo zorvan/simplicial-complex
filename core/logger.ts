@@ -39,5 +39,5 @@ export const logger = {
   },
   error(scope: string, message: string, details?: Record<string, unknown>): void {
     write("error", scope, message, details);
-  }
+  },
 };

@@ -19,7 +19,7 @@ export function scoreCandidate(
   const uniqueDomains = new Set(nodes.map((n) => n.domain)).size;
   score += uniqueDomains * config.domainDiversityWeight;
 
-  const hasAction = nodes.some((n) => n.role === 'action');
+  const hasAction = nodes.some((n) => n.role === "action");
   if (hasAction) score += config.actionBonus;
 
   const allTags = nodes.flatMap((n) => n.tags);
@@ -31,15 +31,16 @@ export function scoreCandidate(
   score -= commonOverlap * config.commonTagPenalty;
 
   if (!passesDiversityConstraint(nodes, d)) {
-    return { ...candidate, insightScore: 0, class: 'folder-cluster', decayedWeight: 0 };
+    return { ...candidate, insightScore: 0, class: "folder-cluster", decayedWeight: 0 };
   }
 
-  const classification = d === 2
-    ? qualifiesAsCore(nodes, config.minDomainsForTetra, config.minRolesForTetra)
-    : { qualifies: true, isSuper: false, class: 'cross-domain' as const };
+  const classification =
+    d === 2
+      ? qualifiesAsCore(nodes, config.minDomainsForTetra, config.minRolesForTetra)
+      : { qualifies: true, isSuper: false, class: "cross-domain" as const };
 
   if (!classification.qualifies) {
-    return { ...candidate, insightScore: 0, class: 'folder-cluster', decayedWeight: 0 };
+    return { ...candidate, insightScore: 0, class: "folder-cluster", decayedWeight: 0 };
   }
 
   const decayedWeight = applyTemporalDecay(candidate.weight ?? 1.0, nodes, {

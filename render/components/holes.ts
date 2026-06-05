@@ -19,7 +19,7 @@ export function drawPhantomHoles(
   if (!analysis.betti?.holes?.length) return;
 
   const allNodes = model.getAllNodes();
-  const nodeMap = new Map(allNodes.map(n => [n.id, n]));
+  const nodeMap = new Map(allNodes.map((n) => [n.id, n]));
 
   ctx.save();
   ctx.setLineDash([8, 4]);
@@ -40,44 +40,39 @@ function drawSingleHole(
   visibleBounds: VisibleBounds,
   hoveredHoleKey: string | null,
 ): void {
-  const nodes = hole.boundaryNodes
-    .map(id => nodeMap.get(id))
-    .filter(Boolean) as Array<{ px: number; py: number }>;
+  const nodes = hole.boundaryNodes.map((id) => nodeMap.get(id)).filter(Boolean) as Array<{ px: number; py: number }>;
 
   if (nodes.length < 3) return;
 
   // Require ALL nodes to be meaningfully placed (not near origin)
   const MIN_PLACEMENT_DIST = 200;
-  const placedNodes = nodes.filter(n => Math.hypot(n.px, n.py) > MIN_PLACEMENT_DIST);
+  const placedNodes = nodes.filter((n) => Math.hypot(n.px, n.py) > MIN_PLACEMENT_DIST);
   if (placedNodes.length < nodes.length) return;
 
   // Calculate centroid from placed nodes
-  const centroid = placedNodes.reduce(
-    (sum, n) => ({ x: sum.x + n.px, y: sum.y + n.py }),
-    { x: 0, y: 0 }
-  );
+  const centroid = placedNodes.reduce((sum, n) => ({ x: sum.x + n.px, y: sum.y + n.py }), { x: 0, y: 0 });
   centroid.x /= placedNodes.length;
   centroid.y /= placedNodes.length;
 
   // Skip if hole is degenerate (all nodes too close together)
   const MIN_SPREAD = 150;
-  const spread = Math.max(...placedNodes.map(n =>
-    Math.hypot(n.px - centroid.x, n.py - centroid.y)
-  ));
+  const spread = Math.max(...placedNodes.map((n) => Math.hypot(n.px - centroid.x, n.py - centroid.y)));
   if (spread < MIN_SPREAD) return;
 
   // Skip if hole is far outside visible area (generous margin)
   const margin = 300;
-  const holeMinX = Math.min(...placedNodes.map(n => n.px));
-  const holeMaxX = Math.max(...placedNodes.map(n => n.px));
-  const holeMinY = Math.min(...placedNodes.map(n => n.py));
-  const holeMaxY = Math.max(...placedNodes.map(n => n.py));
+  const holeMinX = Math.min(...placedNodes.map((n) => n.px));
+  const holeMaxX = Math.max(...placedNodes.map((n) => n.px));
+  const holeMinY = Math.min(...placedNodes.map((n) => n.py));
+  const holeMaxY = Math.max(...placedNodes.map((n) => n.py));
 
   // Skip if entire hole is outside viewport (with margin)
-  if (holeMaxX < visibleBounds.minX - margin ||
-      holeMinX > visibleBounds.maxX + margin ||
-      holeMaxY < visibleBounds.minY - margin ||
-      holeMinY > visibleBounds.maxY + margin) {
+  if (
+    holeMaxX < visibleBounds.minX - margin ||
+    holeMinX > visibleBounds.maxX + margin ||
+    holeMaxY < visibleBounds.minY - margin ||
+    holeMinY > visibleBounds.maxY + margin
+  ) {
     return;
   }
 
@@ -86,11 +81,7 @@ function drawSingleHole(
   const isHovered = hoveredHoleKey === holeKey;
 
   // Draw phantom simplex outline
-  ctx.strokeStyle = isHovered
-    ? "rgba(255, 165, 0, 0.9)"
-    : isDark
-      ? "rgba(255, 165, 0, 0.5)"
-      : "rgba(255, 140, 0, 0.6)";
+  ctx.strokeStyle = isHovered ? "rgba(255, 165, 0, 0.9)" : isDark ? "rgba(255, 165, 0, 0.5)" : "rgba(255, 140, 0, 0.6)";
 
   ctx.beginPath();
   ctx.moveTo(placedNodes[0].px, placedNodes[0].py);
@@ -101,15 +92,15 @@ function drawSingleHole(
   ctx.stroke();
 
   // Fill with subtle color
-  ctx.fillStyle = isHovered
-    ? "rgba(255, 165, 0, 0.15)"
-    : "rgba(255, 165, 0, 0.05)";
+  ctx.fillStyle = isHovered ? "rgba(255, 165, 0, 0.15)" : "rgba(255, 165, 0, 0.05)";
   ctx.fill();
 
   // Draw missing indicator at centroid (only if hovered or hole is small)
   const holeSize = Math.sqrt(
-    placedNodes.reduce((sum: number, n: { px: number; py: number }) => sum + (n.px - centroid.x) ** 2 + (n.py - centroid.y) ** 2, 0)
-    / placedNodes.length
+    placedNodes.reduce(
+      (sum: number, n: { px: number; py: number }) => sum + (n.px - centroid.x) ** 2 + (n.py - centroid.y) ** 2,
+      0,
+    ) / placedNodes.length,
   );
 
   if (isHovered || holeSize < 200) {

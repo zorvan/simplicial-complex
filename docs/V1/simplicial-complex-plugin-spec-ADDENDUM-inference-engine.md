@@ -13,11 +13,11 @@ The v0.2 spec generates simplices from metadata co-membership: shared tags, shar
 
 The fundamental mismatch:
 
-| Dimension | What the system computes | What you expect |
-|---|---|---|
-| 1-simplex | similarity | relation |
-| 2-simplex | stronger similarity | interaction |
-| 3-simplex | strongest similarity | synthesis / system |
+| Dimension | What the system computes | What you expect    |
+| --------- | ------------------------ | ------------------ |
+| 1-simplex | similarity               | relation           |
+| 2-simplex | stronger similarity      | interaction        |
+| 3-simplex | strongest similarity     | synthesis / system |
 
 This addendum replaces the similarity model with a **tension model**. Higher simplices are earned — they represent structural gaps, cross-domain bridges, and role heterogeneity. Most candidate simplices should be rejected. The ones that survive should feel surprising.
 
@@ -49,11 +49,11 @@ LayoutEngine → Renderer
 
 ```typescript
 type SimplexSource =
-  | 'user-defined'     // explicit △ syntax or frontmatter
-  | 'inferred-bridge'  // open triad detection
-  | 'inferred-cross'   // cross-domain diversity
-  | 'inferred-nucleus' // project nucleus (action node present)
-  | 'suggested'        // candidate, not yet confirmed by user
+  | "user-defined" // explicit △ syntax or frontmatter
+  | "inferred-bridge" // open triad detection
+  | "inferred-cross" // cross-domain diversity
+  | "inferred-nucleus" // project nucleus (action node present)
+  | "suggested"; // candidate, not yet confirmed by user
 ```
 
 ---
@@ -84,21 +84,21 @@ Before inference runs, build a `RawGraph` from the vault. This is a weighted pai
 interface RawEdge {
   a: NodeID;
   b: NodeID;
-  strength: number;     // [0.0, 1.0] — see strength computation below
+  strength: number; // [0.0, 1.0] — see strength computation below
 }
 
 interface RawGraph {
   nodes: Map<NodeID, NoteProfile>;
-  edges: Map<string, RawEdge>;   // key: normalizeKey([a, b])
+  edges: Map<string, RawEdge>; // key: normalizeKey([a, b])
 }
 
 interface NoteProfile {
   id: NodeID;
   role: NoteRole;
-  domain: string;         // top-level folder name
+  domain: string; // top-level folder name
   tags: string[];
-  modifiedAt: number;     // Unix timestamp
-  linkCount: number;      // outgoing links from this note
+  modifiedAt: number; // Unix timestamp
+  linkCount: number; // outgoing links from this note
 }
 ```
 
@@ -111,8 +111,9 @@ function computeEdgeStrength(a: NoteProfile, b: NoteProfile, app: App): number {
   // Explicit links — strongest signal (bidirectional, counted once)
   const aLinksB = hasExplicitLink(a.id, b.id, app);
   const bLinksA = hasExplicitLink(b.id, a.id, app);
-  if (aLinksB && bLinksA) strength += 0.8;   // mutual link: very strong
-  else if (aLinksB || bLinksA) strength += 0.5;   // one-way link: strong
+  if (aLinksB && bLinksA)
+    strength += 0.8; // mutual link: very strong
+  else if (aLinksB || bLinksA) strength += 0.5; // one-way link: strong
 
   // Rare tag overlap — uncommon shared concepts
   const sharedRare = sharedRareTags(a.tags, b.tags);
@@ -120,7 +121,7 @@ function computeEdgeStrength(a: NoteProfile, b: NoteProfile, app: App): number {
 
   // Common tag penalty — "writing", "idea", etc. add noise, not signal
   const sharedCommon = sharedCommonTags(a.tags, b.tags);
-  strength -= sharedCommon.length * 0.10;
+  strength -= sharedCommon.length * 0.1;
 
   // Same domain penalty — we want cross-domain tension
   if (a.domain === b.domain) strength -= 0.15;
@@ -133,9 +134,9 @@ function computeEdgeStrength(a: NoteProfile, b: NoteProfile, app: App): number {
 
 ```typescript
 function classifyTags(
-  allTags: Map<string, number>,  // tag → note count
+  allTags: Map<string, number>, // tag → note count
   totalNotes: number,
-  threshold = 0.05
+  threshold = 0.05,
 ): { rare: Set<string>; common: Set<string> } {
   const rare = new Set<string>();
   const common = new Set<string>();
@@ -151,19 +152,20 @@ function classifyTags(
 
 ## Rule 1: Open Triad Detection (Bridge Triangles)
 
-This is the highest-value inference rule. It finds places where the graph *almost* closes but doesn't — and proposes a triangle.
+This is the highest-value inference rule. It finds places where the graph _almost_ closes but doesn't — and proposes a triangle.
 
 **Definition:**  
 An open triad is a triple `(A, B, C)` where:
+
 - `strength(A, B) ≥ LINK_THRESHOLD` (A and B are connected)
-- `strength(B, C) ≥ LINK_THRESHOLD` (B and C are connected)  
+- `strength(B, C) ≥ LINK_THRESHOLD` (B and C are connected)
 - `strength(A, C) < CLOSURE_THRESHOLD` (A and C are NOT directly connected)
 
-B is a bridge. The triangle says: *"A and C don't know each other, but they both need B — what does that mean?"*
+B is a bridge. The triangle says: _"A and C don't know each other, but they both need B — what does that mean?"_
 
 ```typescript
-const LINK_THRESHOLD    = 0.4;   // minimum strength to count as "connected"
-const CLOSURE_THRESHOLD = 0.25;  // maximum A–C strength to be "open"
+const LINK_THRESHOLD = 0.4; // minimum strength to count as "connected"
+const CLOSURE_THRESHOLD = 0.25; // maximum A–C strength to be "open"
 
 function detectOpenTriads(graph: RawGraph): CandidateSimplex[] {
   const candidates: CandidateSimplex[] = [];
@@ -176,22 +178,20 @@ function detectOpenTriads(graph: RawGraph): CandidateSimplex[] {
     // For each pair of B's neighbors (A, C)
     for (let i = 0; i < bNeighbors.length; i++) {
       for (let j = i + 1; j < bNeighbors.length; j++) {
-        const a = bNeighbors[i], c = bNeighbors[j];
+        const a = bNeighbors[i],
+          c = bNeighbors[j];
 
         // A and C must not already be strongly connected
         const acStrength = getEdgeStrength(a, c, graph);
         if (acStrength >= CLOSURE_THRESHOLD) continue;
 
         // Open triad score = how strong the bridge is, minus closure
-        const triadScore =
-          getEdgeStrength(a, b, graph) +
-          getEdgeStrength(b, c, graph) -
-          acStrength * 2;
+        const triadScore = getEdgeStrength(a, b, graph) + getEdgeStrength(b, c, graph) - acStrength * 2;
 
         candidates.push({
           nodes: [a, b, c],
-          source: 'inferred-bridge',
-          bridgeNode: b,              // B is the bridge — used for visualization
+          source: "inferred-bridge",
+          bridgeNode: b, // B is the bridge — used for visualization
           triadScore,
           label: null,
           weight: clamp(triadScore / 2, 0.3, 0.9),
@@ -204,8 +204,9 @@ function detectOpenTriads(graph: RawGraph): CandidateSimplex[] {
 }
 ```
 
-**Visualization treatment for bridge triangles:**  
-- Render with a dashed or lighter blob outline to signal: *"this is a hypothesis, not a fact"*
+**Visualization treatment for bridge triangles:**
+
+- Render with a dashed or lighter blob outline to signal: _"this is a hypothesis, not a fact"_
 - Mark the bridge node (B) with a subtle highlight
 - In the metadata panel, label it "bridge triangle" with B named explicitly
 
@@ -219,49 +220,42 @@ Every inferred simplex of dimension ≥ 1 must pass a role diversity check. A si
 
 ```typescript
 type NoteRole =
-  | 'action'     // contains tasks / TODOs — highest priority
-  | 'project'    // has a status property or explicit project tag
-  | 'research'   // academic / investigation framing
-  | 'idea'       // concept or creative seed
-  | 'creative'   // story, fiction, game design
-  | 'reference'  // default / catch-all
+  | "action" // contains tasks / TODOs — highest priority
+  | "project" // has a status property or explicit project tag
+  | "research" // academic / investigation framing
+  | "idea" // concept or creative seed
+  | "creative" // story, fiction, game design
+  | "reference"; // default / catch-all
 
 function extractRole(file: TFile, cache: MetadataCache, content: string): NoteRole {
-  const tags = (cache.getFileCache(file)?.tags ?? []).map(t => t.tag.toLowerCase());
-  const fm   = cache.getFileCache(file)?.frontmatter ?? {};
+  const tags = (cache.getFileCache(file)?.tags ?? []).map((t) => t.tag.toLowerCase());
+  const fm = cache.getFileCache(file)?.frontmatter ?? {};
 
   // Action: note contains open checkboxes
-  if (/- \[ \]/.test(content)) return 'action';
+  if (/- \[ \]/.test(content)) return "action";
 
   // Project: has status or project marker
-  if (fm.status || tags.some(t => ['#project', '#plan', '#initiative'].includes(t)))
-    return 'project';
+  if (fm.status || tags.some((t) => ["#project", "#plan", "#initiative"].includes(t))) return "project";
 
   // Research
-  if (tags.some(t => ['#research', '#paper', '#study', '#analysis'].includes(t)))
-    return 'research';
+  if (tags.some((t) => ["#research", "#paper", "#study", "#analysis"].includes(t))) return "research";
 
   // Creative
-  if (tags.some(t => ['#story', '#fiction', '#game', '#worldbuilding', '#writing'].includes(t)))
-    return 'creative';
+  if (tags.some((t) => ["#story", "#fiction", "#game", "#worldbuilding", "#writing"].includes(t))) return "creative";
 
   // Idea / concept
-  if (tags.some(t => ['#idea', '#concept', '#hypothesis', '#thought'].includes(t)))
-    return 'idea';
+  if (tags.some((t) => ["#idea", "#concept", "#hypothesis", "#thought"].includes(t))) return "idea";
 
-  return 'reference';
+  return "reference";
 }
 ```
 
 ### Diversity Enforcement
 
 ```typescript
-function passesDiversityConstraint(
-  nodes: NoteProfile[],
-  dim: number
-): boolean {
-  const roles   = new Set(nodes.map(n => n.role));
-  const domains = new Set(nodes.map(n => n.domain));
+function passesDiversityConstraint(nodes: NoteProfile[], dim: number): boolean {
+  const roles = new Set(nodes.map((n) => n.role));
+  const domains = new Set(nodes.map((n) => n.domain));
 
   if (dim === 1) {
     // 2-simplex: at least 2 different roles OR 2 different domains
@@ -278,10 +272,11 @@ function passesDiversityConstraint(
 }
 ```
 
-**What gets rejected:**  
-- Triangle of 3 stories from the same folder: ❌ rejected (same domain, same role)  
-- Triangle of story + research + business plan: ✅ accepted  
-- Tetrahedron of 4 ideas: ❌ rejected  
+**What gets rejected:**
+
+- Triangle of 3 stories from the same folder: ❌ rejected (same domain, same role)
+- Triangle of story + research + business plan: ✅ accepted
+- Tetrahedron of 4 ideas: ❌ rejected
 - Tetrahedron of idea + research + project + action: ✅ accepted — this is a "project nucleus"
 
 ---
@@ -291,50 +286,46 @@ function passesDiversityConstraint(
 3-simplices are the rarest and most valuable structures. They should only exist when they represent something genuinely cross-domain.
 
 ```typescript
-const MIN_DOMAINS_FOR_TETRA = 2;   // hard minimum
-const SUPER_INSIGHT_DOMAINS  = 3;  // marks as "super-insight" class
+const MIN_DOMAINS_FOR_TETRA = 2; // hard minimum
+const SUPER_INSIGHT_DOMAINS = 3; // marks as "super-insight" class
 
 function qualifiesAsCore(nodes: NoteProfile[]): {
   qualifies: boolean;
   isSuper: boolean;
   class: SimplexClass;
 } {
-  const domains = new Set(nodes.map(n => n.domain));
-  const roles   = new Set(nodes.map(n => n.role));
-  const hasAction = nodes.some(n => n.role === 'action');
+  const domains = new Set(nodes.map((n) => n.domain));
+  const roles = new Set(nodes.map((n) => n.role));
+  const hasAction = nodes.some((n) => n.role === "action");
 
   if (domains.size < MIN_DOMAINS_FOR_TETRA) {
-    return { qualifies: false, isSuper: false, class: 'folder-cluster' };
+    return { qualifies: false, isSuper: false, class: "folder-cluster" };
   }
 
   const isSuper = domains.size >= SUPER_INSIGHT_DOMAINS && roles.size >= 3;
-  const cls: SimplexClass = hasAction
-    ? 'project-nucleus'
-    : isSuper
-    ? 'super-insight'
-    : 'cross-domain-core';
+  const cls: SimplexClass = hasAction ? "project-nucleus" : isSuper ? "super-insight" : "cross-domain-core";
 
   return { qualifies: true, isSuper, class: cls };
 }
 
 type SimplexClass =
-  | 'folder-cluster'    // rejected — same-domain, no insight
-  | 'bridge-triangle'   // open triad — hypothetical connection
-  | 'cross-domain'      // 2+ domains, insight value
-  | 'cross-domain-core' // 3+ simplex, 2+ domains
-  | 'project-nucleus'   // contains an action node — priority rendering
-  | 'super-insight'     // 3-simplex, 3+ domains, 3+ roles
+  | "folder-cluster" // rejected — same-domain, no insight
+  | "bridge-triangle" // open triad — hypothetical connection
+  | "cross-domain" // 2+ domains, insight value
+  | "cross-domain-core" // 3+ simplex, 2+ domains
+  | "project-nucleus" // contains an action node — priority rendering
+  | "super-insight"; // 3-simplex, 3+ domains, 3+ roles
 ```
 
 ### Visual Treatment by Class
 
-| Class | Blob style | Label in panel |
-|---|---|---|
-| `bridge-triangle` | dashed outline, lighter fill | "Bridge — [B] connects [A] and [C]" |
-| `cross-domain` | standard blob | cluster label |
-| `project-nucleus` | stronger fill, node with action highlighted | "Project nucleus" |
-| `super-insight` | brightest fill, subtle pulse animation | "Cross-domain synthesis" |
-| `folder-cluster` | **not rendered** | — |
+| Class             | Blob style                                  | Label in panel                      |
+| ----------------- | ------------------------------------------- | ----------------------------------- |
+| `bridge-triangle` | dashed outline, lighter fill                | "Bridge — [B] connects [A] and [C]" |
+| `cross-domain`    | standard blob                               | cluster label                       |
+| `project-nucleus` | stronger fill, node with action highlighted | "Project nucleus"                   |
+| `super-insight`   | brightest fill, subtle pulse animation      | "Cross-domain synthesis"            |
+| `folder-cluster`  | **not rendered**                            | —                                   |
 
 ---
 
@@ -344,8 +335,8 @@ Notes untouched for a long time should not dominate the graph. Apply decay to in
 
 ```typescript
 interface DecayConfig {
-  halfLifeDays: number;      // default: 90 days — weight halves every 90 days
-  minimumWeight: number;     // default: 0.1 — never fully invisible
+  halfLifeDays: number; // default: 90 days — weight halves every 90 days
+  minimumWeight: number; // default: 0.1 — never fully invisible
   roleModifier: Record<NoteRole, number>; // action notes decay slower
 }
 
@@ -353,29 +344,24 @@ const DEFAULT_DECAY: DecayConfig = {
   halfLifeDays: 90,
   minimumWeight: 0.1,
   roleModifier: {
-    action:    0.3,  // actions decay slowly — they're current
-    project:   0.5,
-    research:  0.7,
-    idea:      1.0,  // ideas decay at standard rate
-    creative:  1.2,  // creative notes decay faster
-    reference: 1.5,  // references decay fastest
+    action: 0.3, // actions decay slowly — they're current
+    project: 0.5,
+    research: 0.7,
+    idea: 1.0, // ideas decay at standard rate
+    creative: 1.2, // creative notes decay faster
+    reference: 1.5, // references decay fastest
   },
 };
 
-function applyTemporalDecay(
-  baseWeight: number,
-  nodes: NoteProfile[],
-  config: DecayConfig = DEFAULT_DECAY
-): number {
+function applyTemporalDecay(baseWeight: number, nodes: NoteProfile[], config: DecayConfig = DEFAULT_DECAY): number {
   const now = Date.now();
 
   // Use the most recently modified node — the simplex is as current as its freshest member
-  const mostRecent = Math.max(...nodes.map(n => n.modifiedAt));
+  const mostRecent = Math.max(...nodes.map((n) => n.modifiedAt));
   const ageDays = (now - mostRecent) / (1000 * 60 * 60 * 24);
 
   // Average role modifier across nodes
-  const avgModifier =
-    nodes.reduce((sum, n) => sum + config.roleModifier[n.role], 0) / nodes.length;
+  const avgModifier = nodes.reduce((sum, n) => sum + config.roleModifier[n.role], 0) / nodes.length;
 
   // Exponential decay: w = w₀ × 0.5^(age × modifier / halfLife)
   const decayFactor = Math.pow(0.5, (ageDays * avgModifier) / config.halfLifeDays);
@@ -396,7 +382,7 @@ A **temporal filter slider** in the UI (Phase 2) will let you cut off simplices 
 After all rules run and candidates are generated, rank them. Only pass candidates above `INSIGHT_THRESHOLD` to `SimplicialModel`.
 
 ```typescript
-const INSIGHT_THRESHOLD = 0.45;  // tune this — lower = more noise, higher = more silence
+const INSIGHT_THRESHOLD = 0.45; // tune this — lower = more noise, higher = more silence
 
 interface ScoredCandidate extends CandidateSimplex {
   insightScore: number;
@@ -407,46 +393,45 @@ interface ScoredCandidate extends CandidateSimplex {
 function scoreCandidate(
   candidate: CandidateSimplex,
   profiles: NoteProfile[],
-  config: InferenceConfig
+  config: InferenceConfig,
 ): ScoredCandidate {
-  const nodes = candidate.nodes.map(id => profiles.find(p => p.id === id)!);
+  const nodes = candidate.nodes.map((id) => profiles.find((p) => p.id === id)!);
   const d = nodes.length - 1; // dimension
 
   // Base: triad score (structural tension)
   let score = candidate.triadScore ?? 0;
 
   // Role diversity bonus
-  const uniqueRoles = new Set(nodes.map(n => n.role)).size;
-  score += uniqueRoles * config.ROLE_DIVERSITY_WEIGHT;    // default: 0.2 per unique role
+  const uniqueRoles = new Set(nodes.map((n) => n.role)).size;
+  score += uniqueRoles * config.ROLE_DIVERSITY_WEIGHT; // default: 0.2 per unique role
 
   // Domain diversity bonus
-  const uniqueDomains = new Set(nodes.map(n => n.domain)).size;
+  const uniqueDomains = new Set(nodes.map((n) => n.domain)).size;
   score += uniqueDomains * config.DOMAIN_DIVERSITY_WEIGHT; // default: 0.25 per unique domain
 
   // Action node bonus — presence of an action/task note boosts score
-  const hasAction = nodes.some(n => n.role === 'action');
-  if (hasAction) score += config.ACTION_BONUS;             // default: 0.3
+  const hasAction = nodes.some((n) => n.role === "action");
+  if (hasAction) score += config.ACTION_BONUS; // default: 0.3
 
   // Rare concept bonus
   const rareOverlap = countRareTagOverlap(nodes, config.rareTags);
-  score += rareOverlap * config.RARE_TAG_WEIGHT;           // default: 0.15 per rare tag
+  score += rareOverlap * config.RARE_TAG_WEIGHT; // default: 0.15 per rare tag
 
   // Common tag penalty
   const commonOverlap = countCommonTagOverlap(nodes, config.commonTags);
-  score -= commonOverlap * config.COMMON_TAG_PENALTY;      // default: 0.12 per common tag
+  score -= commonOverlap * config.COMMON_TAG_PENALTY; // default: 0.12 per common tag
 
   // Diversity constraint gate — hard reject if fails
   if (!passesDiversityConstraint(nodes, d)) {
-    return { ...candidate, insightScore: 0, class: 'folder-cluster', decayedWeight: 0 };
+    return { ...candidate, insightScore: 0, class: "folder-cluster", decayedWeight: 0 };
   }
 
   // Classify
-  const classification = d === 2
-    ? qualifiesAsCore(nodes)
-    : { qualifies: true, isSuper: false, class: 'cross-domain' as SimplexClass };
+  const classification =
+    d === 2 ? qualifiesAsCore(nodes) : { qualifies: true, isSuper: false, class: "cross-domain" as SimplexClass };
 
   if (!classification.qualifies) {
-    return { ...candidate, insightScore: 0, class: 'folder-cluster', decayedWeight: 0 };
+    return { ...candidate, insightScore: 0, class: "folder-cluster", decayedWeight: 0 };
   }
 
   // Temporal decay
@@ -460,18 +445,15 @@ function scoreCandidate(
   };
 }
 
-function runInference(
-  graph: RawGraph,
-  config: InferenceConfig
-): Simplex[] {
-  const triads     = detectOpenTriads(graph);
+function runInference(graph: RawGraph, config: InferenceConfig): Simplex[] {
+  const triads = detectOpenTriads(graph);
   const allCandidates = triads; // future: add more rule generators here
 
   return allCandidates
-    .map(c => scoreCandidate(c, [...graph.nodes.values()], config))
-    .filter(c => c.insightScore >= INSIGHT_THRESHOLD && c.class !== 'folder-cluster')
+    .map((c) => scoreCandidate(c, [...graph.nodes.values()], config))
+    .filter((c) => c.insightScore >= INSIGHT_THRESHOLD && c.class !== "folder-cluster")
     .sort((a, b) => b.insightScore - a.insightScore)
-    .map(c => ({
+    .map((c) => ({
       nodes: c.nodes,
       weight: c.decayedWeight,
       label: c.label ?? null,
@@ -488,10 +470,10 @@ function runInference(
 
 Replace the dimensional table from §1.4 of the main spec:
 
-| Dimension | Old meaning | New meaning | Render style |
-|---|---|---|---|
-| 1-simplex | similar | explicitly related (linked) | thin edge |
-| 2-simplex | more similar | **interacting** — bridge or cross-domain | soft blob, dashed if bridge |
+| Dimension | Old meaning  | New meaning                                             | Render style                         |
+| --------- | ------------ | ------------------------------------------------------- | ------------------------------------ |
+| 1-simplex | similar      | explicitly related (linked)                             | thin edge                            |
+| 2-simplex | more similar | **interacting** — bridge or cross-domain                | soft blob, dashed if bridge          |
 | 3-simplex | most similar | **systemic** — multi-domain, multi-role functional unit | strong blob, pulsed if super-insight |
 
 A 3-simplex that fails diversity rules is **not rendered at all** — it collapses to a point or a 1-simplex visually. This is intentional: most of your current 3-simplices should disappear, and the ones that remain should feel earned.
@@ -505,32 +487,32 @@ Add to `PluginSettings` (§5.8 of main spec):
 ```typescript
 interface InferenceSettings {
   // Inference mode
-  inferenceMode: 'emergent' | 'taxonomic' | 'hybrid';
+  inferenceMode: "emergent" | "taxonomic" | "hybrid";
   // 'emergent'   = only tension-based (this addendum)
   // 'taxonomic'  = only metadata co-membership (original v0.2 behavior)
   // 'hybrid'     = both, with emergent simplices styled distinctly
 
   // Thresholds
-  insightThreshold: number;       // default: 0.45 — minimum score to render
-  linkStrengthThreshold: number;  // default: 0.40 — minimum edge strength to count
-  closureThreshold: number;       // default: 0.25 — max A–C strength to be "open"
-  tagRarityThreshold: number;     // default: 0.05 — tags used by < 5% of notes are "rare"
+  insightThreshold: number; // default: 0.45 — minimum score to render
+  linkStrengthThreshold: number; // default: 0.40 — minimum edge strength to count
+  closureThreshold: number; // default: 0.25 — max A–C strength to be "open"
+  tagRarityThreshold: number; // default: 0.05 — tags used by < 5% of notes are "rare"
 
   // Temporal decay
-  decayHalfLifeDays: number;      // default: 90
-  decayMinimumWeight: number;     // default: 0.10
+  decayHalfLifeDays: number; // default: 90
+  decayMinimumWeight: number; // default: 0.10
 
   // Diversity
-  minDomainsForTriangle: number;  // default: 2
-  minDomainsForTetra: number;     // default: 2
-  minRolesForTetra: number;       // default: 2
+  minDomainsForTriangle: number; // default: 2
+  minDomainsForTetra: number; // default: 2
+  minRolesForTetra: number; // default: 2
 
   // Weights
-  roleDiversityWeight: number;    // default: 0.20
-  domainDiversityWeight: number;  // default: 0.25
-  actionBonus: number;            // default: 0.30
-  rareTagWeight: number;          // default: 0.15
-  commonTagPenalty: number;       // default: 0.12
+  roleDiversityWeight: number; // default: 0.20
+  domainDiversityWeight: number; // default: 0.25
+  actionBonus: number; // default: 0.30
+  rareTagWeight: number; // default: 0.15
+  commonTagPenalty: number; // default: 0.12
 }
 ```
 
@@ -594,5 +576,5 @@ Debounce inference runs by **500ms** after vault events to batch rapid consecuti
 
 ---
 
-*End of addendum.*  
-*Entry point: implement `inference/roles.ts` and `inference/graph.ts` first — both are Obsidian-API-independent and fully unit-testable. Then wire `SimplexInferenceEngine` into `main.ts` between `VaultIndex` and `SimplicialModel`.*
+_End of addendum._  
+_Entry point: implement `inference/roles.ts` and `inference/graph.ts` first — both are Obsidian-API-independent and fully unit-testable. Then wire `SimplexInferenceEngine` into `main.ts` between `VaultIndex` and `SimplicialModel`._

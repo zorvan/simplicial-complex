@@ -25,12 +25,7 @@ export interface Hole {
   missingSimplex: NodeID[];
 }
 
-export type SimplexSource =
-  | 'user-defined'
-  | 'inferred-bridge'
-  | 'inferred-cross'
-  | 'inferred-nucleus'
-  | 'suggested';
+export type SimplexSource = "user-defined" | "inferred-bridge" | "inferred-cross" | "inferred-nucleus" | "suggested";
 
 export interface Simplex {
   nodes: NodeID[];
@@ -99,7 +94,7 @@ export interface PluginSettings {
   dampingFactor: number;
   boundaryPadding: number;
   darkMode: "auto" | "force-light" | "force-dark";
-  inferenceMode: 'emergent' | 'taxonomic' | 'hybrid';
+  inferenceMode: "emergent" | "taxonomic" | "hybrid";
   insightThreshold: number;
   linkStrengthThreshold: number;
   linkThresholdLowerBound: number;

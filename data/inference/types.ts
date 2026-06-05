@@ -1,12 +1,6 @@
 import type { SimplexSource } from "../../core/types";
 
-export type NoteRole =
-  | 'action'
-  | 'project'
-  | 'research'
-  | 'idea'
-  | 'creative'
-  | 'reference';
+export type NoteRole = "action" | "project" | "research" | "idea" | "creative" | "reference";
 
 export interface NoteProfile {
   id: string;
@@ -39,14 +33,20 @@ export interface CandidateSimplex {
 
 export interface ScoredCandidate extends CandidateSimplex {
   insightScore: number;
-  class: 'folder-cluster' | 'bridge-triangle' | 'cross-domain' | 'cross-domain-core' | 'project-nucleus' | 'super-insight';
+  class:
+    | "folder-cluster"
+    | "bridge-triangle"
+    | "cross-domain"
+    | "cross-domain-core"
+    | "project-nucleus"
+    | "super-insight";
   decayedWeight: number;
 }
 
-export type SimplexClass = ScoredCandidate['class'];
+export type SimplexClass = ScoredCandidate["class"];
 
 export interface InferenceConfig {
-  inferenceMode: 'emergent' | 'taxonomic' | 'hybrid';
+  inferenceMode: "emergent" | "taxonomic" | "hybrid";
   insightThreshold: number;
   linkStrengthThreshold: number;
   closureThreshold: number;
@@ -61,7 +61,7 @@ export interface InferenceConfig {
   actionBonus: number;
   rareTagWeight: number;
   commonTagPenalty: number;
-  domainSource: 'folder' | 'content-cluster' | 'hybrid';
+  domainSource: "folder" | "content-cluster" | "hybrid";
   contentClusterCount: number;
 }
 

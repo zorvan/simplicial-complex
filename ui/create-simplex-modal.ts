@@ -22,7 +22,7 @@ export class CreateSimplexModal extends Modal {
     contentEl.empty();
     contentEl.createEl("h3", { text: "Create simplex" });
     contentEl.createEl("p", {
-      text: `Review the proposed nodes, then save to ${this.persistenceLabel}. Use commas, spaces, or new lines to separate nodes.`
+      text: `Review the proposed nodes, then save to ${this.persistenceLabel}. Use commas, spaces, or new lines to separate nodes.`,
     });
 
     let textArea: TextAreaComponent | null = null;
@@ -39,14 +39,12 @@ export class CreateSimplexModal extends Modal {
         });
       });
 
-    new Setting(contentEl)
-      .setName("Label")
-      .addText((text) => {
-        text.setPlaceholder("Unnamed");
-        text.onChange((value) => {
-          this.labelInput = value;
-        });
+    new Setting(contentEl).setName("Label").addText((text) => {
+      text.setPlaceholder("Unnamed");
+      text.onChange((value) => {
+        this.labelInput = value;
       });
+    });
 
     new Setting(contentEl)
       .setName("Weight")

@@ -26,9 +26,13 @@ export class VaultIndex {
     private settings: PluginSettings,
     private onExternalChange?: () => void,
   ) {
-    this.debouncedChange = debounce((file: TFile) => {
-      void this.onFileChange(file);
-    }, 100, true);
+    this.debouncedChange = debounce(
+      (file: TFile) => {
+        void this.onFileChange(file);
+      },
+      100,
+      true,
+    );
 
     this.app.vault.on("modify", (file) => file instanceof TFile && this.debouncedChange(file));
     this.app.vault.on("create", (file) => file instanceof TFile && this.debouncedChange(file));
@@ -42,7 +46,7 @@ export class VaultIndex {
     this.lastWrittenHash.set(path, djb2Hash(content));
     logger.debug("vault-index", "Recorded plugin write hash", {
       path,
-      hash: this.lastWrittenHash.get(path)
+      hash: this.lastWrittenHash.get(path),
     });
   }
 
@@ -54,7 +58,7 @@ export class VaultIndex {
   async fullScan(): Promise<void> {
     const files = this.app.vault.getMarkdownFiles();
     logger.info("vault-index", "Starting full vault scan", {
-      fileCount: files.length
+      fileCount: files.length,
     });
 
     let chunk: Array<{ file: TFile; content: string }> = [];
@@ -74,7 +78,7 @@ export class VaultIndex {
     logger.info("vault-index", "Completed full vault scan", {
       fileCount: files.length,
       indexedNodeCount: this.model.nodes.size,
-      simplexCount: this.model.simplices.size
+      simplexCount: this.model.simplices.size,
     });
   }
 
@@ -85,13 +89,13 @@ export class VaultIndex {
     if (this.lastWrittenHash.get(file.path) === currentHash) {
       logger.debug("vault-index", "Suppressed self-triggered modify event", {
         path: file.path,
-        hash: currentHash
+        hash: currentHash,
       });
       return;
     }
     logger.info("vault-index", "Processing changed file", {
       path: file.path,
-      hash: currentHash
+      hash: currentHash,
     });
     this.processFile(file, content);
     await this.scheduleInferenceRebuild();
@@ -110,7 +114,7 @@ export class VaultIndex {
   private onFileRename(file: TFile, oldPath: string): void {
     logger.info("vault-index", "File renamed", {
       oldPath,
-      newPath: file.path
+      newPath: file.path,
     });
     this.model.updateNodeId(oldPath, file.path);
     const oldKeys = this.fileSimplexKeys.get(oldPath);
@@ -137,7 +141,7 @@ export class VaultIndex {
       parsedSimplexCount: parsed.simplices.length,
       parsedNodeCount: parsed.nodeIds.size,
       totalNodeCount: this.model.nodes.size,
-      totalSimplexCount: this.model.simplices.size
+      totalSimplexCount: this.model.simplices.size,
     });
   }
 
@@ -180,17 +184,19 @@ export class VaultIndex {
     let inferred: import("../core/types").Simplex[];
 
     // Use optimized path with cached Betti holes when enabled
-    if (this.settings.enableBettiComputation &&
-        (this.settings.inferenceMode === 'emergent' || this.settings.inferenceMode === 'hybrid')) {
+    if (
+      this.settings.enableBettiComputation &&
+      (this.settings.inferenceMode === "emergent" || this.settings.inferenceMode === "hybrid")
+    ) {
       const holes = this.model.getCachedBetti().holes;
       inferred = runEmergentInferenceWithHoles([...this.inferenceContexts.values()], this.settings, holes);
 
       // Add legacy inferences if in hybrid mode (only taxonomic/legacy, NOT emergent)
-      if (this.settings.inferenceMode === 'hybrid') {
+      if (this.settings.inferenceMode === "hybrid") {
         const legacy = inferSimplicesLegacy([...this.inferenceContexts.values()], this.settings);
         // Deduplicate by key
-        const existingKeys = new Set(inferred.map(s => s.nodes.sort().join("|")));
-        const uniqueLegacy = legacy.filter(s => !existingKeys.has(s.nodes.sort().join("|")));
+        const existingKeys = new Set(inferred.map((s) => s.nodes.sort().join("|")));
+        const uniqueLegacy = legacy.filter((s) => !existingKeys.has(s.nodes.sort().join("|")));
         inferred.push(...uniqueLegacy);
       }
     } else {
@@ -202,7 +208,7 @@ export class VaultIndex {
       inferredSimplexCount: inferred.length,
       totalSimplexCount: this.model.simplices.size,
       totalNodeCount: this.model.nodes.size,
-      enabled: this.settings.enableInferredEdges
+      enabled: this.settings.enableInferredEdges,
     });
     if (snapshot !== this.lastInferredSnapshot) {
       this.lastInferredSnapshot = snapshot;

@@ -58,7 +58,7 @@ export class SimplicialView extends ItemView {
   getDisplayText(): string {
     return "Simplicial graph";
   }
- 
+
   async onOpen(): Promise<void> {
     await Promise.resolve();
     const { contentEl } = this;
@@ -70,9 +70,24 @@ export class SimplicialView extends ItemView {
     this.renderFiltrationControls(hud);
     this.renderLegend(legend);
     const filters = contentEl.createDiv({ cls: "simplicial-filters" });
-    this.addFilterToggle(filters, "edges", () => this.settings.showEdges, (value) => (this.settings.showEdges = value));
-    this.addFilterToggle(filters, "clusters", () => this.settings.showClusters, (value) => (this.settings.showClusters = value));
-    this.addFilterToggle(filters, "cores", () => this.settings.showCores, (value) => (this.settings.showCores = value));
+    this.addFilterToggle(
+      filters,
+      "edges",
+      () => this.settings.showEdges,
+      (value) => (this.settings.showEdges = value),
+    );
+    this.addFilterToggle(
+      filters,
+      "clusters",
+      () => this.settings.showClusters,
+      (value) => (this.settings.showClusters = value),
+    );
+    this.addFilterToggle(
+      filters,
+      "cores",
+      () => this.settings.showCores,
+      (value) => (this.settings.showCores = value),
+    );
 
     // Add floating canvas controls
     this.renderFloatingControls(contentEl);
@@ -85,7 +100,12 @@ export class SimplicialView extends ItemView {
     this.renderer.destroy();
   }
 
-  private addFilterToggle(container: HTMLElement, label: string, getValue: () => boolean, setValue: (_value: boolean) => void): void {
+  private addFilterToggle(
+    container: HTMLElement,
+    label: string,
+    getValue: () => boolean,
+    setValue: (_value: boolean) => void,
+  ): void {
     const button = container.createEl("button", {
       cls: `simplicial-filter ${getValue() ? "is-on" : ""}`,
       text: label,
@@ -233,7 +253,7 @@ export class SimplicialView extends ItemView {
         this.settings.linkThresholdLowerBound = lower;
         this.settings.linkThresholdUpperBound = upper;
         this.onSettingsChanged();
-      }
+      },
     );
 
     // Insight Threshold
@@ -409,7 +429,7 @@ export class SimplicialView extends ItemView {
 
   private updateEventMarkers(): void {
     // Clear existing markers
-    this.eventMarkers.forEach(m => m.remove());
+    this.eventMarkers.forEach((m) => m.remove());
     this.eventMarkers = [];
 
     if (!this.sliderWrap || !this.sliderEl || this.filtrationEvents.length === 0) return;
@@ -418,7 +438,7 @@ export class SimplicialView extends ItemView {
     const sliderRect = this.sliderEl.getBoundingClientRect();
     if (sliderRect.width === 0) return; // Slider not rendered yet
 
-    thresholds.forEach(threshold => {
+    thresholds.forEach((threshold) => {
       const marker = this.sliderWrap!.createDiv({ cls: "simplicial-filtration-marker" });
       const percent = threshold * 100;
       marker.style.setProperty("left", `${percent}%`);

@@ -3,7 +3,7 @@ import type { NodeID, Simplex, RenderFilterMetric } from "./types.js";
 
 export interface FiltrationEvent {
   threshold: number;
-  type: 'component-merge' | 'triangle-close' | 'void-open' | 'void-fill' | 'edge-appear';
+  type: "component-merge" | "triangle-close" | "void-open" | "void-fill" | "edge-appear";
   nodes: NodeID[];
   description: string;
 }
@@ -13,17 +13,16 @@ export interface FiltrationEvent {
  * Events are detected by sorting simplices by weight and tracking
  * when the complex changes topology.
  */
-export function computeFiltrationEvents(
-  model: SimplicialModel,
-  metric: RenderFilterMetric,
-): FiltrationEvent[] {
+export function computeFiltrationEvents(model: SimplicialModel, metric: RenderFilterMetric): FiltrationEvent[] {
   const events: FiltrationEvent[] = [];
-  
-  const simplices = [...model.simplices.entries()].map(([key, simplex]) => ({
-    key,
-    simplex,
-    weight: getSimplexWeight(simplex, metric),
-  })).sort((a, b) => b.weight - a.weight);
+
+  const simplices = [...model.simplices.entries()]
+    .map(([key, simplex]) => ({
+      key,
+      simplex,
+      weight: getSimplexWeight(simplex, metric),
+    }))
+    .sort((a, b) => b.weight - a.weight);
 
   const appearedNodes = new Set<NodeID>();
   const appearedEdges = new Map<string, Set<NodeID>>(); // node -> connected component
@@ -31,7 +30,7 @@ export function computeFiltrationEvents(
 
   for (const { simplex, weight } of simplices) {
     const dim = simplex.nodes.length - 1;
-    
+
     if (dim === 0) {
       // Node appears
       for (const node of simplex.nodes) {
@@ -40,7 +39,7 @@ export function computeFiltrationEvents(
           appearedEdges.set(node, new Set([node]));
           events.push({
             threshold: weight,
-            type: 'edge-appear',
+            type: "edge-appear",
             nodes: [node],
             description: `Node ${node} appears`,
           });
@@ -51,7 +50,7 @@ export function computeFiltrationEvents(
       const [a, b] = simplex.nodes;
       const compA = appearedEdges.get(a);
       const compB = appearedEdges.get(b);
-      
+
       if (compA && compB && compA !== compB) {
         // Merge components
         const merged = new Set([...compA, ...compB]);
@@ -60,7 +59,7 @@ export function computeFiltrationEvents(
         }
         events.push({
           threshold: weight,
-          type: 'component-merge',
+          type: "component-merge",
           nodes: [a, b],
           description: `Components merge via ${a} ↔ ${b}`,
         });
@@ -68,23 +67,21 @@ export function computeFiltrationEvents(
     } else if (dim === 2) {
       // Triangle appears - check if it closes a hole
       const triangleKey = simplex.nodes.sort().join("|");
-      
+
       // Check if this triangle fills a previously open 1-dimensional hole
       const edges = getTriangleEdges(simplex.nodes);
-      const allEdgesExisted = edges.every(edge => {
+      const allEdgesExisted = edges.every((edge) => {
         const edgeKey = edge.sort().join("|");
-        return simplices.some(s => 
-          s.simplex.nodes.length === 2 && 
-          s.simplex.nodes.sort().join("|") === edgeKey &&
-          s.weight > weight
+        return simplices.some(
+          (s) => s.simplex.nodes.length === 2 && s.simplex.nodes.sort().join("|") === edgeKey && s.weight > weight,
         );
       });
-      
+
       if (allEdgesExisted && !appearedTriangles.has(triangleKey)) {
         appearedTriangles.add(triangleKey);
         events.push({
           threshold: weight,
-          type: 'triangle-close',
+          type: "triangle-close",
           nodes: simplex.nodes,
           description: `Triangle closes: ${simplex.nodes.join(" · ")}`,
         });
@@ -115,6 +112,6 @@ function getTriangleEdges(nodes: NodeID[]): [NodeID, NodeID][] {
  * Get unique threshold values where events occur, for slider markers.
  */
 export function getEventThresholds(events: FiltrationEvent[]): number[] {
-  const thresholds = new Set(events.map(e => Math.round(e.threshold * 100) / 100));
+  const thresholds = new Set(events.map((e) => Math.round(e.threshold * 100) / 100));
   return [...thresholds].sort((a, b) => a - b);
 }
