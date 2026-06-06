@@ -140,13 +140,10 @@ export class MetadataPanel extends ItemView {
       text.setPlaceholder("Unnamed");
       text.setValue(simplex.label ?? "");
       text.onChange((value) => {
-        activeWindow.clearTimeout((text.inputEl as HTMLInputElement & { _simplicialTimer?: number })._simplicialTimer);
-        (text.inputEl as HTMLInputElement & { _simplicialTimer?: number })._simplicialTimer = activeWindow.setTimeout(
-          () => {
-            void this.saveMetadata?.(this.simplexKey!, { label: value });
-          },
-          500,
-        );
+        window.clearTimeout((text.inputEl as HTMLInputElement & { _simplicialTimer?: number })._simplicialTimer);
+        (text.inputEl as HTMLInputElement & { _simplicialTimer?: number })._simplicialTimer = window.setTimeout(() => {
+          void this.saveMetadata?.(this.simplexKey!, { label: value });
+        }, 500);
       });
     });
 

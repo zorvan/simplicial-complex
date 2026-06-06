@@ -154,7 +154,7 @@ export class VaultIndex {
   }
 
   private async yieldToBrowser(): Promise<void> {
-    await new Promise<void>((resolve) => activeWindow.setTimeout(resolve, 0));
+    await new Promise<void>((resolve) => window.setTimeout(resolve, 0));
   }
 
   private scheduleInferenceRebuild(delayMs = this.inferenceRebuildDelayMs): Promise<void> {
@@ -164,9 +164,9 @@ export class VaultIndex {
       });
     }
     if (this.inferenceRebuildTimer !== null) {
-      activeWindow.clearTimeout(this.inferenceRebuildTimer);
+      window.clearTimeout(this.inferenceRebuildTimer);
     }
-    this.inferenceRebuildTimer = activeWindow.setTimeout(() => {
+    this.inferenceRebuildTimer = window.setTimeout(() => {
       this.inferenceRebuildTimer = null;
       try {
         this.rebuildInferredSimplices();
@@ -218,7 +218,7 @@ export class VaultIndex {
 
   destroy(): void {
     if (this.inferenceRebuildTimer !== null) {
-      activeWindow.clearTimeout(this.inferenceRebuildTimer);
+      window.clearTimeout(this.inferenceRebuildTimer);
       this.inferenceRebuildTimer = null;
     }
     // Obsidian handles event cleanup via plugin registration scope.

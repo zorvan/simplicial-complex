@@ -82,7 +82,7 @@ export class CreateSimplexModal extends Modal {
         button.onClick(() => this.close());
       });
 
-    activeWindow.setTimeout(() => {
+    window.setTimeout(() => {
       const input = contentEl.querySelector("textarea");
       if (input instanceof HTMLTextAreaElement) input.focus();
     }, 0);

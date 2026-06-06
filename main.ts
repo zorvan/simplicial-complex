@@ -213,7 +213,7 @@ export default class SimplicialPlugin extends Plugin {
   }
 
   onunload(): void {
-    if (this.rescanTimer !== null) activeWindow.clearTimeout(this.rescanTimer);
+    if (this.rescanTimer !== null) window.clearTimeout(this.rescanTimer);
     logger.info("plugin", "Unloading plugin", {
       indexedNodeCount: this.model.nodes.size,
       simplexCount: this.model.simplices.size,
@@ -277,8 +277,8 @@ export default class SimplicialPlugin extends Plugin {
   }
 
   private queueSaveSettings(): void {
-    if (this.saveTimer !== null) activeWindow.clearTimeout(this.saveTimer);
-    this.saveTimer = activeWindow.setTimeout(() => {
+    if (this.saveTimer !== null) window.clearTimeout(this.saveTimer);
+    this.saveTimer = window.setTimeout(() => {
       this.saveTimer = null;
       void this.saveSettings();
     }, 150);
@@ -611,8 +611,8 @@ export default class SimplicialPlugin extends Plugin {
   }
 
   scheduleFullScan(reason: string, delayMs: number): void {
-    if (this.rescanTimer !== null) activeWindow.clearTimeout(this.rescanTimer);
-    this.rescanTimer = activeWindow.setTimeout(async () => {
+    if (this.rescanTimer !== null) window.clearTimeout(this.rescanTimer);
+    this.rescanTimer = window.setTimeout(async () => {
       this.rescanTimer = null;
       logger.info("plugin", "Running full scan", { reason });
       await this.index.fullScan();

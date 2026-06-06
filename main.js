@@ -2575,7 +2575,7 @@ var re = class {
     });
   }
   async yieldToBrowser() {
-    await new Promise((e) => activeWindow.setTimeout(e, 0));
+    await new Promise((e) => window.setTimeout(e, 0));
   }
   scheduleInferenceRebuild(e = this.inferenceRebuildDelayMs) {
     return (
@@ -2583,8 +2583,8 @@ var re = class {
         (this.inferenceRebuildPromise = new Promise((t) => {
           this.resolveInferenceRebuild = t;
         })),
-      this.inferenceRebuildTimer !== null && activeWindow.clearTimeout(this.inferenceRebuildTimer),
-      (this.inferenceRebuildTimer = activeWindow.setTimeout(() => {
+      this.inferenceRebuildTimer !== null && window.clearTimeout(this.inferenceRebuildTimer),
+      (this.inferenceRebuildTimer = window.setTimeout(() => {
         this.inferenceRebuildTimer = null;
         try {
           this.rebuildInferredSimplices();
@@ -2624,7 +2624,7 @@ var re = class {
   }
   destroy() {
     this.inferenceRebuildTimer !== null &&
-      (activeWindow.clearTimeout(this.inferenceRebuildTimer), (this.inferenceRebuildTimer = null));
+      (window.clearTimeout(this.inferenceRebuildTimer), (this.inferenceRebuildTimer = null));
   }
 };
 function mi(s, e, t) {
@@ -2733,7 +2733,7 @@ var oe = class {
       (this.pressX = t),
       (this.pressY = n),
       (this.movedDuringPointerDown = !1),
-      (this.holdTimer = activeWindow.setTimeout(() => {
+      (this.holdTimer = window.setTimeout(() => {
         ((this.holdNode = e), this.onWake?.());
       }, 200)));
   }
@@ -2770,7 +2770,7 @@ var oe = class {
     );
   }
   clearHoldTimer() {
-    this.holdTimer !== null && (activeWindow.clearTimeout(this.holdTimer), (this.holdTimer = null));
+    this.holdTimer !== null && (window.clearTimeout(this.holdTimer), (this.holdTimer = null));
   }
   cancelHoverSelection() {
     this.clearHoverIntent();
@@ -2799,15 +2799,14 @@ var oe = class {
       this.onHoverIntent?.(null);
       return;
     }
-    this.hoverIntentTimer = activeWindow.setTimeout(() => {
+    this.hoverIntentTimer = window.setTimeout(() => {
       let t = this.model.getSimplicesForNode(this.hoveredNodeId).sort((i, r) => (r.weight ?? 1) - (i.weight ?? 1))[0],
         n = t ? N(t.nodes) : null;
       ((this.hoveredSimplexKey = n), this.onHoverIntent?.(n));
     }, e);
   }
   clearHoverIntent() {
-    this.hoverIntentTimer !== null &&
-      (activeWindow.clearTimeout(this.hoverIntentTimer), (this.hoverIntentTimer = null));
+    this.hoverIntentTimer !== null && (window.clearTimeout(this.hoverIntentTimer), (this.hoverIntentTimer = null));
   }
 };
 function pt(s, e) {
@@ -2922,9 +2921,9 @@ var Pe = class s {
       ((this.renderFn = e), (this.getState = t), this.animFrame !== null && cancelAnimationFrame(this.animFrame));
       let n = () => {
         let { nodes: i, simplices: r, bounds: o, holdNode: a } = t();
-        (this.tick(i, r, o, a), e(), this.isAsleep || (this.animFrame = requestAnimationFrame(n)));
+        (this.tick(i, r, o, a), e(), this.isAsleep || (this.animFrame = window.requestAnimationFrame(n)));
       };
-      ((this.isAsleep = !1), (this.animFrame = requestAnimationFrame(n)));
+      ((this.isAsleep = !1), (this.animFrame = window.requestAnimationFrame(n)));
     }
     stop() {
       (this.animFrame !== null && cancelAnimationFrame(this.animFrame), (this.animFrame = null), (this.isAsleep = !0));
@@ -4190,7 +4189,7 @@ var R = require("obsidian"),
           .addExtraButton((i) => {
             (i.setIcon("cross"), i.setTooltip("Cancel"), i.onClick(() => this.close()));
           }),
-        activeWindow.setTimeout(() => {
+        window.setTimeout(() => {
           let i = t.querySelector("textarea");
           i instanceof HTMLTextAreaElement && i.focus();
         }, 0));
@@ -4288,8 +4287,8 @@ var ce = class extends E.ItemView {
       (g.setPlaceholder("Unnamed"),
         g.setValue(n.label ?? ""),
         g.onChange((d) => {
-          (activeWindow.clearTimeout(g.inputEl._simplicialTimer),
-            (g.inputEl._simplicialTimer = activeWindow.setTimeout(() => {
+          (window.clearTimeout(g.inputEl._simplicialTimer),
+            (g.inputEl._simplicialTimer = window.setTimeout(() => {
               this.saveMetadata?.(this.simplexKey, { label: d });
             }, 500)));
         }));
@@ -5412,7 +5411,7 @@ ${r.prompt}`,
       this.registerEvent(this.app.metadataCache.on("resolved", () => this.scheduleFullScan("metadata-resolved", 50))));
   }
   onunload() {
-    (this.rescanTimer !== null && activeWindow.clearTimeout(this.rescanTimer),
+    (this.rescanTimer !== null && window.clearTimeout(this.rescanTimer),
       w.info("plugin", "Unloading plugin", {
         indexedNodeCount: this.model.nodes.size,
         simplexCount: this.model.simplices.size,
@@ -5471,8 +5470,8 @@ ${r.prompt}`,
       }));
   }
   queueSaveSettings() {
-    (this.saveTimer !== null && activeWindow.clearTimeout(this.saveTimer),
-      (this.saveTimer = activeWindow.setTimeout(() => {
+    (this.saveTimer !== null && window.clearTimeout(this.saveTimer),
+      (this.saveTimer = window.setTimeout(() => {
         ((this.saveTimer = null), this.saveSettings());
       }, 150)));
   }
@@ -5742,8 +5741,8 @@ ${r.prompt}`,
     return this.app.metadataCache.getFirstLinkpathDest(t, n)?.path ?? t.trim();
   }
   scheduleFullScan(t, n) {
-    (this.rescanTimer !== null && activeWindow.clearTimeout(this.rescanTimer),
-      (this.rescanTimer = activeWindow.setTimeout(async () => {
+    (this.rescanTimer !== null && window.clearTimeout(this.rescanTimer),
+      (this.rescanTimer = window.setTimeout(async () => {
         ((this.rescanTimer = null),
           w.info("plugin", "Running full scan", { reason: t }),
           await this.index.fullScan(),

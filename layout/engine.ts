@@ -201,11 +201,11 @@ export class LayoutEngine {
       this.tick(nodes, simplices, bounds, holdNode);
       renderFn();
       if (!this.isAsleep) {
-        this.animFrame = requestAnimationFrame(loop);
+        this.animFrame = window.requestAnimationFrame(loop);
       }
     };
     this.isAsleep = false;
-    this.animFrame = requestAnimationFrame(loop);
+    this.animFrame = window.requestAnimationFrame(loop);
   }
 
   stop(): void {

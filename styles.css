@@ -455,5 +455,5 @@
 
 /* Utility classes for hiding/showing elements */
 .simplicial-hidden {
-  display: none !important;
+  display: none;
 }

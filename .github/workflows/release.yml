@@ -1,0 +1,60 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  release:
+    name: Build and Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build production
+        run: npm run build
+
+      - name: Prettify
+        run: npx prettier --write .
+
+      - name: Verify output
+        run: |
+          if [ ! -f main.js ]; then
+            echo "Build failed: main.js not found"
+            exit 1
+          fi
+          if [ ! -f styles.css ]; then
+            echo "Build failed: styles.css not found"
+            exit 1
+          fi
+          echo "Build successful: main.js and styles.css exist"
+
+      - name: Upload release assets with attestations
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-assets
+          path: |
+            main.js
+            styles.css
+            manifest.json
+          if-no-files-found: error
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: |
+            main.js
+            styles.css
+            manifest.json
