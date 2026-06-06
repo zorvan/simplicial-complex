@@ -1,4 +1,4 @@
-/* global activeDocument, activeWindow -- Allow document/window references for context menu and resize handling in Obsidian/Electron environment (ESLint browser globals) */
+/* global activeDocument, window -- Allow document/window references for context menu and resize handling in Obsidian/Electron environment (ESLint browser globals) */
 import { Menu, Notice, Plugin, TFile, type Editor, MarkdownView } from "obsidian";
 import { SimplicialModel } from "./core/model";
 import { normalizeKey, resolveNodeId } from "./core/normalize";
