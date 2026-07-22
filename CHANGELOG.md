@@ -21,15 +21,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI/CD workflow (lint, type-check, build, test)
 - Linting and formatting scripts to `package.json`
 
-### Changed
-
-- Removed `tsc` dummy dependency from `package.json`
-- Updated TODO documentation to clarify research-only items
-
 ### Fixed
 
 - Missing LICENSE file referenced in README
 - Missing SPEC.md file referenced in README and CONTRIBUTING
+
+---
+
+## [0.4.0] - Hardening: scalability, correctness, and maintainability
+
+### Added
+
+- Reverse `NodeID → simplex` index in `SimplicialModel` for O(1) node lookups
+  (replaces linear scans in hover/focus/neighbor paths)
+- Collapsible, filterable settings tab — every setting grouped into sections with a
+  live filter box (no settings removed)
+- Test suites for Betti numbers, filtration events, and the model reverse index,
+  including regressions that lock the node-order and orphan-cleanup fixes
+- `versions.json` (required Obsidian version → minAppVersion map)
+- Runtime log-level control via `setLogLevel`
+
+### Changed
+
+- Logging is quiet by default in production builds (warnings/errors only); verbose
+  in dev builds — removes per-scan/per-save console noise
+- `removeSimplex` orphan cleanup scoped to affected simplices (was up to O(n³))
+- Emergent inference engine deduplicated (`runEmergentInference` /
+  `runEmergentInferenceWithHoles` now share helpers)
+- Release workflow attaches `main.js`/`styles.css`/`manifest.json`/`versions.json`
+  to the GitHub Release (were only uploaded as workflow artifacts, invisible to
+  Obsidian's updater)
+
+### Fixed
+
+- **β₁ over-counting**: unfilled triangles were counted once per vertex, inflating
+  β₁ (and the hole list) threefold; now deduplicated
+- **Filtration events**: component-merge and node-appearance events never fired
+  because component tracking was only seeded from dim-0 simplices (which the model
+  never creates); components are now seeded lazily from edge endpoints, so the
+  filtration slider shows merge markers as intended
+- Betti and filtration analysis no longer mutate stored simplex node order via
+  in-place `.sort()`
+- `saveTimer` now cleared on plugin unload
+- `getCachedBetti()` reuses the analysis cache instead of recomputing
+
+### Removed
+
+- Deprecated `tsc` dummy dependency from `package.json`
 
 ---
 

@@ -88,13 +88,13 @@ function findUnfilledTriangles(nodeIds: NodeID[], edges: Simplex[], triangles: S
 
   const edgeSet = new Set<string>();
   for (const edge of edges) {
-    const [a, b] = edge.nodes.sort();
+    const [a, b] = [...edge.nodes].sort();
     edgeSet.add(`${a}|${b}`);
   }
 
   const triangleSet = new Set<string>();
   for (const tri of triangles) {
-    triangleSet.add(tri.nodes.sort().join("|"));
+    triangleSet.add([...tri.nodes].sort().join("|"));
   }
 
   const adjacency = new Map<NodeID, Set<NodeID>>();
@@ -107,6 +107,9 @@ function findUnfilledTriangles(nodeIds: NodeID[], edges: Simplex[], triangles: S
     adjacency.get(b)?.add(a);
   }
 
+  // Each triangle {a,b,c} is discovered once per vertex, so dedupe by triangle key
+  // to avoid triple-counting the same 1-cycle.
+  const seenHoles = new Set<string>();
   for (let i = 0; i < nodeIds.length; i++) {
     const a = nodeIds[i];
     const neighbors = [...(adjacency.get(a) ?? [])];
@@ -122,7 +125,8 @@ function findUnfilledTriangles(nodeIds: NodeID[], edges: Simplex[], triangles: S
         const sortedNodes = [a, b, c].sort();
         const triangleKey = sortedNodes.join("|");
 
-        if (!triangleSet.has(triangleKey)) {
+        if (!triangleSet.has(triangleKey) && !seenHoles.has(triangleKey)) {
+          seenHoles.add(triangleKey);
           holes.push({
             dimension: 1,
             boundaryNodes: sortedNodes,
@@ -148,7 +152,7 @@ function findHollowTetrahedra(triangles: Simplex[], tetrahedra: Simplex[]): Hole
   const triangleNodes = new Map<string, NodeID[]>();
 
   for (const tri of triangles) {
-    const sorted = tri.nodes.sort();
+    const sorted = [...tri.nodes].sort();
     const key = sorted.join("|");
     triangleSet.add(key);
     triangleNodes.set(key, sorted);
@@ -156,7 +160,7 @@ function findHollowTetrahedra(triangles: Simplex[], tetrahedra: Simplex[]): Hole
 
   const tetraSet = new Set<string>();
   for (const tet of tetrahedra) {
-    tetraSet.add(tet.nodes.sort().join("|"));
+    tetraSet.add([...tet.nodes].sort().join("|"));
   }
 
   const edgeToTriangles = new Map<string, Set<string>>();

@@ -457,3 +457,38 @@
 .simplicial-hidden {
   display: none;
 }
+
+/* Settings tab: filter input + collapsible sections */
+.simplicial-settings-filter {
+  width: 100%;
+  margin: 4px 0 16px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+  color: var(--text-normal);
+}
+
+.simplicial-settings-section {
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  margin-bottom: 10px;
+  padding: 0 14px;
+  background: color-mix(in srgb, var(--background-secondary) 40%, transparent);
+}
+
+.simplicial-settings-summary {
+  cursor: pointer;
+  padding: 10px 4px;
+  font-weight: 600;
+  color: var(--text-normal);
+  list-style-position: inside;
+}
+
+.simplicial-settings-summary:hover {
+  color: var(--interactive-accent);
+}
+
+.simplicial-settings-body {
+  padding-bottom: 6px;
+}

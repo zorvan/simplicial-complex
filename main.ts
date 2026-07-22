@@ -214,6 +214,7 @@ export default class SimplicialPlugin extends Plugin {
 
   onunload(): void {
     if (this.rescanTimer !== null) window.clearTimeout(this.rescanTimer);
+    if (this.saveTimer !== null) window.clearTimeout(this.saveTimer);
     logger.info("plugin", "Unloading plugin", {
       indexedNodeCount: this.model.nodes.size,
       simplexCount: this.model.simplices.size,

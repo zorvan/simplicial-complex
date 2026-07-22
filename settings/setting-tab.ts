@@ -3,6 +3,15 @@ import type SimplicialPlugin from "../main";
 import { ensureCentralFile } from "../data/persistence";
 import type { PluginSettings } from "../core/types";
 
+/** Format a slider value with just enough decimals to match its step. */
+function formatSliderValue(value: number, step: number): string {
+  const decimals = step >= 1 ? 0 : (`${step}`.split(".")[1]?.length ?? 0);
+  return value
+    .toFixed(decimals)
+    .replace(/\.0+$/, "")
+    .replace(/(\.\d*?)0+$/, "$1");
+}
+
 export class SimplicialSettingTab extends PluginSettingTab {
   constructor(
     app: App,
@@ -15,15 +24,51 @@ export class SimplicialSettingTab extends PluginSettingTab {
     const { containerEl } = this;
     containerEl.empty();
 
-    this.renderPersistenceSettings(containerEl);
-    this.renderLayoutSettings(containerEl);
-    this.renderInferenceSettings(containerEl);
-    this.renderCommandUiSettings(containerEl);
-    this.renderBettiSettings(containerEl);
-    this.renderEmergentSettings(containerEl);
-    this.renderLegacySettings(containerEl);
+    this.renderFilter(containerEl);
+    this.renderPersistenceSettings(this.createSection(containerEl, "Persistence"));
+    this.renderLayoutSettings(this.createSection(containerEl, "Layout"));
+    this.renderInferenceSettings(this.createSection(containerEl, "Inference"));
+    this.renderCommandUiSettings(this.createSection(containerEl, "Command and UI"));
+    this.renderBettiSettings(this.createSection(containerEl, "Topology"));
+    this.renderEmergentSettings(this.createSection(containerEl, "Inference engine (emergent)"));
+    this.renderLegacySettings(this.createSection(containerEl, "Legacy inference weights"));
 
     this.refreshSettingVisibility();
+  }
+
+  /** Create a collapsible section and return its content container. */
+  private createSection(containerEl: HTMLElement, title: string): HTMLElement {
+    const details = containerEl.createEl("details", { cls: "simplicial-settings-section" });
+    details.open = true;
+    details.createEl("summary", { text: title, cls: "simplicial-settings-summary" });
+    return details.createDiv({ cls: "simplicial-settings-body" });
+  }
+
+  /** Render the filter input that shows/hides individual settings by name or description. */
+  private renderFilter(containerEl: HTMLElement): void {
+    const input = containerEl.createEl("input", {
+      cls: "simplicial-settings-filter",
+      attr: { type: "search", placeholder: "Filter settings…", "aria-label": "Filter settings" },
+    });
+    input.addEventListener("input", () => this.applyFilter(input.value));
+  }
+
+  private applyFilter(query: string): void {
+    const q = query.trim().toLowerCase();
+    const sections = this.containerEl.querySelectorAll<HTMLDetailsElement>("details.simplicial-settings-section");
+    sections.forEach((section) => {
+      let anyVisible = false;
+      section.querySelectorAll<HTMLElement>(".setting-item").forEach((item) => {
+        if (item.classList.contains("setting-item-heading")) return;
+        const name = item.querySelector(".setting-item-name")?.textContent?.toLowerCase() ?? "";
+        const desc = item.querySelector(".setting-item-description")?.textContent?.toLowerCase() ?? "";
+        const match = !q || name.includes(q) || desc.includes(q);
+        item.style.display = match ? "" : "none";
+        if (match) anyVisible = true;
+      });
+      section.style.display = anyVisible || !q ? "" : "none";
+      if (q) section.open = anyVisible;
+    });
   }
 
   private renderPersistenceSettings(containerEl: HTMLElement): void {
@@ -558,19 +603,11 @@ export class SimplicialSettingTab extends PluginSettingTab {
   ): void {
     setting.addSlider((slider) => {
       const valueEl = setting.controlEl.createSpan({ cls: "simplicial-setting-value" });
-      const format = (value: number): string => {
-        const decimals = step >= 1 ? 0 : (`${step}`.split(".")[1]?.length ?? 0);
-        return value
-          .toFixed(decimals)
-          .replace(/\.0+$/, "")
-          .replace(/(\.\d*?)0+$/, "$1");
-      };
-
-      valueEl.setText(format(initialValue));
+      valueEl.setText(formatSliderValue(initialValue, step));
       slider.setLimits(min, max, step);
       slider.setValue(initialValue);
       slider.onChange(async (value) => {
-        valueEl.setText(format(value));
+        valueEl.setText(formatSliderValue(value, step));
         await onChange(value);
       });
     });
@@ -606,13 +643,6 @@ export class SimplicialSettingTab extends PluginSettingTab {
   ): void {
     const setting = new Setting(containerEl).setName(name).setDesc(desc);
     let sliderRef: SliderComponent | null = null;
-    const format = (value: number): string => {
-      const decimals = step >= 1 ? 0 : (`${step}`.split(".")[1]?.length ?? 0);
-      return value
-        .toFixed(decimals)
-        .replace(/\.0+$/, "")
-        .replace(/(\.\d*?)0+$/, "$1");
-    };
 
     setting.addToggle((toggle) => {
       toggle.setTooltip("Enable or disable this inference signal");
@@ -627,12 +657,12 @@ export class SimplicialSettingTab extends PluginSettingTab {
     setting.addSlider((slider) => {
       sliderRef = slider;
       const valueEl = setting.controlEl.createSpan({ cls: "simplicial-setting-value" });
-      valueEl.setText(format(this.plugin.settings[key]));
+      valueEl.setText(formatSliderValue(this.plugin.settings[key], step));
       slider.setLimits(min, max, step);
       slider.setValue(this.plugin.settings[key]);
       slider.setDisabled(!this.plugin.settings[enabledKey]);
       slider.onChange(async (value) => {
-        valueEl.setText(format(value));
+        valueEl.setText(formatSliderValue(value, step));
         this.plugin.settings[key] = value;
         await this.plugin.saveSettings();
       });

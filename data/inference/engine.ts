@@ -6,23 +6,29 @@ import { detectDensityClusters } from "./rules/density-cluster.js";
 import { scoreCandidate } from "./scorer.js";
 import type { CandidateSimplex } from "./types.js";
 
-export function runEmergentInference(contexts: InferenceContext[], config: InferenceConfig): Simplex[] {
-  const graph = buildRawGraph(contexts, config);
-  const triads = detectOpenTriads(graph, config);
-  const densityClusters = detectDensityClusters(graph, config);
-  const dedupedCandidates = new Map<string, CandidateSimplex>();
+type RawGraph = ReturnType<typeof buildRawGraph>;
 
-  [...triads, ...densityClusters].forEach((candidate) => {
+/**
+ * Dedupe candidate simplices (keeping the strongest per node set), score them,
+ * keep the insightful non-folder ones, and map to persisted Simplex records.
+ */
+function scoreCandidatesToSimplices(
+  candidates: CandidateSimplex[],
+  graph: RawGraph,
+  config: InferenceConfig,
+): Simplex[] {
+  const dedupedCandidates = new Map<string, CandidateSimplex>();
+  candidates.forEach((candidate) => {
     const key = [...candidate.nodes].sort().join("|");
     const current = dedupedCandidates.get(key);
     if (!current || (candidate.weight ?? 0) > (current.weight ?? 0)) {
       dedupedCandidates.set(key, candidate);
     }
   });
-  const allCandidates = [...dedupedCandidates.values()];
 
-  const scored = allCandidates
-    .map((c) => scoreCandidate(c, [...graph.nodes.values()], config))
+  const graphNodes = [...graph.nodes.values()];
+  return [...dedupedCandidates.values()]
+    .map((c) => scoreCandidate(c, graphNodes, config))
     .filter((c) => c.insightScore >= config.insightThreshold && c.class !== "folder-cluster")
     .sort((a, b) => b.insightScore - a.insightScore)
     .map((c) => ({
@@ -40,24 +46,25 @@ export function runEmergentInference(contexts: InferenceContext[], config: Infer
       decayedWeight: c.decayedWeight,
       inferredSignals: c.label === "density cluster" ? ["density-cluster"] : [],
       dominantSignal: c.label === "density cluster" ? "semantic" : "soft-cluster",
-      // class is in type; we preserve via label where needed
     }));
+}
 
-  // Add graph edges as 1-simplices so basic links are visible
-  // Fix 3: Percentile-based threshold (eliminates bistability cliff)
-  const edgeSimplices: Simplex[] = [];
-
-  // Compute percentile-based threshold
+/**
+ * Emit raw graph edges as 1-simplices so basic links stay visible.
+ * Uses a percentile-based cutoff (slider 0 → sparsest, 1 → all edges) to avoid a
+ * bistability cliff around a fixed threshold.
+ */
+function buildEmergentEdgeSimplices(graph: RawGraph, config: InferenceConfig): Simplex[] {
   const allStrengths = [...graph.edges.values()]
     .map((e) => e.strength)
     .filter((s) => s > 0)
     .sort((a, b) => b - a);
 
-  // slider = 0.0 → keep top edges (sparse); slider = 1.0 → keep all edges (dense)
   const keepFraction = 1 - config.linkStrengthThreshold;
   const cutoffIdx = Math.max(0, Math.floor(allStrengths.length * keepFraction) - 1);
   const effectiveThreshold = allStrengths[cutoffIdx] ?? 0;
 
+  const edgeSimplices: Simplex[] = [];
   for (const edge of graph.edges.values()) {
     if (edge.strength >= effectiveThreshold) {
       edgeSimplices.push({
@@ -77,7 +84,16 @@ export function runEmergentInference(contexts: InferenceContext[], config: Infer
       });
     }
   }
+  return edgeSimplices;
+}
 
+export function runEmergentInference(contexts: InferenceContext[], config: InferenceConfig): Simplex[] {
+  const graph = buildRawGraph(contexts, config);
+  const triads = detectOpenTriads(graph, config);
+  const densityClusters = detectDensityClusters(graph, config);
+
+  const scored = scoreCandidatesToSimplices([...triads, ...densityClusters], graph, config);
+  const edgeSimplices = buildEmergentEdgeSimplices(graph, config);
   return [...edgeSimplices, ...scored];
 }
 
@@ -97,69 +113,8 @@ export function runEmergentInferenceWithHoles(
   const graph = buildRawGraph(contexts, config);
   const triads = detectOpenTriadsFromHoles(holes, graph, config);
   const densityClusters = detectDensityClusters(graph, config);
-  const dedupedCandidates = new Map<string, CandidateSimplex>();
 
-  [...triads, ...densityClusters].forEach((candidate) => {
-    const key = [...candidate.nodes].sort().join("|");
-    const current = dedupedCandidates.get(key);
-    if (!current || (candidate.weight ?? 0) > (current.weight ?? 0)) {
-      dedupedCandidates.set(key, candidate);
-    }
-  });
-  const allCandidates = [...dedupedCandidates.values()];
-
-  const scored = allCandidates
-    .map((c) => scoreCandidate(c, [...graph.nodes.values()], config))
-    .filter((c) => c.insightScore >= config.insightThreshold && c.class !== "folder-cluster")
-    .sort((a, b) => b.insightScore - a.insightScore)
-    .map((c) => ({
-      nodes: c.nodes,
-      weight: c.decayedWeight,
-      label: c.label ?? undefined,
-      source: c.source,
-      sourcePath: undefined,
-      autoGenerated: true,
-      inferred: true,
-      userDefined: false,
-      suggested: true,
-      colorKey: "neutral" as const,
-      confidence: c.insightScore,
-      decayedWeight: c.decayedWeight,
-      inferredSignals: c.label === "density cluster" ? ["density-cluster"] : [],
-      dominantSignal: c.label === "density cluster" ? "semantic" : "soft-cluster",
-    }));
-
-  // Add graph edges as 1-simplices
-  const edgeSimplices: Simplex[] = [];
-
-  const allStrengths = [...graph.edges.values()]
-    .map((e) => e.strength)
-    .filter((s) => s > 0)
-    .sort((a, b) => b - a);
-
-  const keepFraction = 1 - config.linkStrengthThreshold;
-  const cutoffIdx = Math.max(0, Math.floor(allStrengths.length * keepFraction) - 1);
-  const effectiveThreshold = allStrengths[cutoffIdx] ?? 0;
-
-  for (const edge of graph.edges.values()) {
-    if (edge.strength >= effectiveThreshold) {
-      edgeSimplices.push({
-        nodes: [edge.a, edge.b],
-        weight: edge.strength,
-        source: "suggested",
-        sourcePath: undefined,
-        autoGenerated: true,
-        inferred: true,
-        userDefined: false,
-        suggested: edge.strength >= config.closureThreshold,
-        colorKey: "neutral",
-        confidence: edge.strength,
-        decayedWeight: edge.strength,
-        inferredSignals: ["emergent-edge"],
-        dominantSignal: "link",
-      });
-    }
-  }
-
+  const scored = scoreCandidatesToSimplices([...triads, ...densityClusters], graph, config);
+  const edgeSimplices = buildEmergentEdgeSimplices(graph, config);
   return [...edgeSimplices, ...scored];
 }

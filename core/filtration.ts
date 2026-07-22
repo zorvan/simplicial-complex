@@ -25,37 +25,42 @@ export function computeFiltrationEvents(model: SimplicialModel, metric: RenderFi
     .sort((a, b) => b.weight - a.weight);
 
   const appearedNodes = new Set<NodeID>();
-  const appearedEdges = new Map<string, Set<NodeID>>(); // node -> connected component
+  const nodeComponent = new Map<NodeID, Set<NodeID>>(); // node -> its connected component
   const appearedTriangles = new Set<string>();
+
+  // Register a node as a singleton component the first time it is seen (on a 0- or
+  // 1-simplex). The model never emits 0-simplices, so without this lazy seeding
+  // component tracking stayed empty and no merge events ever fired.
+  const ensureNode = (node: NodeID, weight: number): void => {
+    if (appearedNodes.has(node)) return;
+    appearedNodes.add(node);
+    nodeComponent.set(node, new Set([node]));
+    events.push({
+      threshold: weight,
+      type: "edge-appear",
+      nodes: [node],
+      description: `Node ${node} appears`,
+    });
+  };
 
   for (const { simplex, weight } of simplices) {
     const dim = simplex.nodes.length - 1;
 
     if (dim === 0) {
-      // Node appears
-      for (const node of simplex.nodes) {
-        if (!appearedNodes.has(node)) {
-          appearedNodes.add(node);
-          appearedEdges.set(node, new Set([node]));
-          events.push({
-            threshold: weight,
-            type: "edge-appear",
-            nodes: [node],
-            description: `Node ${node} appears`,
-          });
-        }
-      }
+      ensureNode(simplex.nodes[0], weight);
     } else if (dim === 1) {
-      // Edge appears - check for component merge
+      // Edge appears - seed its endpoints, then check for a component merge.
       const [a, b] = simplex.nodes;
-      const compA = appearedEdges.get(a);
-      const compB = appearedEdges.get(b);
+      ensureNode(a, weight);
+      ensureNode(b, weight);
+      const compA = nodeComponent.get(a)!;
+      const compB = nodeComponent.get(b)!;
 
-      if (compA && compB && compA !== compB) {
+      if (compA !== compB) {
         // Merge components
         const merged = new Set([...compA, ...compB]);
         for (const node of merged) {
-          appearedEdges.set(node, merged);
+          nodeComponent.set(node, merged);
         }
         events.push({
           threshold: weight,
@@ -66,14 +71,14 @@ export function computeFiltrationEvents(model: SimplicialModel, metric: RenderFi
       }
     } else if (dim === 2) {
       // Triangle appears - check if it closes a hole
-      const triangleKey = simplex.nodes.sort().join("|");
+      const triangleKey = [...simplex.nodes].sort().join("|");
 
       // Check if this triangle fills a previously open 1-dimensional hole
       const edges = getTriangleEdges(simplex.nodes);
       const allEdgesExisted = edges.every((edge) => {
-        const edgeKey = edge.sort().join("|");
+        const edgeKey = [...edge].sort().join("|");
         return simplices.some(
-          (s) => s.simplex.nodes.length === 2 && s.simplex.nodes.sort().join("|") === edgeKey && s.weight > weight,
+          (s) => s.simplex.nodes.length === 2 && [...s.simplex.nodes].sort().join("|") === edgeKey && s.weight > weight,
         );
       });
 
