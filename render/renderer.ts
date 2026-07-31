@@ -14,6 +14,8 @@ import { SimplicialModel } from "../core/model";
 import { LayoutEngine } from "../layout/engine";
 import { InteractionController } from "../interaction/controller";
 import { renderBlob, renderHyperedge } from "./blobs";
+import { encounterStyle, pulsePhase, pulsedNodeRadius } from "./encounter-style";
+import { closureDeficit } from "../core/diagnostics";
 import { renderEdges } from "./edges";
 import { effectiveColorForSimplex } from "./palette";
 import { drawBettiHUD, drawEncounterHUD } from "./components/hud";
@@ -82,6 +84,8 @@ export class Renderer {
   private lassoPath: Array<{ x: number; y: number }> = [];
   private isLassoActive = false;
   private hoveredHoleKey: string | null = null;
+  private reducedMotionQuery = activeWindow.matchMedia("(prefers-reduced-motion: reduce)");
+  private pulseHeld = false;
   private isPanning = false;
   private panStartScreenX = 0;
   private panStartScreenY = 0;
@@ -687,6 +691,26 @@ export class Renderer {
     });
   }
 
+  /**
+   * HG-17. The breath is only drawn while an encounter is *explicitly* focused —
+   * hovering a member node highlights its encounters but does not set them
+   * breathing, because that would assert alignment the user did not ask for.
+   *
+   * A reader who has asked their system for less motion gets the static highlight
+   * instead: the same emphasis, held still. Same for the settings kill switch.
+   */
+  private encounterPulse(focusState: { hoveredHyperedgeKey: RelationKey | null }): number {
+    if (!this.settings.enableHyperedgePulse) return 0;
+    if (this.reducedMotionQuery.matches) return 0;
+    if (!focusState.hoveredHyperedgeKey) return 0;
+    return pulsePhase(Date.now());
+  }
+
+  /** Null when the encounter is too large to enumerate — unmeasured, not zero. */
+  private encounterDeficit(key: RelationKey): number | null {
+    return closureDeficit(this.model, key)?.deficit ?? null;
+  }
+
   private alphaForDimension(dim: number, focused: boolean): number {
     if (dim === 1) return focused ? 0.18 : 0.1;
     if (dim === 2) return focused ? 0.18 : 0.13;
@@ -958,14 +982,28 @@ export class Renderer {
 
     // Encounters draw above the simplicial fields: a transient enclosure has to read
     // as laid over the structure, not as another layer of it.
+    const pulse = this.encounterPulse(focusState);
+    if (pulse > 0 !== this.pulseHeld) {
+      this.pulseHeld = pulse > 0;
+      this.engine.setAnimationHold(this.pulseHeld);
+    }
+    const pulsingNodeIds = new Set<string>();
     renderableHyperedges.forEach(([key, hyperedge]) => {
+      const focused = !focusState.isActive || focusState.involvesRelation({ kind: "hyperedge", ...hyperedge }, key);
+      const isPulseTarget = pulse > 0 && key === focusState.hoveredHyperedgeKey;
+      if (isPulseTarget) hyperedge.nodes.forEach((nodeId) => pulsingNodeIds.add(nodeId));
       renderHyperedge(
         ctx,
         hyperedge,
         allNodes,
         this.hyperedgeColor(hyperedge),
-        this.settings.hyperedgeOpacity,
-        !focusState.isActive || focusState.involvesRelation({ kind: "hyperedge", ...hyperedge }, key),
+        encounterStyle({
+          opacity: this.settings.hyperedgeOpacity,
+          focused,
+          deficit: this.encounterDeficit(key),
+          emergent: hyperedge.persistence === "recurring" && !hyperedge.crystallizedInto,
+          pulse: isPulseTarget ? pulse : 0,
+        }),
       );
     });
 
@@ -982,14 +1020,19 @@ export class Renderer {
         ctx.fillStyle = `rgba(${r},${g},${b},0.10)`;
         ctx.fill();
       }
+      // In phase, not each on its own clock: the members are being breathed
+      // together, which is the assertion — temporary alignment of attention.
+      const baseRadius = this.settings.formalMode ? 4.5 : isHovered ? 7 : 5;
+      const nodeRadius = pulsingNodeIds.has(node.id) ? pulsedNodeRadius(baseRadius, pulse) : baseRadius;
+
       ctx.beginPath();
       if (node.isVirtual) {
-        ctx.arc(node.px, node.py, this.settings.formalMode ? 4.5 : isHovered ? 7 : 5, 0, Math.PI * 2);
+        ctx.arc(node.px, node.py, nodeRadius, 0, Math.PI * 2);
         ctx.strokeStyle = `rgba(${r},${g},${b},${node.displayAlpha})`;
         ctx.lineWidth = 1.5;
         ctx.stroke();
       } else {
-        ctx.arc(node.px, node.py, this.settings.formalMode ? 4.5 : isHovered ? 7 : 5, 0, Math.PI * 2);
+        ctx.arc(node.px, node.py, nodeRadius, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(${r},${g},${b},${isActive ? node.displayAlpha : 0.2})`;
         ctx.fill();
       }

@@ -29,6 +29,7 @@ import {
   simpliciality,
 } from "../core/diagnostics.js";
 import { explainEncounter, explainSimpliciality } from "../data/explainer.js";
+import { PULSE_PERIOD_MS, encounterStyle, pulsePhase, pulsedNodeRadius } from "../render/encounter-style.js";
 
 // ---------------------------------------------------------------------------
 // HG-01 — namespaced relation keys
@@ -884,4 +885,92 @@ test("the vault-level reading is absent until there is something to read", () =>
   assert.equal(explainSimpliciality(0.95, 0), null);
   assert.match(explainSimpliciality(0.95, 4)!, /barely saying anything/);
   assert.match(explainSimpliciality(0.1, 4)!, /may not decompose/);
+});
+
+// ---------------------------------------------------------------------------
+// HG-17 — focus and the in-phase pulse
+// ---------------------------------------------------------------------------
+
+test("the pulse is one shared phase, so members breathe together rather than each on its own clock", () => {
+  const now = 1234567;
+  const phase = pulsePhase(now);
+  assert.equal(pulsePhase(now), phase, "the phase depends on time alone");
+  assert.ok(phase >= 0 && phase <= 1);
+
+  // A full period returns to the same point in the breath.
+  assert.ok(Math.abs(pulsePhase(now + PULSE_PERIOD_MS) - phase) < 1e-9);
+  // Half a period is the opposite point.
+  assert.ok(Math.abs(pulsePhase(0) - 0) < 1e-9);
+  assert.ok(Math.abs(pulsePhase(PULSE_PERIOD_MS / 2) - 1) < 1e-9);
+});
+
+test("a still pulse leaves the node exactly as it was — reduced motion is the same shape held still", () => {
+  assert.equal(pulsedNodeRadius(5, 0), 5);
+  assert.ok(pulsedNodeRadius(5, 1) > 5);
+});
+
+test("the layout engine keeps ticking while an animation hold is set", () => {
+  const engine = new LayoutEngine();
+  const nodes: LayoutNode[] = [
+    { id: "a.md", px: 0, py: 0, vx: 0, vy: 0, isVirtual: false, isPinned: true, displayAlpha: 1 },
+  ];
+
+  // A pinned lone node has no kinetic energy, so the engine sleeps immediately.
+  engine.tick(nodes, [], { width: 800, height: 600 }, null, []);
+  assert.equal(engine.isAnimationHeld, false);
+
+  engine.setAnimationHold(true);
+  engine.tick(nodes, [], { width: 800, height: 600 }, null, []);
+  assert.equal(engine.isAnimationHeld, true, "a settled layout must not stop a pulse that has its own clock");
+});
+
+// ---------------------------------------------------------------------------
+// HG-18 — emergence and closure-deficit visuals
+// ---------------------------------------------------------------------------
+
+test("a high closure deficit reads as more unresolved than a low one", () => {
+  const base = { opacity: 0.55, focused: true, emergent: false, pulse: 0 };
+  const unresolved = encounterStyle({ ...base, deficit: 1 });
+  const resolved = encounterStyle({ ...base, deficit: 0 });
+
+  assert.ok(unresolved.dash[1] > resolved.dash[1], "an unresolved encounter has a more open boundary");
+  assert.ok(unresolved.fillAlpha < resolved.fillAlpha, "an encounter on a filled-in neighbourhood may look settled");
+});
+
+test("an unmeasured deficit borrows neither the settled nor the hollow look", () => {
+  const base = { opacity: 0.55, focused: true, emergent: false, pulse: 0 };
+  const unmeasured = encounterStyle({ ...base, deficit: null });
+  const resolved = encounterStyle({ ...base, deficit: 0 });
+  const unresolved = encounterStyle({ ...base, deficit: 1 });
+
+  assert.ok(unmeasured.fillAlpha > unresolved.fillAlpha && unmeasured.fillAlpha < resolved.fillAlpha);
+  assert.ok(unmeasured.dash[1] > resolved.dash[1] && unmeasured.dash[1] < unresolved.dash[1]);
+});
+
+test("only an encounter eligible to crystallize shows the precipitation contour", () => {
+  const base = { opacity: 0.55, focused: true, deficit: 0.5, pulse: 0 };
+  assert.equal(encounterStyle({ ...base, emergent: false }).showEmergenceContour, false);
+  assert.equal(encounterStyle({ ...base, emergent: true }).showEmergenceContour, true);
+});
+
+test("an unfocused encounter recedes without disappearing", () => {
+  const base = { opacity: 0.55, deficit: 0.5, emergent: false, pulse: 0 };
+  const focused = encounterStyle({ ...base, focused: true });
+  const unfocused = encounterStyle({ ...base, focused: false });
+
+  assert.ok(unfocused.strokeAlpha < focused.strokeAlpha);
+  assert.ok(unfocused.strokeAlpha > 0);
+});
+
+test("every style value stays in range across the whole input space", () => {
+  for (const opacity of [0, 0.55, 1, 2, -1]) {
+    for (const deficit of [null, 0, 0.5, 1]) {
+      for (const pulse of [0, 0.5, 1, 3]) {
+        const style = encounterStyle({ opacity, focused: true, deficit, emergent: false, pulse });
+        assert.ok(style.strokeAlpha >= 0 && style.strokeAlpha <= 1, `strokeAlpha ${style.strokeAlpha}`);
+        assert.ok(style.fillAlpha >= 0 && style.fillAlpha <= 1, `fillAlpha ${style.fillAlpha}`);
+        assert.ok(style.lineWidth > 0 && style.dash[0] > 0 && style.dash[1] > 0);
+      }
+    }
+  }
 });

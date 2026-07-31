@@ -169,6 +169,7 @@ export class LayoutEngine {
   private MAX_VELOCITY = 30;
   private USE_BARNES_HUT = true;
   private isAsleep = false;
+  private animationHold = false;
   private animFrame: number | null = null;
   private renderFn: (() => void) | null = null;
   private getState: (() => LayoutState) | null = null;
@@ -221,6 +222,22 @@ export class LayoutEngine {
     if (!this.isAsleep || !this.renderFn || !this.getState) return;
     this.isAsleep = false;
     this.start(this.renderFn, this.getState);
+  }
+
+  /**
+   * Keep ticking even once the layout has settled.
+   *
+   * The engine sleeps on low kinetic energy, which is right for a force layout and
+   * wrong for anything animating on its own clock — a focused encounter's pulse has
+   * no kinetic energy at all and would stop on the first still frame.
+   */
+  setAnimationHold(active: boolean): void {
+    this.animationHold = active;
+    if (active) this.wake();
+  }
+
+  get isAnimationHeld(): boolean {
+    return this.animationHold;
   }
 
   tick(
@@ -420,7 +437,7 @@ export class LayoutEngine {
 
     const kineticEnergy = nodes.reduce((sum, node) => sum + node.vx * node.vx + node.vy * node.vy, 0);
     const averageKineticEnergy = nodes.length > 0 ? kineticEnergy / nodes.length : 0;
-    if (averageKineticEnergy < this.SLEEP_THRESHOLD) {
+    if (averageKineticEnergy < this.SLEEP_THRESHOLD && !this.animationHold) {
       this.isAsleep = true;
     }
   }

@@ -5,7 +5,7 @@
   "type": "module",
   "description": "simplicial complex visualization with topological analysis",
   "scripts": {
-    "build": "node build.mjs production && prettier --write main.js",
+    "build": "node build.mjs production",
     "build:dev": "node build.mjs development",
     "check": "./node_modules/typescript/bin/tsc --noEmit",
     "test": "./node_modules/typescript/bin/tsc -p tsconfig.tests.json && node --test tests-dist/tests/*.test.js",

@@ -270,6 +270,7 @@ export function getDefaultSettings(): PluginSettings {
     pinnedNodes: {},
     showHyperedges: true,
     hyperedgeOpacity: 0.55,
+    enableHyperedgePulse: true,
     encounterRecurrenceThreshold: 3,
     crystallizeFolder: "",
     historyFile: "_simplicial-history.md",

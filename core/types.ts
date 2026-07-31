@@ -191,6 +191,12 @@ export interface PluginSettings {
   /** Defaults keep an existing vault visually identical until a hyperedge exists. */
   showHyperedges: boolean;
   hyperedgeOpacity: number;
+  /**
+   * Whether a focused encounter breathes its participants in phase. A kill switch
+   * that stands alongside `prefers-reduced-motion`, not instead of it — the system
+   * preference is honoured whatever this is set to.
+   */
+  enableHyperedgePulse: boolean;
   /** How many recorded encounters over the same node set flip it to "recurring". */
   encounterRecurrenceThreshold: number;
   /** Folder new notes from "crystallize concept" are created in; empty means vault root. */

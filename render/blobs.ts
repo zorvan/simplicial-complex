@@ -1,6 +1,7 @@
 /* global activeDocument -- Allow activeDocument for canvas creation in Obsidian/Electron environment (ESLint browser globals) */
 import type { Hyperedge, LayoutNode, Simplex } from "../core/types";
 import { SimplicialModel } from "../core/model";
+import type { EncounterStyle } from "./encounter-style";
 import { effectiveColorForSimplex } from "./palette";
 
 type Point = { x: number; y: number };
@@ -161,32 +162,41 @@ export function drawBlobShape(ctx: CanvasRenderingContext2D, ns: LayoutNode[], b
 /** Above this many members an enclosure stops reading as a shape; it gets a marker instead. */
 export const MAX_RENDERED_ENCOUNTER_ORDER = 8;
 
+function drawEnclosure(ctx: CanvasRenderingContext2D, points: Point[], radius: number): void {
+  if (points.length === 2 || areCollinear(points)) {
+    drawCapsule(ctx, points[0], points[points.length - 1], radius);
+    return;
+  }
+  drawSmoothClosed(ctx, expandPoints(sortByAngle(points), radius));
+}
+
 /**
  * A simplex reads as a stable field. An encounter must not: it asserts a moment of
  * togetherness, not a standing structure. So: an open dashed boundary, low fill,
  * no interior gradient and no blur passes — present, but visibly provisional.
+ *
+ * Everything about *how* provisional it looks comes from `encounterStyle`, so the
+ * diagnostics drive the drawing rather than being reported next to it.
  */
 export function renderHyperedge(
   ctx: CanvasRenderingContext2D,
   hyperedge: Hyperedge,
   nodes: LayoutNode[],
   color: [number, number, number],
-  opacity: number,
-  focused: boolean,
+  style: EncounterStyle,
 ): void {
   const ns = resolveNodes(hyperedge, nodes);
   if (ns.length < 2) return;
   const [r, g, b] = color;
-  const alpha = opacity * (focused ? 1 : 0.35);
   const points = ns.map((node) => ({ x: node.px, y: node.py }));
   const radius = 30 + (hyperedge.weight ?? 1) * 14;
 
   ctx.save();
   ctx.lineJoin = "round";
-  ctx.setLineDash([9, 7]);
-  ctx.lineWidth = focused ? 2 : 1.4;
-  ctx.strokeStyle = `rgba(${r},${g},${b},${Math.min(1, alpha * 1.5)})`;
-  ctx.fillStyle = `rgba(${r},${g},${b},${alpha * 0.12})`;
+  ctx.setLineDash(style.dash);
+  ctx.lineWidth = style.lineWidth;
+  ctx.strokeStyle = `rgba(${r},${g},${b},${style.strokeAlpha})`;
+  ctx.fillStyle = `rgba(${r},${g},${b},${style.fillAlpha})`;
 
   if (ns.length > MAX_RENDERED_ENCOUNTER_ORDER) {
     // A large encounter: mark each participant rather than drawing a shape whose
@@ -200,20 +210,27 @@ export function renderHyperedge(
     return;
   }
 
-  if (ns.length === 2 || areCollinear(points)) {
-    drawCapsule(ctx, points[0], points[points.length - 1], radius);
-  } else {
-    drawSmoothClosed(ctx, expandPoints(sortByAngle(points), radius));
-  }
+  drawEnclosure(ctx, points, radius);
   ctx.fill();
   ctx.stroke();
 
+  // HG-18. Precipitation: a second contour drawn inside the first, as if the
+  // encounter were beginning to condense into something with an edge of its own.
+  // It appears only where "crystallize concept" is actually available.
+  if (style.showEmergenceContour) {
+    ctx.setLineDash([2, 5]);
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = `rgba(${r},${g},${b},${Math.min(1, style.strokeAlpha * 0.8)})`;
+    drawEnclosure(ctx, points, radius * 0.62);
+    ctx.stroke();
+  }
+
   // Participation ticks: each member is held by the encounter, not bound to the others.
   ctx.setLineDash([]);
-  ctx.fillStyle = `rgba(${r},${g},${b},${Math.min(1, alpha * 1.2)})`;
+  ctx.fillStyle = `rgba(${r},${g},${b},${Math.min(1, style.strokeAlpha * 0.8)})`;
   points.forEach((point) => {
     ctx.beginPath();
-    ctx.arc(point.x, point.y, focused ? 3.4 : 2.6, 0, Math.PI * 2);
+    ctx.arc(point.x, point.y, style.memberRadius, 0, Math.PI * 2);
     ctx.fill();
   });
   ctx.restore();

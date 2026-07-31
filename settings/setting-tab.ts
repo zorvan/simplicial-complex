@@ -182,6 +182,20 @@ export class SimplicialSettingTab extends PluginSettingTab {
       });
     }
 
+    new Setting(containerEl)
+      .setName("Pulse focused encounters")
+      .setDesc(
+        "Breathe the participants of a focused encounter in phase — a temporary alignment of attention, not a permanent connection. Turned off automatically when your system asks for reduced motion.",
+      )
+      .addToggle((toggle) => {
+        toggle.setValue(this.plugin.settings.enableHyperedgePulse);
+        toggle.onChange(async (value) => {
+          this.plugin.settings.enableHyperedgePulse = value;
+          await this.plugin.saveSettings();
+          this.plugin.renderer.render();
+        });
+      });
+
     {
       const setting = new Setting(containerEl)
         .setName("Recurrence threshold")
