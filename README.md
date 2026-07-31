@@ -5,7 +5,7 @@ My blog post about the motivation and process of creating this plugin : [blog po
 
 ---
 
-![Version](https://img.shields.io/badge/version-0.3.0-green)
+![Version](https://img.shields.io/badge/version-0.4.0-green)
 ![Obsidian](https://img.shields.io/badge/obsidian-%3E%3D1.5.0-blueviolet)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
@@ -61,6 +61,8 @@ Both views are projections of the same underlying simplicial model. Toggle betwe
 
 ## Features
 
+**Hypergraph layer (v0.4.0):** A second kind of togetherness. `◇` records an irreducible encounter that makes no claim about its subgroups — no faces generated, no effect on topology. Four explicit transformations between encounters and simplices, and an append-only history of how each relation came to be.
+
 **Core:** Organic blob renderer, living force-based layout, hover focus, dimension filtering, node pinning, real-time vault updates, formal geometric view, lasso selection, simplex-to-note promotion, centrality analysis.
 
 **Analysis & Inference:** Edge inference from tags/links/folders, suggestion system for missing connections, temporal decay, and centrality measures.
@@ -106,9 +108,96 @@ simplices:
 
 Open the Simplicial Complex view to see your cluster as a living, organic field.
 
+**Record your first encounter:**
+
+When notes belong together but you are _not_ prepared to say their pairs are meaningful on their own:
+
+```markdown
+◇ Levinas AI-Agent refusal
+```
+
+No faces are generated. If the triad later proves compositional, promote it — you will be shown exactly which relations you are about to assert.
+
 ---
 
 # Technical Details
+
+## Two Kinds of Togetherness
+
+The plugin models two different claims about a group of notes, and keeps them structurally separate.
+
+| Claim         | Syntax | Means                                                                                      |
+| ------------- | ------ | ------------------------------------------------------------------------------------------ |
+| **Simplex**   | `△`    | The group is coherent **and so are its sub-relations**. Its faces are generated.           |
+| **Hyperedge** | `◇`    | These notes came together as **one irreducible encounter**. No pair within it is asserted. |
+
+If `Levinas`, `AI Agent` and `Refusal` appeared together during one insight, that does not by itself mean Levinas–Refusal is independently meaningful. The triad may be the smallest unit that makes sense. That is a hyperedge, and generating its faces would assert something you never claimed.
+
+A simplex is not "a better hyperedge." It is a different achievement: the relation has become compositional, supported across its faces. Moving between the two is always an explicit act — see [Transformations](#transformations).
+
+**The invariant:** a hyperedge never generates faces, never enters the simplicial complex, and never affects Betti numbers. An encounter over a triad leaves the triangular hole in that triad exactly where it was — only a simplex fills it.
+
+---
+
+## Defining Encounters
+
+### Inline shorthand
+
+```markdown
+◇ Levinas AI-Agent refusal
+```
+
+`hyperedge:` and `encounter:` work as prose aliases for `◇`. Unlike `△`/`△△`, arity is unbounded — every token on the line becomes a participant, because the group is the unit.
+
+Use the **Insert encounter hyperedge marker** command if `◇` is awkward to type.
+
+### YAML frontmatter
+
+```yaml
+---
+hyperedges:
+  - nodes: [Levinas, AI Agent, refusal]
+    label: "unmandated ethical interruption"
+    mode: encounter
+---
+```
+
+`mode` is your own vocabulary for what sort of encounter it was. `simplices:` and `hyperedges:` are independent arrays — a note may carry both, and the plugin never touches your other frontmatter keys.
+
+### Visual language
+
+Encounters render as **open dashed enclosures** with low fill and no interior gradient — present, but visibly provisional — against the solid membranes of the simplicial fields. Encounters over more than eight notes get per-member markers instead of a hull, since at that size the hull would describe the layout rather than the relation.
+
+---
+
+## Transformations
+
+Four explicit moves, all user-initiated. Available in the metadata panel and the canvas context menu.
+
+| Transformation         | Effect                                                                                              |
+| ---------------------- | --------------------------------------------------------------------------------------------------- |
+| **Create encounter**   | Records a hyperedge. No faces.                                                                      |
+| **Promote to simplex** | You assert the faces are meaningful. Shows the exact list first; keeps the encounter as provenance. |
+| **Relax to encounter** | Withdraws the closure claim, keeps the group relation. Faces another simplex still asserts survive. |
+| **Crystallize**        | A recurring encounter precipitates a new note naming what keeps emerging.                           |
+
+**Recurring encounters are never promoted automatically.** Repetition is evidence, not proof, of simplicial coherence. Recurrence only unlocks crystallization; the assertion stays yours to make.
+
+Because promotion retains the encounter, promote → relax is reversible and the journey stays legible.
+
+---
+
+## Relation History
+
+Every transformation destroys or overwrites something. Without a record, the plugin would quietly assert that the current state was always the state.
+
+So it keeps an append-only log — `_simplicial-history.md` by default — of `encountered`, `recurred`, `created`, `promoted`, `relaxed`, `crystallized` and `dissolved` events, each with a timestamp, the node set, and who did it. Corrections are new events, never edits. Dissolving a relation does not dissolve its history.
+
+Recurrence is a query over this log rather than a stored counter, so it cannot drift from what actually happened. A rescan is deliberately _not_ an encounter — re-reading the same `◇` line on every startup would inflate recurrence into meaninglessness.
+
+Both the log and its path are configurable; disabling it stops new entries and never deletes existing ones.
+
+---
 
 ## Defining Simplices
 
@@ -142,7 +231,7 @@ simplices:
 ---
 ```
 
-Frontmatter takes priority when both are present in the same note. Use it when you want to attach a label or weight to a simplex.
+Frontmatter and inline markers are **merged** — a note may use both, and entries are deduplicated per kind. (Before v0.4.0, frontmatter silently suppressed inline markers in the same note.) Use frontmatter when you want to attach a label or weight.
 
 ### Face generation
 
@@ -186,6 +275,20 @@ Colors are deterministic by simplex order, with stable per-simplex variation ins
 By default, simplex definitions are written to the YAML frontmatter of the note they conceptually belong to. This keeps the vault as the single source of truth and works correctly under Obsidian Sync.
 
 You can switch to a central `_simplicial.md` file in settings if you prefer to keep definitions in one place.
+
+---
+
+## Vault Access and Privacy
+
+This plugin enumerates every markdown file in your vault (`vault.getMarkdownFiles()`) and reads their contents. That is inherent to what it does: it renders a graph over the whole vault, and relation markers can appear in any note.
+
+What it does with that access:
+
+- **Reads** note bodies for `△`/`◇` markers and frontmatter, and note metadata (links, tags, folders, aliases) to infer relations.
+- **Writes** only to: the frontmatter arrays it manages (`simplices:`, `hyperedges:`) in notes you act on, the central file if you enable that mode, the relation history file, and notes you explicitly create via promote or crystallize. Unrelated frontmatter keys and note bodies are left untouched.
+- **Sends nothing anywhere.** The plugin makes no network requests of any kind. There is no telemetry, no sync, no external service. Everything stays in your vault and Obsidian's local plugin data.
+
+Alias resolution builds its index once per vault change rather than per lookup, so enumeration happens when notes change, not on every relation token.
 
 ---
 
@@ -307,8 +410,11 @@ Open Settings → Simplicial Complex to configure:
 
 ## Design Decisions
 
-**Why simplicial complexes and not hypergraphs?**
-Hypergraphs are more general but harder to visualize and reason about. Simplicial complexes are a mathematically well-behaved subset: they carry built-in hierarchy (every face of a simplex is also in the complex), support rigorous topological analysis (Betti numbers, persistent homology), and can be rendered elegantly as organic regions rather than geometric clutter.
+**Why both simplicial complexes and hypergraphs?** _(revised in v0.4.0)_
+Earlier versions modelled only simplicial complexes, on the grounds that they are the mathematically better-behaved subset: built-in hierarchy, rigorous topological analysis, elegant rendering. That is all still true, but it was answering the wrong question. Automatic face generation is correct for simplices and wrong for encounters — it asserts closure nobody claimed. Emergence that cannot be reduced to proper subgroups belongs first to the hypergraph; simplicial structure is what a relation becomes once its coherence is supported across its faces. So the plugin now carries both layers and makes the move between them an explicit, reversible, recorded act.
+
+**Why keep the encounter after promoting it?**
+Discarding it would rewrite the history the relation log exists to protect, and it is what makes relaxation reversible. Two relations over the same node set is exactly the state the namespaced key scheme (`s:` / `h:`) was built to support.
 
 **Why organic blobs and not crisp triangles?**
 The primary use case is cognitive — building and navigating a personal knowledge base. Soft blobs are easier to perceive as "fields of meaning" than precise geometry. The formal geometric view (crisp triangles, wireframe tetrahedra) is planned for v3, when topological analysis becomes the focus.

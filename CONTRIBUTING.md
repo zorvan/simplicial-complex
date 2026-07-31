@@ -147,9 +147,17 @@ Include:
 
 ## Design Philosophy
 
-### Why Simlicial Complexes and Not Hypergraphs?
+### Why Both Simplicial Complexes and Hypergraphs?
 
-Hypergraphs are more general but harder to visualize and reason about. Simplicial complexes are mathematically well-behaved: they carry built-in hierarchy (every face of a simplex is also in the complex), support rigorous topological analysis (Betti numbers, persistent homology), and can be rendered elegantly as organic regions rather than geometric clutter.
+_Revised in v0.4.0. Earlier versions modelled only simplicial complexes._
+
+Simplicial complexes are the mathematically better-behaved object: they carry built-in hierarchy (every face of a simplex is also in the complex), support rigorous topological analysis (Betti numbers, persistent homology), and render elegantly as organic regions rather than geometric clutter. All of that still holds.
+
+But it answered the wrong question. Downward closure is a _claim_, and generating faces makes it on the user's behalf. When three notes appeared together during one insight, that says nothing about whether any two of them mean something apart. Emergence that cannot be reduced to proper subgroups belongs first to the hypergraph; simplicial structure is what a relation becomes once its coherence is supported across its faces.
+
+So both layers exist, kept structurally separate, with explicit user-driven transformations between them.
+
+**The invariant every contributor must preserve:** a hyperedge never passes through `generateFaces()`, never enters `model.simplices`, and never contributes to boundary or Betti computation. `tests/hypergraph.test.ts` asserts this after every public mutation; if you add a mutation, add it there too.
 
 ### Why Organic Blobs and Not Crisp Triangles?
 

@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.4.0]
+
+The hypergraph layer. The plugin previously modelled one kind of togetherness — the simplex, whose defining property is downward closure — and generated faces for every relation. That is correct for simplices and wrong for encounters: a triad that only means something as a triad is a hyperedge, and asserting its pairs claims something the user never said.
+
+### Added
+
+- **`◇` hyperedge syntax** (with `hyperedge:`/`encounter:` aliases) and a `hyperedges:` frontmatter array. Arity is unbounded, unlike `△`/`△△`.
+- **Hypergraph layer in the model** — a store structurally separated from the simplicial complex. Hyperedges never reach `generateFaces()`, never enter `model.simplices`, and never affect Betti numbers.
+- **Namespaced relation keys** (`s:` / `h:`) so a simplex and a hyperedge over the same node set can coexist — which is exactly what promotion produces.
+- **`core/incidence.ts`** — incidence matrix, node degrees, edge sizes, pairwise co-occurrence, and a cached cross-layer map of which implied faces each encounter has.
+- **Four transformations**: create encounter, promote to simplex (with a dialog listing the exact faces to be asserted), relax to encounter, and crystallize concept. All user-initiated; nothing promotes automatically.
+- **Append-only relation history** (`_simplicial-history.md`) recording how each relation came to be. Corrections are new events, never edits; dissolving a relation does not dissolve its history. Recurrence is derived from this log rather than stored as a counter.
+- **Encounter rendering** — open dashed enclosures with low fill, distinct from the solid membranes of simplicial fields. Layout draws encounter members toward a shared centroid without creating pairwise springs.
+- Commands: create encounter from open note, insert `◇` marker. Context-menu and panel actions for every transformation.
+- Settings: show encounters, encounter opacity, recurrence threshold, crystallize folder, relation history toggle and path.
+
+### Changed
+
+- **Frontmatter and inline markers now merge.** `parseSimplices()` previously returned early when `simplices:` frontmatter was present, silently dropping inline `△` markers in the same note. Notes that carry both will now contribute both.
+- Managed frontmatter arrays are only written when there is something to store, so recording an encounter no longer stamps an empty `simplices: []` onto an unrelated note.
+- Parsing and frontmatter handling split into vault-independent modules (`data/parser-core.ts`, `data/frontmatter.ts`); `data/parser.ts` and `data/persistence.ts` are now thin Obsidian adapters.
+- `generateFaces()` is defined in terms of a new `plannedFaces()`, so the promotion preview cannot drift from what actually happens.
+
+### Fixed
+
+- **Release assets now carry build attestations.** The release workflow attested files it then passed to `actions/upload-artifact`, producing a workflow artifact rather than a release asset — the downloadable files had no provenance. Assets are now attested, attached with `gh release upload`, and verified afterwards.
+- **Alias resolution no longer enumerates the vault per lookup.** `resolveNodeId()` walked every markdown file once per unresolved token; it now builds an alias index once per vault change.
+- `window.cancelAnimationFrame` instead of the bare global.
+
 ## [Unreleased]
 
 ### Added
