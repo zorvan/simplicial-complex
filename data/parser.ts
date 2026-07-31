@@ -42,7 +42,7 @@ function simplexFromObject(input: unknown, sourcePath: string, app: App): Simple
 
 export function parseSimplices(content: string, sourcePath: string, app: App): ParsedFileResult {
   const frontmatter = parseFrontmatterBlock(content);
-  const result: ParsedFileResult = { nodeIds: new Set(), simplices: [] };
+  const result: ParsedFileResult = { nodeIds: new Set(), simplices: [], hyperedges: [] };
 
   if (Array.isArray(frontmatter?.simplices)) {
     for (const entry of frontmatter.simplices) {

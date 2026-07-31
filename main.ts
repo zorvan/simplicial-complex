@@ -3,7 +3,7 @@ import { Menu, Notice, Plugin, TFile, type Editor, MarkdownView } from "obsidian
 import { SimplicialModel } from "./core/model";
 import { normalizeKey, resolveNodeId } from "./core/normalize";
 import { logger } from "./core/logger";
-import type { PluginSettings, Simplex } from "./core/types";
+import type { PluginSettings, RelationSelection, Simplex } from "./core/types";
 import { deserializeReinforcement, serializeReinforcement, type ReinforcementState } from "./data/interactions";
 import { VIEW_TYPE_SIMPLICIAL, VIEW_TYPE_SIMPLICIAL_PANEL } from "./core/types";
 import {
@@ -65,8 +65,8 @@ export default class SimplicialPlugin extends Plugin {
     this.controller = new InteractionController(
       this.model,
       () => this.engine.wake(),
-      (simplexKey) => this.panelView?.setSelection(simplexKey),
-      (simplexKey) => void this.openPanel(simplexKey, false),
+      (selection) => this.panelView?.setSelection(selection),
+      (selection) => void this.openPanel(selection, false),
       () => this.queueSaveSettings(),
       (tracker) => this.saveInteractionState(tracker),
     );
@@ -595,13 +595,16 @@ export default class SimplicialPlugin extends Plugin {
     });
   }
 
-  private async openPanel(simplexKey: string | null, active: boolean): Promise<void> {
+  private async openPanel(selection: RelationSelection | string | null, active: boolean): Promise<void> {
     const right = this.app.workspace.getRightLeaf(false);
     if (!right) return;
+    const normalized: RelationSelection | null =
+      typeof selection === "string" ? { kind: "simplex", key: selection } : selection;
     await right.setViewState({ type: VIEW_TYPE_SIMPLICIAL_PANEL, active });
-    this.panelView?.setSelection(simplexKey);
+    this.panelView?.setSelection(normalized);
     logger.info("plugin", "Opened metadata panel", {
-      simplexKey,
+      kind: normalized?.kind ?? null,
+      relationKey: normalized?.key ?? null,
       active,
     });
   }

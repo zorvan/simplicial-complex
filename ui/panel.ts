@@ -1,7 +1,7 @@
 /* global window -- Allow window for setTimeout/clearTimeout in Obsidian/Electron environment (ESLint browser globals) */
 import { ItemView, Notice, Setting, TFile, WorkspaceLeaf, type App } from "obsidian";
 import { SimplicialModel } from "../core/model";
-import type { PluginSettings, Simplex, SimplexKey } from "../core/types";
+import type { PluginSettings, RelationSelection, Simplex, SimplexKey } from "../core/types";
 import { VIEW_TYPE_SIMPLICIAL_PANEL } from "../core/types";
 import { effectiveColorForSimplex } from "../render/palette";
 import { explainSimplex } from "../data/explainer";
@@ -9,6 +9,7 @@ import type { NoteProfile } from "../data/inference/types";
 
 export class MetadataPanel extends ItemView {
   private simplexKey: SimplexKey | null = null;
+  private selection: RelationSelection | null = null;
   private saveMetadata?: (_simplexKey: string, _updates: { label?: string; weight?: number }) => Promise<void>;
   private promoteSimplex?: (_simplexKey: string) => Promise<void>;
   private dissolveSimplex?: (_simplexKey: string) => Promise<void>;
@@ -48,8 +49,11 @@ export class MetadataPanel extends ItemView {
     this.dissolveSimplex = actions.dissolveSimplex;
   }
 
-  setSelection(simplexKey: string | null): void {
-    this.simplexKey = simplexKey;
+  setSelection(selection: RelationSelection | string | null): void {
+    const normalized: RelationSelection | null =
+      typeof selection === "string" ? { kind: "simplex", key: selection } : selection;
+    this.selection = normalized;
+    this.simplexKey = normalized?.kind === "simplex" ? normalized.key : null;
     this.renderPanel();
   }
 

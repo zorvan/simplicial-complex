@@ -1,6 +1,15 @@
 /* global window -- Allow window for setTimeout/clearTimeout in Obsidian/Electron environment (ESLint browser globals) */
-import { normalizeKey } from "../core/normalize";
-import type { FocusState, LayoutNode, NodeID, Simplex, SimplexKey } from "../core/types";
+import { normalizeKey, relationKey } from "../core/normalize";
+import type {
+  FocusState,
+  HigherOrderRelation,
+  LayoutNode,
+  NodeID,
+  RelationKey,
+  RelationSelection,
+  Simplex,
+  SimplexKey,
+} from "../core/types";
 import { SimplicialModel } from "../core/model";
 import { createInteractionTracker, logInteraction, type ReinforcementState } from "../data/interactions";
 
@@ -12,6 +21,8 @@ export class InteractionController {
   hoveredNodeId: NodeID | null = null;
   lockedNodeId: NodeID | null = null;
   hoveredSimplexKey: SimplexKey | null = null;
+  /** Namespaced (`h:`) key of the focused encounter, kept separate so the two layers never alias. */
+  hoveredHyperedgeKey: RelationKey | null = null;
   holdNode: NodeID | null = null;
   private holdTimer: number | null = null;
   private hoverIntentTimer: number | null = null;
@@ -28,8 +39,8 @@ export class InteractionController {
   constructor(
     private model: SimplicialModel,
     private onWake?: () => void,
-    private onSelection?: (simplexKey: string | null) => void,
-    private onHoverIntent?: (simplexKey: string | null) => void,
+    private onSelection?: (selection: RelationSelection | null) => void,
+    private onHoverIntent?: (selection: RelationSelection | null) => void,
     private onPinnedStateChanged?: () => void,
     private onInteraction?: (tracker: ReinforcementState) => void,
   ) {
@@ -72,6 +83,7 @@ export class InteractionController {
   getFocusState(): FocusState {
     const activeNodeIds = new Set<NodeID>();
     const activeSimplexKeys = new Set<SimplexKey>();
+    const activeHyperedgeKeys = new Set<RelationKey>();
     const targetNode = this.lockedNodeId ?? this.hoveredNodeId;
     if (targetNode) {
       activeNodeIds.add(targetNode);
@@ -79,23 +91,41 @@ export class InteractionController {
         activeSimplexKeys.add(normalizeKey(simplex.nodes));
         simplex.nodes.forEach((nodeId) => activeNodeIds.add(nodeId));
       });
+      this.model.getHyperedgesForNode(targetNode).forEach((hyperedge) => {
+        activeHyperedgeKeys.add(relationKey("hyperedge", hyperedge.nodes));
+        hyperedge.nodes.forEach((nodeId) => activeNodeIds.add(nodeId));
+      });
     }
     if (this.hoveredSimplexKey) {
       activeSimplexKeys.add(this.hoveredSimplexKey);
       this.model.getSimplex(this.hoveredSimplexKey)?.nodes.forEach((nodeId) => activeNodeIds.add(nodeId));
     }
+    if (this.hoveredHyperedgeKey) {
+      activeHyperedgeKeys.add(this.hoveredHyperedgeKey);
+      this.model.getHyperedge(this.hoveredHyperedgeKey)?.nodes.forEach((nodeId) => activeNodeIds.add(nodeId));
+    }
+
+    const involvesRelation = (relation: HigherOrderRelation, key?: RelationKey): boolean => {
+      if (relation.kind === "hyperedge") {
+        const hyperedgeKey = key ?? relationKey("hyperedge", relation.nodes);
+        return activeHyperedgeKeys.has(hyperedgeKey) || relation.nodes.some((nodeId) => activeNodeIds.has(nodeId));
+      }
+      const simplexKey = key ?? normalizeKey(relation.nodes);
+      return activeSimplexKeys.has(simplexKey) || relation.nodes.some((nodeId) => activeNodeIds.has(nodeId));
+    };
+
     return {
-      isActive: activeNodeIds.size > 0 || activeSimplexKeys.size > 0,
+      isActive: activeNodeIds.size > 0 || activeSimplexKeys.size > 0 || activeHyperedgeKeys.size > 0,
       lockedNodeId: this.lockedNodeId,
       hoveredNodeId: this.hoveredNodeId,
       hoveredSimplexKey: this.hoveredSimplexKey,
+      hoveredHyperedgeKey: this.hoveredHyperedgeKey,
       activeNodeIds,
       activeSimplexKeys,
+      activeHyperedgeKeys,
       involvesNode: (nodeId: NodeID) => activeNodeIds.has(nodeId),
-      involvesSimplex: (simplex: Simplex, key?: SimplexKey) => {
-        const simplexKey = key ?? normalizeKey(simplex.nodes);
-        return activeSimplexKeys.has(simplexKey) || simplex.nodes.some((nodeId) => activeNodeIds.has(nodeId));
-      },
+      involvesSimplex: (simplex: Simplex, key?: SimplexKey) => involvesRelation({ kind: "simplex", ...simplex }, key),
+      involvesRelation,
     };
   }
 
@@ -112,6 +142,7 @@ export class InteractionController {
     this.clearHoverIntent();
     this.hoveredNodeId = null;
     this.hoveredSimplexKey = null;
+    this.hoveredHyperedgeKey = null;
     this.lockedNodeId = null;
     this.onSelection?.(null);
   }
@@ -205,7 +236,8 @@ export class InteractionController {
   selectSimplex(simplexKey: string | null): void {
     this.clearHoverIntent();
     this.hoveredSimplexKey = simplexKey;
-    this.onSelection?.(simplexKey);
+    this.hoveredHyperedgeKey = null;
+    this.onSelection?.(simplexKey ? { kind: "simplex", key: simplexKey } : null);
     if (simplexKey) {
       const simplex = this.model.getSimplex(simplexKey);
       if (simplex) {
@@ -217,6 +249,33 @@ export class InteractionController {
         });
       }
     }
+  }
+
+  selectHyperedge(hyperedgeKey: RelationKey | null): void {
+    this.clearHoverIntent();
+    this.hoveredHyperedgeKey = hyperedgeKey;
+    this.hoveredSimplexKey = null;
+    this.onSelection?.(hyperedgeKey ? { kind: "hyperedge", key: hyperedgeKey } : null);
+    if (hyperedgeKey) {
+      const hyperedge = this.model.getHyperedge(hyperedgeKey);
+      if (hyperedge) {
+        logInteraction(this.interactionTracker, {
+          type: "select",
+          simplexKey: hyperedgeKey,
+          nodeIds: hyperedge.nodes,
+          weight: 0.1,
+        });
+      }
+    }
+  }
+
+  selectRelation(selection: RelationSelection | null): void {
+    if (!selection) {
+      this.selectSimplex(null);
+      return;
+    }
+    if (selection.kind === "hyperedge") this.selectHyperedge(selection.key);
+    else this.selectSimplex(selection.key);
   }
 
   lerpAlpha(node: LayoutNode, focusState: FocusState): void {
@@ -231,12 +290,12 @@ export class InteractionController {
       return;
     }
     this.hoverIntentTimer = window.setTimeout(() => {
-      const simplexKey = this.model
+      const simplex = this.model
         .getSimplicesForNode(this.hoveredNodeId!)
         .sort((a, b) => (b.weight ?? 1) - (a.weight ?? 1))[0];
-      const nextKey = simplexKey ? normalizeKey(simplexKey.nodes) : null;
+      const nextKey = simplex ? normalizeKey(simplex.nodes) : null;
       this.hoveredSimplexKey = nextKey;
-      this.onHoverIntent?.(nextKey);
+      this.onHoverIntent?.(nextKey ? { kind: "simplex", key: nextKey } : null);
     }, hoverDelayMs);
   }
 
