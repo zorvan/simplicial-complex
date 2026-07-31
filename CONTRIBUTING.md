@@ -63,6 +63,29 @@ npm run format:check # Verify formatting
 npm test             # Compile and run tests
 ```
 
+### Run CI locally
+
+Before pushing, run everything `.github/workflows/ci.yml` runs:
+
+```bash
+npm run verify
+```
+
+This executes the same four jobs in the same order — Lint & Format, Type Check, Build, Test — plus a release preflight that checks `manifest.json`, `package.json` and `versions.json` agree on the version. It takes seconds, needs no Docker, and exits non-zero if any job fails.
+
+For true workflow-level fidelity — the actual runner image, action versions and step wiring — use [`act`](https://github.com/nektos/act):
+
+```bash
+npm run ci:act:list  # list the jobs act sees
+npm run ci:act       # run ci.yml in a container
+```
+
+`act` needs Docker and network access (it runs `npm ci` inside the container), so it is slower and heavier. `npm run verify` is the one to run habitually; reach for `act` when you have changed a workflow file itself.
+
+`release.yml` is not runnable locally in any meaningful way — it needs a real tag, `GITHUB_TOKEN`, and Sigstore attestation. The parts that _are_ checkable locally (build output present, version consistency) are covered by `npm run verify`.
+
+> **Keep them in step.** `scripts/verify.mjs` mirrors `ci.yml` by hand. If you add a job to the workflow, add it there too, or the script stops being the thing it claims to be.
+
 ---
 
 ## Where Contributions Are Most Useful
