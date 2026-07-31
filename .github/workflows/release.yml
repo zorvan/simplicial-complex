@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      id-token: write
       attestations: write
     steps:
       - uses: actions/checkout@v4
@@ -23,38 +24,53 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Verify manifest version matches the release tag
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          MANIFEST=$(node -p "require('./manifest.json').version")
+          if [ "$TAG" != "$MANIFEST" ]; then
+            echo "Release tag $TAG does not match manifest.json version $MANIFEST"
+            exit 1
+          fi
+          echo "Version $MANIFEST matches the tag"
+
       - name: Build production
         run: npm run build
 
-      - name: Prettify
-        run: npx prettier --write .
+      - name: Prettify build output
+        run: npx prettier --write main.js styles.css manifest.json
 
       - name: Verify output
         run: |
-          if [ ! -f main.js ]; then
-            echo "Build failed: main.js not found"
-            exit 1
-          fi
-          if [ ! -f styles.css ]; then
-            echo "Build failed: styles.css not found"
-            exit 1
-          fi
-          echo "Build successful: main.js and styles.css exist"
+          for asset in main.js styles.css manifest.json; do
+            if [ ! -f "$asset" ]; then
+              echo "Build failed: $asset not found"
+              exit 1
+            fi
+          done
+          echo "Build successful: main.js, styles.css and manifest.json exist"
 
-      - name: Upload release assets with attestations
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-assets
-          path: |
-            main.js
-            styles.css
-            manifest.json
-          if-no-files-found: error
-
+      # Attest the exact bytes that are about to become release assets. The previous
+      # workflow attested files it then uploaded with actions/upload-artifact, which
+      # produces a workflow artifact rather than a release asset — so the assets people
+      # actually download carried no provenance.
       - name: Attest build provenance
-        uses: actions/attest-build-provenance@v1
+        uses: actions/attest-build-provenance@v2
         with:
           subject-path: |
             main.js
             styles.css
             manifest.json
+
+      - name: Upload release assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "$GITHUB_REF_NAME" main.js styles.css manifest.json --clobber
+
+      - name: Verify the published assets are attested
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          for asset in main.js styles.css manifest.json; do
+            gh attestation verify "$asset" --repo "$GITHUB_REPOSITORY"
+          done

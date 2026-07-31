@@ -3,6 +3,7 @@ import { debounce, TFile, type App, type TAbstractFile } from "obsidian";
 import { djb2Hash } from "../core/hash.js";
 import { logger } from "../core/logger.js";
 import { SimplicialModel } from "../core/model.js";
+import { invalidateAliasIndex } from "../core/normalize.js";
 import type { Hyperedge, PluginSettings } from "../core/types.js";
 import { buildInferenceContext, inferSimplices, inferSimplicesLegacy, type InferenceContext } from "./inference.js";
 import { runEmergentInferenceWithHoles } from "./inference/engine.js";
@@ -36,10 +37,22 @@ export class VaultIndex {
       true,
     );
 
-    this.app.vault.on("modify", (file) => file instanceof TFile && this.debouncedChange(file));
-    this.app.vault.on("create", (file) => file instanceof TFile && this.debouncedChange(file));
-    this.app.vault.on("delete", (file) => this.onFileDelete(file));
+    // Any note change can add, remove or move an alias, so the alias index is
+    // dropped alongside the model update rather than being re-derived per lookup.
+    this.app.vault.on("modify", (file) => {
+      invalidateAliasIndex();
+      if (file instanceof TFile) this.debouncedChange(file);
+    });
+    this.app.vault.on("create", (file) => {
+      invalidateAliasIndex();
+      if (file instanceof TFile) this.debouncedChange(file);
+    });
+    this.app.vault.on("delete", (file) => {
+      invalidateAliasIndex();
+      this.onFileDelete(file);
+    });
     this.app.vault.on("rename", (file, oldPath) => {
+      invalidateAliasIndex();
       if (file instanceof TFile) this.onFileRename(file, oldPath);
     });
   }
@@ -58,6 +71,7 @@ export class VaultIndex {
   }
 
   async fullScan(): Promise<void> {
+    invalidateAliasIndex();
     const files = this.app.vault.getMarkdownFiles();
     logger.info("vault-index", "Starting full vault scan", {
       fileCount: files.length,

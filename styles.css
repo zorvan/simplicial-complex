@@ -453,6 +453,23 @@
   white-space: nowrap;
 }
 
+/* Promotion confirmation: the faces the user is about to assert */
+.simplicial-promote-faces {
+  margin: 4px 0 12px;
+  padding-left: 20px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-normal);
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.simplicial-promote-note {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
 /* Utility classes for hiding/showing elements */
 .simplicial-hidden {
   display: none;
