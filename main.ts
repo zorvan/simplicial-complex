@@ -256,6 +256,8 @@ export default class SimplicialPlugin extends Plugin {
     logger.info("plugin", "Unloading plugin", {
       indexedNodeCount: this.model.nodes.size,
       simplexCount: this.model.simplices.size,
+      hyperedgeCount: this.model.hyperedges.size,
+      historyEventCount: this.history.size,
     });
     this.renderer.destroy();
     this.index.destroy();

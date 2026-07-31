@@ -2976,9 +2976,12 @@ var ge = class {
   updateSettings(e) {
     ((this.settings = e), this.rebuildInferredSimplices());
   }
+  isPluginInternalFile(e) {
+    return e === this.settings.historyFile;
+  }
   async fullScan() {
     X();
-    let e = this.app.vault.getMarkdownFiles();
+    let e = this.app.vault.getMarkdownFiles().filter((n) => !this.isPluginInternalFile(n.path));
     C.info("vault-index", "Starting full vault scan", { fileCount: e.length });
     let t = [];
     for (let n of e) {
@@ -2995,7 +2998,7 @@ var ge = class {
       }));
   }
   async onFileChange(e) {
-    if (e.extension !== "md") return;
+    if (e.extension !== "md" || this.isPluginInternalFile(e.path)) return;
     let t = await this.app.vault.read(e),
       n = _(t);
     if (this.lastWrittenHash.get(e.path) === n) {
@@ -6430,6 +6433,8 @@ ${s.prompt}`,
       C.info("plugin", "Unloading plugin", {
         indexedNodeCount: this.model.nodes.size,
         simplexCount: this.model.simplices.size,
+        hyperedgeCount: this.model.hyperedges.size,
+        historyEventCount: this.history.size,
       }),
       this.renderer.destroy(),
       this.index.destroy());

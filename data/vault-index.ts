@@ -70,9 +70,18 @@ export class VaultIndex {
     this.rebuildInferredSimplices();
   }
 
+  /**
+   * The relation history is machine-written, append-only and unbounded. Indexing it
+   * would put a growing wall of JSON through the inference engine and add a node
+   * nobody wrote. The central file is different — it holds real definitions.
+   */
+  private isPluginInternalFile(path: string): boolean {
+    return path === this.settings.historyFile;
+  }
+
   async fullScan(): Promise<void> {
     invalidateAliasIndex();
-    const files = this.app.vault.getMarkdownFiles();
+    const files = this.app.vault.getMarkdownFiles().filter((file) => !this.isPluginInternalFile(file.path));
     logger.info("vault-index", "Starting full vault scan", {
       fileCount: files.length,
     });
@@ -100,6 +109,7 @@ export class VaultIndex {
 
   private async onFileChange(file: TFile): Promise<void> {
     if (file.extension !== "md") return;
+    if (this.isPluginInternalFile(file.path)) return;
     const content = await this.app.vault.read(file);
     const currentHash = djb2Hash(content);
     if (this.lastWrittenHash.get(file.path) === currentHash) {
