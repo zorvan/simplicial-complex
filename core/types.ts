@@ -187,6 +187,17 @@ export interface PluginSettings {
   renderFilterMetric: RenderFilterMetric;
   renderFilterThreshold: number;
   pinnedNodes: PinnedState;
+  // --- hypergraph layer (v0.4.0) ---
+  /** Defaults keep an existing vault visually identical until a hyperedge exists. */
+  showHyperedges: boolean;
+  hyperedgeOpacity: number;
+  /** How many recorded encounters over the same node set flip it to "recurring". */
+  encounterRecurrenceThreshold: number;
+  /** Folder new notes from "crystallize concept" are created in; empty means vault root. */
+  crystallizeFolder: string;
+  /** Append-only relation event log (HG-30). */
+  historyFile: string;
+  enableRelationHistory: boolean;
 }
 
 export interface RelationSelection {

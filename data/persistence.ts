@@ -268,5 +268,11 @@ export function getDefaultSettings(): PluginSettings {
     renderFilterMetric: "weight",
     renderFilterThreshold: 0.1,
     pinnedNodes: {},
+    showHyperedges: true,
+    hyperedgeOpacity: 0.55,
+    encounterRecurrenceThreshold: 3,
+    crystallizeFolder: "",
+    historyFile: "_simplicial-history.md",
+    enableRelationHistory: true,
   };
 }

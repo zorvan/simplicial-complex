@@ -3,22 +3,28 @@ import { Menu, Notice, Plugin, TFile, type Editor, MarkdownView } from "obsidian
 import { SimplicialModel } from "./core/model";
 import { normalizeKey, resolveNodeId } from "./core/normalize";
 import { logger } from "./core/logger";
-import type { PluginSettings, RelationSelection, Simplex } from "./core/types";
+import { RelationHistory, syncEncounterPersistence, type RelationEventInput } from "./core/history";
+import type { Hyperedge, PluginSettings, RelationKey, RelationSelection, Simplex } from "./core/types";
 import { deserializeReinforcement, serializeReinforcement, type ReinforcementState } from "./data/interactions";
 import { VIEW_TYPE_SIMPLICIAL, VIEW_TYPE_SIMPLICIAL_PANEL } from "./core/types";
 import {
   ensureCentralFile,
   getDefaultSettings,
+  removeHyperedgeFromManagedFile,
   removeSimplexFromManagedFile,
   readCentralFileState,
+  writeHyperedgeToCentralFile,
+  writeHyperedgeToSourceNote,
   writeSimplexToCentralFile,
   writeSimplexToSourceNote,
 } from "./data/persistence";
+import { HistoryStore } from "./data/history-store";
 import { VaultIndex } from "./data/vault-index";
 import { InteractionController } from "./interaction/controller";
 import { LayoutEngine } from "./layout/engine";
 import { Renderer } from "./render/renderer";
-import { CreateSimplexModal } from "./ui/create-simplex-modal";
+import { CreateSimplexModal, type RelationDraft } from "./ui/create-simplex-modal";
+import { PromoteEncounterModal } from "./ui/promote-encounter-modal";
 import { createPromotedNote, MetadataPanel } from "./ui/panel";
 import { SimplicialView } from "./ui/view";
 import { SimplicialSettingTab } from "./settings/setting-tab";
@@ -30,6 +36,8 @@ export default class SimplicialPlugin extends Plugin {
   engine!: LayoutEngine;
   renderer!: Renderer;
   controller!: InteractionController;
+  history!: RelationHistory;
+  historyStore!: HistoryStore;
   panelView: MetadataPanel | null = null;
   simplicialView: SimplicialView | null = null;
   private saveTimer: number | null = null;
@@ -50,6 +58,11 @@ export default class SimplicialPlugin extends Plugin {
       pinnedNodeCount: Object.keys(this.settings.pinnedNodes).length,
     });
     this.model = new SimplicialModel();
+    this.history = new RelationHistory();
+    this.historyStore = new HistoryStore(this.app, this.settings.historyFile);
+    if (this.settings.enableRelationHistory) {
+      this.history.onAppend((event) => this.historyStore.record(event));
+    }
     this.engine = new LayoutEngine();
     this.engine.configure({
       noiseAmount: this.settings.noiseAmount,
@@ -93,7 +106,13 @@ export default class SimplicialPlugin extends Plugin {
         new Notice(`🕳️ ${explanation.headline}\n\nNotes: ${nodeNames.join(" · ")}\n\n${explanation.prompt}`, 8000);
       },
     });
-    this.index = new VaultIndex(this.app, this.model, this.settings, () => this.engine.wake());
+    this.index = new VaultIndex(
+      this.app,
+      this.model,
+      this.settings,
+      () => this.engine.wake(),
+      (hyperedge) => this.recordEncounter(hyperedge, "parser"),
+    );
 
     this.restorePinnedNodes();
 
@@ -115,7 +134,13 @@ export default class SimplicialPlugin extends Plugin {
         saveMetadata: (simplexKey, updates) => this.persistSimplexMetadata(simplexKey, updates),
         promoteSimplex: (simplexKey) => this.promoteSimplex(simplexKey),
         dissolveSimplex: (simplexKey) => this.dissolveSimplex(simplexKey),
+        relaxSimplex: (simplexKey) => this.relaxSimplex(simplexKey),
+        saveHyperedgeMetadata: (key, updates) => this.saveHyperedgeMetadata(key, updates),
+        promoteEncounter: (key) => this.promoteEncounter(key),
+        crystallizeEncounter: (key) => this.crystallizeEncounter(key),
+        dissolveHyperedge: (key) => this.dissolveHyperedge(key),
       });
+      panel.setHistory(this.history);
       panel.setSettings(this.settings);
       this.panelView = panel;
       return panel;
@@ -133,9 +158,19 @@ export default class SimplicialPlugin extends Plugin {
       editorCallback: (editor: Editor) => editor.replaceSelection("\u25b3 "),
     });
     this.addCommand({
+      id: "insert-hyperedge-symbol",
+      name: "Insert encounter hyperedge marker",
+      editorCallback: (editor: Editor) => editor.replaceSelection("◇ "),
+    });
+    this.addCommand({
       id: "form-simplex-from-open-note",
       name: "Simplicial: form simplex from open note",
       callback: () => void this.formSimplexFromOpenNote(),
+    });
+    this.addCommand({
+      id: "create-encounter",
+      name: "Simplicial: create encounter from open note",
+      callback: () => void this.createEncounterFromOpenNote(),
     });
     this.addCommand({
       id: "toggle-edges",
@@ -207,6 +242,10 @@ export default class SimplicialPlugin extends Plugin {
       this.engine.wake();
     });
     await this.logPersistenceState();
+    if (this.settings.enableRelationHistory) {
+      await this.historyStore.load(this.history);
+      this.syncEncounterState();
+    }
     this.scheduleFullScan("startup", 0);
     this.app.workspace.onLayoutReady(() => this.scheduleFullScan("layout-ready", 50));
     this.registerEvent(this.app.metadataCache.on("resolved", () => this.scheduleFullScan("metadata-resolved", 50)));
@@ -346,6 +385,248 @@ export default class SimplicialPlugin extends Plugin {
     this.openCreateSimplexModal(nodes, file.path);
   }
 
+  // --- hypergraph layer -----------------------------------------------------
+
+  /**
+   * Record that a configuration was encountered.
+   *
+   * A rescan is not a new encounter: re-reading the same `◇` line on every startup
+   * would inflate recurrence into meaninglessness, so the parser only ever records
+   * a set it has never seen. Deliberate user acts do record a repeat.
+   */
+  private recordEncounter(hyperedge: Hyperedge, actor: RelationEventInput["actor"]): void {
+    const prior = this.history.occurrencesOf(hyperedge.nodes);
+    if (actor === "parser" && prior.length > 0) return;
+    this.history.append({
+      type: prior.length > 0 ? "recurred" : "encountered",
+      kind: "hyperedge",
+      nodes: hyperedge.nodes,
+      actor,
+      ...(hyperedge.label || hyperedge.mode
+        ? {
+            detail: {
+              ...(hyperedge.label ? { label: hyperedge.label } : {}),
+              ...(hyperedge.mode ? { mode: hyperedge.mode } : {}),
+            },
+          }
+        : {}),
+    });
+    this.syncEncounterState();
+  }
+
+  private syncEncounterState(): void {
+    syncEncounterPersistence(this.model, this.history, this.settings.encounterRecurrenceThreshold);
+  }
+
+  private createEncounterFromOpenNote(): void {
+    const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+    const file = view?.file;
+    if (!file) {
+      new Notice("Open a note first.");
+      return;
+    }
+    const cache = this.app.metadataCache.getFileCache(file);
+    const links = cache?.links?.map((link) => link.link) ?? [];
+    const resolvedLinks = links
+      .map((link) => this.app.metadataCache.getFirstLinkpathDest(link, file.path)?.path ?? link)
+      .filter((path, index, all) => all.indexOf(path) === index);
+    const nodes = [file.path, ...resolvedLinks];
+    if (nodes.length < 2) {
+      new Notice("Need at least one resolvable outgoing link to record an encounter.");
+      return;
+    }
+    logger.info("plugin", "Create encounter from open note requested", {
+      sourcePath: file.path,
+      participantCount: nodes.length,
+    });
+    this.openCreateRelationModal(nodes, file.path, "hyperedge");
+  }
+
+  private async createHyperedge(draft: RelationDraft, sourcePath: string): Promise<RelationKey> {
+    const nodes = draft.nodes.map((node) => this.resolveDraftNode(node, sourcePath));
+    const owner = this.settings.persistenceMode === "central-file" ? this.settings.centralFile : sourcePath;
+    const hyperedge: Hyperedge = {
+      nodes,
+      label: draft.label,
+      weight: draft.weight,
+      mode: draft.mode ?? "encounter",
+      occurredAt: Date.now(),
+      persistence: "momentary",
+      sourcePath: owner,
+    };
+    const key = this.model.addHyperedge(hyperedge);
+    if (!key) return "";
+    this.recordEncounter({ ...hyperedge, nodes: this.model.getHyperedge(key)!.nodes }, "user");
+    await this.persistHyperedge(this.model.getHyperedge(key)!);
+    return key;
+  }
+
+  private async persistHyperedge(hyperedge: Hyperedge): Promise<void> {
+    const shouldWriteCentral =
+      hyperedge.sourcePath === this.settings.centralFile ||
+      (!hyperedge.sourcePath && this.settings.persistenceMode === "central-file");
+    if (shouldWriteCentral) {
+      const { file, content } = await writeHyperedgeToCentralFile(this.app, this.settings.centralFile, {
+        ...hyperedge,
+        sourcePath: this.settings.centralFile,
+      });
+      await this.app.vault.modify(file, content);
+      this.index.recordWrite(file.path, content);
+      return;
+    }
+    const file = this.app.vault.getAbstractFileByPath(hyperedge.sourcePath ?? "");
+    if (!(file instanceof TFile)) {
+      logger.warn("plugin", "Unable to persist hyperedge to source note", {
+        nodeKey: normalizeKey(hyperedge.nodes),
+        sourcePath: hyperedge.sourcePath,
+      });
+      return;
+    }
+    const content = await writeHyperedgeToSourceNote(this.app, file, hyperedge);
+    await this.app.vault.modify(file, content);
+    this.index.recordWrite(file.path, content);
+  }
+
+  private async removeHyperedgeFromNote(hyperedge: Hyperedge): Promise<void> {
+    const nodeKey = normalizeKey(hyperedge.nodes);
+    const shouldWriteCentral =
+      hyperedge.sourcePath === this.settings.centralFile ||
+      (!hyperedge.sourcePath && this.settings.persistenceMode === "central-file");
+    const file = shouldWriteCentral
+      ? await ensureCentralFile(this.app, this.settings.centralFile)
+      : this.app.vault.getAbstractFileByPath(hyperedge.sourcePath ?? "");
+    if (!(file instanceof TFile)) return;
+    const content = await removeHyperedgeFromManagedFile(this.app, file, nodeKey);
+    await this.app.vault.modify(file, content);
+    this.index.recordWrite(file.path, content);
+  }
+
+  /** HG-08. Always user-initiated, always confirmed — nothing promotes on its own. */
+  private promoteEncounter(hyperedgeKey: RelationKey): void {
+    const hyperedge = this.model.getHyperedge(hyperedgeKey);
+    if (!hyperedge) return;
+    const faces = this.model.facesImpliedByPromotion(hyperedgeKey);
+    new PromoteEncounterModal(this.app, hyperedge.nodes, faces, async () => {
+      const result = this.model.promoteToSimplex(hyperedgeKey);
+      if (!result) return;
+      this.history.append({
+        type: "promoted",
+        kind: "hyperedge",
+        nodes: hyperedge.nodes,
+        actor: "user",
+        prior: { persistence: hyperedge.persistence ?? "momentary" },
+        detail: { createdFaceCount: result.createdFaces.length },
+      });
+      const simplex = this.model.getSimplex(result.simplexKey);
+      if (simplex) await this.persistSimplex(simplex);
+      await this.persistHyperedge(this.model.getHyperedge(hyperedgeKey)!);
+      this.controller.selectSimplex(result.simplexKey);
+      await this.openPanel({ kind: "simplex", key: result.simplexKey }, false);
+      new Notice(
+        result.createdFaces.length > 0
+          ? `Promoted. ${result.createdFaces.length} face${result.createdFaces.length === 1 ? "" : "s"} asserted.`
+          : "Promoted. Every implied face already existed.",
+      );
+    }).open();
+  }
+
+  /** HG-09. Withdraws the closure claim; the group relation survives. */
+  private async relaxSimplex(simplexKey: string): Promise<void> {
+    const simplex = this.model.getSimplex(simplexKey);
+    if (!simplex || simplex.autoGenerated) return;
+    const hyperedgeKey = this.model.relaxToHyperedge(simplexKey);
+    if (!hyperedgeKey) return;
+    this.history.append({
+      type: "relaxed",
+      kind: "simplex",
+      nodes: simplex.nodes,
+      actor: "user",
+      prior: { label: simplex.label ?? null, weight: simplex.weight ?? null },
+    });
+
+    const owner = this.app.vault.getAbstractFileByPath(simplex.sourcePath ?? "");
+    if (owner instanceof TFile) {
+      const content = await removeSimplexFromManagedFile(this.app, owner, simplexKey);
+      await this.app.vault.modify(owner, content);
+      this.index.recordWrite(owner.path, content);
+    }
+    await this.persistHyperedge(this.model.getHyperedge(hyperedgeKey)!);
+    this.controller.selectHyperedge(hyperedgeKey);
+    await this.openPanel({ kind: "hyperedge", key: hyperedgeKey }, false);
+    new Notice("Relaxed to encounter. The group relation is kept; its faces are not asserted.");
+  }
+
+  /**
+   * HG-10. A recurring encounter precipitates a concept note.
+   *
+   * It offers a follow-up encounter including the new concept, but never promotes:
+   * repetition is evidence, not proof, of simplicial coherence.
+   */
+  private async crystallizeEncounter(hyperedgeKey: RelationKey): Promise<void> {
+    const hyperedge = this.model.getHyperedge(hyperedgeKey);
+    if (!hyperedge) return;
+    const title = hyperedge.label?.trim() || `encounter-${normalizeKey(hyperedge.nodes).replace(/[|/]/g, "-")}`;
+    const folder = this.settings.crystallizeFolder.replace(/\/+$/, "");
+    const participants = hyperedge.nodes.map((nodeId) => `  - "[[${nodeId.replace(/\.md$/, "")}]]"`).join("\n");
+    const body = [
+      "---",
+      "crystallizedFrom:",
+      participants,
+      `crystallizedAt: ${Date.now()}`,
+      "---",
+      "",
+      `# ${title}`,
+      "",
+      "This note names a concept that emerged from a recurring encounter between:",
+      "",
+      ...hyperedge.nodes.map((nodeId) => `- [[${nodeId.replace(/\.md$/, "")}]]`),
+      "",
+      "The encounter is retained unpromoted — the triad recurring is evidence, not proof,",
+      "that its pairs are meaningful on their own.",
+      "",
+    ].join("\n");
+
+    const file = await createPromotedNote(this.app, folder ? `${folder}/${title}` : title, body);
+    this.index.recordWrite(file.path, body);
+    this.model.crystallizeHyperedge(hyperedgeKey, file.path);
+    this.history.append({
+      type: "crystallized",
+      kind: "hyperedge",
+      nodes: hyperedge.nodes,
+      actor: "user",
+      detail: { conceptNote: file.path },
+    });
+    await this.persistHyperedge(this.model.getHyperedge(hyperedgeKey)!);
+    new Notice(`Crystallized into ${file.basename}. The encounter is unchanged.`);
+    await this.app.workspace.getLeaf(true).openFile(file);
+  }
+
+  private async dissolveHyperedge(hyperedgeKey: RelationKey): Promise<void> {
+    const hyperedge = this.model.getHyperedge(hyperedgeKey);
+    if (!hyperedge) return;
+    await this.removeHyperedgeFromNote(hyperedge);
+    this.model.removeHyperedge(hyperedgeKey);
+    this.history.append({
+      type: "dissolved",
+      kind: "hyperedge",
+      nodes: hyperedge.nodes,
+      actor: "user",
+      prior: { label: hyperedge.label ?? null, mode: hyperedge.mode ?? null },
+    });
+    this.controller.clearFocus();
+    this.panelView?.setSelection(null);
+    new Notice("Encounter dissolved. Its history is kept.");
+  }
+
+  private async saveHyperedgeMetadata(
+    hyperedgeKey: RelationKey,
+    updates: { label?: string; weight?: number; mode?: string },
+  ): Promise<void> {
+    const updated = this.model.updateHyperedge(hyperedgeKey, updates);
+    if (!updated) return;
+    await this.persistHyperedge(updated);
+  }
+
   private async promoteSimplex(simplexKey: string): Promise<void> {
     const simplex = this.model.getSimplex(simplexKey);
     if (!simplex || simplex.autoGenerated) return;
@@ -383,22 +664,47 @@ export default class SimplicialPlugin extends Plugin {
   }
 
   private openCreateSimplexModal(nodes: string[], sourcePath: string): void {
+    this.openCreateRelationModal(nodes, sourcePath, "simplex");
+  }
+
+  private openCreateRelationModal(nodes: string[], sourcePath: string, kind: "simplex" | "hyperedge"): void {
+    const owner = this.settings.persistenceMode === "central-file" ? this.settings.centralFile : sourcePath;
     new CreateSimplexModal(
       this.app,
       nodes,
-      this.settings.persistenceMode === "central-file" ? this.settings.centralFile : sourcePath,
+      owner,
       async (draft) => {
-        const normalizedNodes = draft.nodes.map((node) => this.resolveDraftNode(node, sourcePath));
+        if (draft.kind === "hyperedge") {
+          const key = await this.createHyperedge(draft, sourcePath);
+          if (!key) return;
+          this.controller.selectHyperedge(key);
+          if (this.settings.commandAutoOpenPanel) {
+            await this.openPanel({ kind: "hyperedge", key }, false);
+          }
+          logger.info("plugin", "Encounter created from guided modal", {
+            relationKey: key,
+            sourcePath: owner,
+            hyperedgeCount: this.model.hyperedges.size,
+          });
+          new Notice(
+            this.settings.persistenceMode === "central-file"
+              ? `Encounter added to ${this.settings.centralFile}. No faces were generated.`
+              : "Encounter added to note frontmatter. No faces were generated.",
+          );
+          return;
+        }
+
         const simplex: Simplex = {
-          nodes: normalizedNodes,
+          nodes: draft.nodes.map((node) => this.resolveDraftNode(node, sourcePath)),
           label: draft.label,
           weight: draft.weight,
-          sourcePath: this.settings.persistenceMode === "central-file" ? this.settings.centralFile : sourcePath,
+          sourcePath: owner,
           userDefined: true,
           autoGenerated: false,
         };
         const key = this.model.addSimplex(simplex);
         await this.persistSimplex(this.model.getSimplex(key)!);
+        this.history.append({ type: "created", kind: "simplex", nodes: simplex.nodes, actor: "user" });
         this.controller.selectSimplex(key);
         if (this.settings.commandAutoOpenPanel) {
           await this.openPanel(key, false);
@@ -414,6 +720,7 @@ export default class SimplicialPlugin extends Plugin {
             : "Simplex added to note frontmatter.",
         );
       },
+      kind,
     ).open();
   }
 
@@ -619,6 +926,7 @@ export default class SimplicialPlugin extends Plugin {
       this.rescanTimer = null;
       logger.info("plugin", "Running full scan", { reason });
       await this.index.fullScan();
+      this.syncEncounterState();
       this.renderer.render();
       logger.info("plugin", "Full scan complete", {
         reason,

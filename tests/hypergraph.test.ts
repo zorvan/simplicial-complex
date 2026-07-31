@@ -2,6 +2,7 @@ import { test } from "node:test";
 import { strict as assert } from "node:assert";
 import { normalizeKey, normalizeNodes, parseRelationKey, relationKey } from "../core/normalize.js";
 import { SimplicialModel } from "../core/model.js";
+import { RelationHistory, deserializeEvent, serializeEvent, syncEncounterPersistence } from "../core/history.js";
 import { parseRelations, type ParserDeps } from "../data/parser-core.js";
 import {
   parseManagedFrontmatter,
@@ -359,4 +360,265 @@ test("a hyperedge survives serialize → parse → model round-trip with its met
   const restored = model.getHyperedge(relationKey("hyperedge", ["levinas.md", "refusal.md"]));
   assert.equal(restored!.mode, "encounter");
   assert.equal(model.simplices.size, 0);
+});
+
+// ---------------------------------------------------------------------------
+// HG-30 — append-only relation event log
+// ---------------------------------------------------------------------------
+
+test("the event log is append-only: recorded events cannot be mutated or dropped", () => {
+  const history = new RelationHistory();
+  const event = history.append({ type: "encountered", kind: "hyperedge", nodes: ["a.md", "b.md"], actor: "user" });
+
+  assert.throws(() => {
+    (event as { timestamp: number }).timestamp = 0;
+  }, TypeError);
+
+  const copy = history.all();
+  copy.length = 0;
+  copy.push(event);
+  assert.equal(history.size, 1, "callers get a defensive copy, not the log itself");
+});
+
+test("promote → relax → promote leaves three events and a reconstructible history", () => {
+  const history = new RelationHistory();
+  const nodes = ["a.md", "b.md", "c.md"];
+  history.append({ type: "encountered", kind: "hyperedge", nodes, actor: "user", timestamp: 1 });
+  history.append({ type: "promoted", kind: "hyperedge", nodes, actor: "user", timestamp: 2 });
+  history.append({ type: "relaxed", kind: "simplex", nodes, actor: "user", timestamp: 3 });
+  history.append({ type: "promoted", kind: "hyperedge", nodes, actor: "user", timestamp: 4 });
+
+  const thread = history.forNodes(nodes);
+
+  assert.deepEqual(
+    thread.map((event) => event.type),
+    ["encountered", "promoted", "relaxed", "promoted"],
+    "both kinds share a node key, so the thread reads as one journey",
+  );
+});
+
+test("dissolving a relation does not dissolve its history", () => {
+  const model = new SimplicialModel();
+  const history = new RelationHistory();
+  const nodes = ["a.md", "b.md"];
+  const key = model.addHyperedge({ nodes });
+  history.append({ type: "encountered", kind: "hyperedge", nodes, actor: "user" });
+
+  model.removeHyperedge(key);
+  history.append({ type: "dissolved", kind: "hyperedge", nodes, actor: "user" });
+
+  assert.equal(model.hyperedges.size, 0);
+  assert.equal(history.forNodes(nodes).length, 2);
+});
+
+test("events survive serialization round-trip", () => {
+  const history = new RelationHistory();
+  history.append({
+    type: "crystallized",
+    kind: "hyperedge",
+    nodes: ["a.md", "b.md"],
+    actor: "user",
+    timestamp: 1700000000000,
+    detail: { conceptNote: "concept.md" },
+  });
+
+  const restored = new RelationHistory();
+  restored.load(history.all().map((event) => deserializeEvent(serializeEvent(event))!));
+
+  assert.equal(restored.size, 1);
+  assert.equal(restored.all()[0].type, "crystallized");
+  assert.equal(restored.all()[0].detail!.conceptNote, "concept.md");
+  assert.equal(restored.all()[0].relationKey, relationKey("hyperedge", ["a.md", "b.md"]));
+});
+
+test("deserializeEvent rejects junk lines rather than inventing history", () => {
+  assert.equal(deserializeEvent("not json"), null);
+  assert.equal(deserializeEvent('{"t":1,"e":"invented","k":"hyperedge","n":["a.md"]}'), null);
+  assert.equal(deserializeEvent('{"e":"created","k":"simplex","n":["a.md"]}'), null);
+});
+
+// ---------------------------------------------------------------------------
+// HG-13 (derived) — recurrence
+// ---------------------------------------------------------------------------
+
+test("a configuration encountered three times becomes recurring", () => {
+  const model = new SimplicialModel();
+  const history = new RelationHistory();
+  const nodes = ["a.md", "b.md", "c.md"];
+  model.addHyperedge({ nodes });
+
+  history.append({ type: "encountered", kind: "hyperedge", nodes, actor: "user", timestamp: 1 });
+  syncEncounterPersistence(model, history, 3);
+  assert.equal(model.getHyperedge(relationKey("hyperedge", nodes))!.persistence, "momentary");
+
+  history.append({ type: "recurred", kind: "hyperedge", nodes, actor: "user", timestamp: 2 });
+  history.append({ type: "recurred", kind: "hyperedge", nodes, actor: "user", timestamp: 3 });
+  syncEncounterPersistence(model, history, 3);
+
+  const hyperedge = model.getHyperedge(relationKey("hyperedge", nodes))!;
+  assert.equal(hyperedge.persistence, "recurring");
+  assert.deepEqual(hyperedge.occurrences, [1, 2, 3]);
+  assert.equal(model.simplices.size, 0, "recurrence is evidence, not proof — nothing was promoted");
+});
+
+// ---------------------------------------------------------------------------
+// HG-07 / HG-08 / HG-09 / HG-10 — the four transformations
+// ---------------------------------------------------------------------------
+
+test("promotion creates the simplex and its faces, and keeps the encounter as provenance", () => {
+  const model = new SimplicialModel();
+  const key = model.addHyperedge({ nodes: ["a.md", "b.md", "c.md"], label: "triad" });
+
+  const planned = model.facesImpliedByPromotion(key);
+  const result = model.promoteToSimplex(key)!;
+
+  assert.equal(planned.length, 3, "the confirmation list matches what generateFaces will do");
+  assert.equal(result.createdFaces.length, 3);
+  assert.equal(model.simplices.has(normalizeKey(["a.md", "b.md", "c.md"])), true);
+  assert.equal(model.simplices.has(normalizeKey(["a.md", "b.md"])), true);
+  assert.equal(model.simplices.has(normalizeKey(["b.md", "c.md"])), true);
+  assert.equal(model.getHyperedge(key)!.promotedTo, result.simplexKey, "the encounter is retained, marked promoted");
+});
+
+test("promotion recomputes Betti — the asserted triangle fills the hole", () => {
+  const model = new SimplicialModel();
+  model.addSimplex({ nodes: ["a.md", "b.md"], userDefined: true });
+  model.addSimplex({ nodes: ["b.md", "c.md"], userDefined: true });
+  model.addSimplex({ nodes: ["a.md", "c.md"], userDefined: true });
+  const key = model.addHyperedge({ nodes: ["a.md", "b.md", "c.md"] });
+  assert.ok(model.getCachedBetti().b1 > 0);
+
+  model.promoteToSimplex(key);
+
+  assert.equal(model.getCachedBetti().b1, 0);
+});
+
+test("promote then relax returns to the pre-promote state, keeping provenance", () => {
+  const model = new SimplicialModel();
+  const nodes = ["a.md", "b.md", "c.md"];
+  const key = model.addHyperedge({ nodes, label: "triad" });
+  const simplicesBefore = model.simplices.size;
+
+  const promoted = model.promoteToSimplex(key)!;
+  const relaxedKey = model.relaxToHyperedge(promoted.simplexKey);
+
+  assert.equal(relaxedKey, key);
+  assert.equal(model.simplices.size, simplicesBefore, "the asserted faces are withdrawn with the claim");
+  assert.equal(model.hyperedges.size, 1);
+  assert.equal(model.getHyperedge(key)!.promotedTo, undefined);
+  assert.equal(model.getHyperedge(key)!.label, "triad");
+});
+
+test("relaxing does not delete faces an unrelated simplex still asserts", () => {
+  const model = new SimplicialModel();
+  // An independent user-defined simplex over {a,b} — nobody else's claim to withdraw.
+  model.addSimplex({ nodes: ["a.md", "b.md"], userDefined: true, label: "independent" });
+  const key = model.addHyperedge({ nodes: ["a.md", "b.md", "c.md"] });
+  const promoted = model.promoteToSimplex(key)!;
+
+  model.relaxToHyperedge(promoted.simplexKey);
+
+  assert.equal(model.simplices.has(normalizeKey(["a.md", "b.md"])), true, "the independent edge survives");
+  assert.equal(model.simplices.get(normalizeKey(["a.md", "b.md"]))!.label, "independent");
+  assert.equal(model.simplices.has(normalizeKey(["a.md", "c.md"])), false, "faces created by the promotion are gone");
+  assert.equal(model.simplices.has(normalizeKey(["a.md", "b.md", "c.md"])), false);
+});
+
+test("relax preserves the original encounter time — relaxing is not a new encounter", () => {
+  const model = new SimplicialModel();
+  const key = model.addHyperedge({ nodes: ["a.md", "b.md"], occurredAt: 1234 });
+  const promoted = model.promoteToSimplex(key)!;
+
+  model.relaxToHyperedge(promoted.simplexKey);
+
+  assert.equal(model.getHyperedge(key)!.occurredAt, 1234);
+});
+
+test("relax refuses auto-generated faces", () => {
+  const model = new SimplicialModel();
+  model.addSimplex({ nodes: ["a.md", "b.md", "c.md"], userDefined: true });
+  const faceKey = normalizeKey(["a.md", "b.md"]);
+  assert.equal(model.simplices.get(faceKey)!.autoGenerated, true);
+
+  assert.equal(model.relaxToHyperedge(faceKey), null);
+});
+
+test("crystallize wires the concept node and leaves the encounter unpromoted", () => {
+  const model = new SimplicialModel();
+  const key = model.addHyperedge({ nodes: ["a.md", "b.md", "c.md"], persistence: "recurring" });
+
+  const ok = model.crystallizeHyperedge(key, "concept.md");
+
+  assert.equal(ok, true);
+  assert.equal(model.nodes.has("concept.md"), true);
+  assert.equal(model.getHyperedge(key)!.crystallizedInto, "concept.md");
+  assert.equal(model.getHyperedge(key)!.promotedTo, undefined, "repetition is evidence, not proof");
+  assert.equal(model.simplices.size, 0);
+});
+
+test("no code path promotes without an explicit call — recurrence alone never does", () => {
+  const model = new SimplicialModel();
+  const history = new RelationHistory();
+  const nodes = ["a.md", "b.md", "c.md"];
+  const key = model.addHyperedge({ nodes });
+
+  for (let i = 0; i < 10; i++) {
+    history.append({ type: "recurred", kind: "hyperedge", nodes, actor: "user", timestamp: i + 1 });
+    syncEncounterPersistence(model, history, 3);
+  }
+  model.crystallizeHyperedge(key, "concept.md");
+
+  assert.equal(model.getHyperedge(key)!.persistence, "recurring");
+  assert.equal(model.simplices.size, 0, "ten recurrences and a crystallization still assert no faces");
+  assert.equal(model.getHyperedge(key)!.promotedTo, undefined);
+});
+
+// ---------------------------------------------------------------------------
+// HG-23 — the governing invariant, asserted after every public mutation
+// ---------------------------------------------------------------------------
+
+test("no hyperedge ever appears in model.simplices, whatever the mutation sequence", () => {
+  const model = new SimplicialModel();
+  const hyperedgeNodeKeys = new Set<string>();
+  const assertNoLeak = (step: string) => {
+    hyperedgeNodeKeys.forEach((nodeKey) => {
+      const simplex = model.simplices.get(nodeKey);
+      // A simplex over the same nodes is legal — but only when promotion put it there.
+      if (!simplex) return;
+      assert.equal(simplex.userDefined, true, `${step}: an encounter leaked into the simplicial layer`);
+    });
+    model.hyperedges.forEach((hyperedge) => {
+      assert.equal(
+        (hyperedge as { autoGenerated?: boolean }).autoGenerated,
+        undefined,
+        `${step}: an encounter grew a face flag`,
+      );
+    });
+  };
+
+  const key = model.addHyperedge({ nodes: ["a.md", "b.md", "c.md"] });
+  hyperedgeNodeKeys.add(normalizeKey(["a.md", "b.md", "c.md"]));
+  assert.equal(model.simplices.size, 0, "addHyperedge generated a face");
+  assertNoLeak("addHyperedge");
+
+  model.updateHyperedge(key, { label: "renamed" });
+  assert.equal(model.simplices.size, 0);
+  assertNoLeak("updateHyperedge");
+
+  model.setNode("d.md");
+  assert.equal(model.simplices.size, 0);
+  assertNoLeak("setNode");
+
+  model.replaceInferredSimplices([{ nodes: ["a.md", "d.md"], inferred: true }]);
+  assertNoLeak("replaceInferredSimplices");
+
+  model.updateNodeId("d.md", "e.md");
+  assertNoLeak("updateNodeId");
+
+  model.crystallizeHyperedge(key, "concept.md");
+  assert.equal(model.simplices.has(normalizeKey(["a.md", "b.md", "c.md"])), false);
+  assertNoLeak("crystallizeHyperedge");
+
+  model.removeHyperedge(key);
+  assertNoLeak("removeHyperedge");
 });
