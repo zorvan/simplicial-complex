@@ -783,7 +783,10 @@ export default class SimplicialPlugin extends Plugin {
     });
   }
 
-  private openCanvasContextMenu(target: { nodeId?: string; simplexKey?: string }, event: MouseEvent): void {
+  private openCanvasContextMenu(
+    target: { nodeId?: string; simplexKey?: string; hyperedgeKey?: string },
+    event: MouseEvent,
+  ): void {
     const menu = new Menu();
     if (target.nodeId) {
       menu.addItem((item) =>
@@ -807,6 +810,12 @@ export default class SimplicialPlugin extends Plugin {
           .setTitle("Create simplex from node + neighbors")
           .setIcon("plus-circle")
           .onClick(() => void this.createSimplexFromNode(target.nodeId!)),
+      );
+      menu.addItem((item) =>
+        item
+          .setTitle("Record encounter from node + neighbors")
+          .setIcon("diamond")
+          .onClick(() => void this.createEncounterFromNode(target.nodeId!)),
       );
       menu.addItem((item) =>
         item
@@ -839,6 +848,12 @@ export default class SimplicialPlugin extends Plugin {
       );
       menu.addItem((item) =>
         item
+          .setTitle("Relax to encounter")
+          .setIcon("diamond")
+          .onClick(() => void this.relaxSimplex(target.simplexKey!)),
+      );
+      menu.addItem((item) =>
+        item
           .setTitle("Show in formal view")
           .setIcon("sigma")
           .onClick(async () => {
@@ -847,6 +862,35 @@ export default class SimplicialPlugin extends Plugin {
             this.controller.selectSimplex(target.simplexKey!);
             this.renderer.render();
           }),
+      );
+    }
+    if (target.hyperedgeKey) {
+      const hyperedge = this.model.getHyperedge(target.hyperedgeKey);
+      menu.addItem((item) =>
+        item
+          .setTitle("Open encounter")
+          .setIcon("info")
+          .onClick(() => void this.openPanel({ kind: "hyperedge", key: target.hyperedgeKey! }, true)),
+      );
+      menu.addItem((item) =>
+        item
+          .setTitle("Promote to simplex")
+          .setIcon("triangle")
+          .onClick(() => this.promoteEncounter(target.hyperedgeKey!)),
+      );
+      if (hyperedge?.persistence === "recurring") {
+        menu.addItem((item) =>
+          item
+            .setTitle("Crystallize concept")
+            .setIcon("sparkles")
+            .onClick(() => void this.crystallizeEncounter(target.hyperedgeKey!)),
+        );
+      }
+      menu.addItem((item) =>
+        item
+          .setTitle("Dissolve encounter")
+          .setIcon("trash")
+          .onClick(() => void this.dissolveHyperedge(target.hyperedgeKey!)),
       );
     }
     menu.showAtMouseEvent(event);
@@ -870,6 +914,15 @@ export default class SimplicialPlugin extends Plugin {
       return;
     }
     this.openCreateSimplexModal(nodes, nodeId);
+  }
+
+  private createEncounterFromNode(nodeId: string): void {
+    const nodes = [nodeId, ...this.model.getNeighbors(nodeId)];
+    if (nodes.length < 2) {
+      new Notice("Need at least one connected neighbor to record an encounter.");
+      return;
+    }
+    this.openCreateRelationModal(nodes, nodeId, "hyperedge");
   }
 
   private async dissolveSimplex(simplexKey: string): Promise<void> {

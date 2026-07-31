@@ -1,10 +1,19 @@
 /* global activeWindow -- Allow activeWindow for canvas resize handling in Obsidian/Electron environment (ESLint browser globals) */
-import type { LayoutNode, PluginSettings, Rect, RenderFilterMetric, Simplex, Hole } from "../core/types";
+import type {
+  Hyperedge,
+  LayoutNode,
+  PluginSettings,
+  Rect,
+  RelationKey,
+  RenderFilterMetric,
+  Simplex,
+  Hole,
+} from "../core/types";
 import { normalizeKey } from "../core/normalize";
 import { SimplicialModel } from "../core/model";
 import { LayoutEngine } from "../layout/engine";
 import { InteractionController } from "../interaction/controller";
-import { renderBlob } from "./blobs";
+import { renderBlob, renderHyperedge } from "./blobs";
 import { renderEdges } from "./edges";
 import { effectiveColorForSimplex } from "./palette";
 import { drawBettiHUD } from "./components/hud";
@@ -13,7 +22,7 @@ import { explainHole, type SimplexExplanation } from "../data/explainer";
 import type { InferenceContext } from "../data/inference/types";
 
 interface RendererCallbacks {
-  onContextMenu?: (target: { nodeId?: string; simplexKey?: string }, event: MouseEvent) => void;
+  onContextMenu?: (target: { nodeId?: string; simplexKey?: string; hyperedgeKey?: string }, event: MouseEvent) => void;
   onLassoCreate?: (nodeIds: string[]) => void;
   onNodeOpen?: (nodeId: string) => void;
   onHoleHover?: (hole: Hole | null, explanation: SimplexExplanation | null) => void;
@@ -35,7 +44,7 @@ function pointInPolygon(point: { x: number; y: number }, polygon: Array<{ x: num
   return inside;
 }
 
-function simplexPolygon(simplex: Simplex, nodes: LayoutNode[]): Array<{ x: number; y: number }> {
+function simplexPolygon(simplex: { nodes: string[] }, nodes: LayoutNode[]): Array<{ x: number; y: number }> {
   const points = simplex.nodes
     .map((id) => nodes.find((node) => node.id === id))
     .filter(Boolean)
@@ -243,6 +252,20 @@ export class Renderer {
     return ranked.slice(0, this.progressiveSimplexBudget);
   }
 
+  /**
+   * Encounters visible this frame.
+   *
+   * `maxRenderedDim` is deliberately not applied: a hyperedge's order is not a
+   * dimension, and capping it by one would silently hide encounters for a reason
+   * that does not apply to them.
+   */
+  private getRenderableHyperedges(renderedNodeIds: Set<string>): Array<[RelationKey, Hyperedge]> {
+    if (!this.settings.showHyperedges) return [];
+    return [...this.model.hyperedges.entries()].filter(([, hyperedge]) =>
+      hyperedge.nodes.some((nodeId) => renderedNodeIds.has(nodeId)),
+    );
+  }
+
   // Optimized label placement using spatial hashing
   private canPlaceLabelFast(occupied: Box[], text: string, x: number, y: number): boolean {
     if (!this.ctx) return false;
@@ -277,6 +300,7 @@ export class Renderer {
       () => ({
         nodes: this.model.getAllNodes(),
         simplices: [...this.model.simplices.values()],
+        hyperedges: [...this.model.hyperedges.values()],
         bounds: { width: this.W, height: this.H },
         holdNode: this.controller.holdNode,
       }),
@@ -404,7 +428,14 @@ export class Renderer {
         return;
       }
       const simplex = this.findSimplexAtPoint(point);
-      this.controller.selectSimplex(simplex ? normalizeKey(simplex.nodes) : null);
+      if (simplex) {
+        this.controller.selectSimplex(normalizeKey(simplex.nodes));
+      } else {
+        // Only fall through to an encounter when no field claims the point, so
+        // clicking a promoted triad still selects the simplex it became.
+        const hyperedgeKey = this.findHyperedgeAtPoint(point);
+        this.controller.selectRelation(hyperedgeKey ? { kind: "hyperedge", key: hyperedgeKey } : null);
+      }
       this.render();
     });
     this.canvas.addEventListener("contextmenu", (event) => {
@@ -412,11 +443,13 @@ export class Renderer {
       const point = this.eventToCanvasPoint(event);
       const node = this.findNodeNearPoint(point);
       const simplex = this.findSimplexAtPoint(point);
-      if (!node && !simplex) return;
+      const hyperedgeKey = this.findHyperedgeAtPoint(point);
+      if (!node && !simplex && !hyperedgeKey) return;
       this.callbacks.onContextMenu?.(
         {
           ...(node ? { nodeId: node.id } : {}),
           ...(simplex ? { simplexKey: normalizeKey(simplex.nodes) } : {}),
+          ...(hyperedgeKey ? { hyperedgeKey } : {}),
         },
         event,
       );
@@ -486,6 +519,39 @@ export class Renderer {
     return hovered
       ? (this.model.getSimplicesForNode(hovered.id).sort((a, b) => b.nodes.length - a.nodes.length)[0] ?? null)
       : null;
+  }
+
+  /**
+   * Encounter hit-testing, kept separate from `findSimplexAtPoint` so a simplex and
+   * a hyperedge over the same nodes stay individually selectable.
+   */
+  private findHyperedgeAtPoint(point: { x: number; y: number }): RelationKey | null {
+    if (!this.settings.showHyperedges) return null;
+    const nodes = this.model.getAllNodes();
+    const candidates = [...this.model.hyperedges.entries()].sort((a, b) => a[1].nodes.length - b[1].nodes.length);
+    for (const [key, hyperedge] of candidates) {
+      const polygon = simplexPolygon(hyperedge, nodes);
+      if (polygon.length < 2) continue;
+      if (polygon.length === 2) {
+        const [a, b] = polygon;
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        const distance = Math.abs(dy * point.x - dx * point.y + b.x * a.y - b.y * a.x) / (Math.hypot(dx, dy) || 1);
+        const padding = this.worldRadius(8);
+        if (
+          point.x >= Math.min(a.x, b.x) - padding &&
+          point.x <= Math.max(a.x, b.x) + padding &&
+          point.y >= Math.min(a.y, b.y) - padding &&
+          point.y <= Math.max(a.y, b.y) + padding &&
+          distance <= this.worldRadius(10)
+        ) {
+          return key;
+        }
+        continue;
+      }
+      if (pointInPolygon(point, polygon)) return key;
+    }
+    return null;
   }
 
   private findHoleAtPoint(point: { x: number; y: number }): Hole | null {
@@ -606,6 +672,19 @@ export class Renderer {
     this.viewZoom = fitZoom * this.userZoom;
     this.viewOffsetX = this.W / 2 - centerX * this.viewZoom + this.userPanX;
     this.viewOffsetY = this.H / 2 - centerY * this.viewZoom + this.userPanY;
+  }
+
+  /**
+   * Encounters borrow the simplex palette so a promoted pair stays recognisably the
+   * same relation; the *form* is what distinguishes them, not the hue.
+   */
+  private hyperedgeColor(hyperedge: Hyperedge): [number, number, number] {
+    return effectiveColorForSimplex(null, {
+      nodes: hyperedge.nodes,
+      label: hyperedge.label,
+      colorKey: hyperedge.colorKey,
+      sourcePath: hyperedge.sourcePath,
+    });
   }
 
   private alphaForDimension(dim: number, focused: boolean): number {
@@ -815,6 +894,7 @@ export class Renderer {
     const renderableNodes = this.getProgressiveRenderableNodes(visibleNodes, focusState.activeNodeIds);
     const renderedNodeIds = new Set(renderableNodes.map((node) => node.id));
     const renderableSimplices = this.getRenderableSimplices(simplices, renderedNodeIds, focusState.activeSimplexKeys);
+    const renderableHyperedges = this.getRenderableHyperedges(renderedNodeIds);
 
     ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
     ctx.clearRect(0, 0, this.W, this.H);
@@ -875,6 +955,19 @@ export class Renderer {
         focusState,
       );
     }
+
+    // Encounters draw above the simplicial fields: a transient enclosure has to read
+    // as laid over the structure, not as another layer of it.
+    renderableHyperedges.forEach(([key, hyperedge]) => {
+      renderHyperedge(
+        ctx,
+        hyperedge,
+        allNodes,
+        this.hyperedgeColor(hyperedge),
+        this.settings.hyperedgeOpacity,
+        !focusState.isActive || focusState.involvesRelation({ kind: "hyperedge", ...hyperedge }, key),
+      );
+    });
 
     // Only render progressively loaded visible nodes
     renderableNodes.forEach((node) => {

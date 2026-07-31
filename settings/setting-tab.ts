@@ -16,6 +16,7 @@ export class SimplicialSettingTab extends PluginSettingTab {
     containerEl.empty();
 
     this.renderPersistenceSettings(containerEl);
+    this.renderHypergraphSettings(containerEl);
     this.renderLayoutSettings(containerEl);
     this.renderInferenceSettings(containerEl);
     this.renderCommandUiSettings(containerEl);
@@ -151,6 +152,86 @@ export class SimplicialSettingTab extends PluginSettingTab {
         await this.plugin.saveSettings();
       });
     });
+  }
+
+  private renderHypergraphSettings(containerEl: HTMLElement): void {
+    new Setting(containerEl).setName("Hypergraph layer").setHeading();
+
+    new Setting(containerEl)
+      .setName("Show encounters")
+      .setDesc(
+        "Render hyperedges (◇) as transient enclosures. An encounter records that notes came together as one irreducible whole, without asserting any pair within it.",
+      )
+      .addToggle((toggle) => {
+        toggle.setValue(this.plugin.settings.showHyperedges);
+        toggle.onChange(async (value) => {
+          this.plugin.settings.showHyperedges = value;
+          await this.plugin.saveSettings();
+          this.plugin.renderer.render();
+        });
+      });
+
+    {
+      const setting = new Setting(containerEl)
+        .setName("Encounter opacity")
+        .setDesc("How present encounter enclosures are against the simplicial fields.");
+      this.addNumberSlider(setting, this.plugin.settings.hyperedgeOpacity, 0.1, 1, 0.05, async (value) => {
+        this.plugin.settings.hyperedgeOpacity = value;
+        await this.plugin.saveSettings();
+        this.plugin.renderer.render();
+      });
+    }
+
+    {
+      const setting = new Setting(containerEl)
+        .setName("Recurrence threshold")
+        .setDesc(
+          "How many recorded encounters over the same notes mark a configuration as recurring. Recurrence enables crystallization; it never promotes anything on its own.",
+        );
+      this.addNumberSlider(setting, this.plugin.settings.encounterRecurrenceThreshold, 2, 10, 1, async (value) => {
+        this.plugin.settings.encounterRecurrenceThreshold = value;
+        await this.plugin.saveSettings();
+      });
+    }
+
+    new Setting(containerEl)
+      .setName("Crystallize folder")
+      .setDesc("Where notes created by 'crystallize concept' are placed. Leave empty for the vault root.")
+      .addText((text) => {
+        text.setPlaceholder("Concepts");
+        text.setValue(this.plugin.settings.crystallizeFolder);
+        text.onChange(async (value) => {
+          this.plugin.settings.crystallizeFolder = value.trim();
+          await this.plugin.saveSettings();
+        });
+      });
+
+    new Setting(containerEl)
+      .setName("Record relation history")
+      .setDesc(
+        "Keep an append-only log of how relations came to be — encountered, promoted, relaxed, crystallized, dissolved. Turning this off stops new entries; it never deletes existing ones.",
+      )
+      .addToggle((toggle) => {
+        toggle.setValue(this.plugin.settings.enableRelationHistory);
+        toggle.onChange(async (value) => {
+          this.plugin.settings.enableRelationHistory = value;
+          await this.plugin.saveSettings();
+          new Notice(value ? "History resumes on next reload." : "History paused. Existing entries are kept.");
+        });
+      });
+
+    new Setting(containerEl)
+      .setName("History file")
+      .setDesc("Vault path of the append-only relation history.")
+      .addText((text) => {
+        text.setPlaceholder("_simplicial-history.md");
+        text.setValue(this.plugin.settings.historyFile);
+        text.onChange(async (value) => {
+          this.plugin.settings.historyFile = value.trim() || "_simplicial-history.md";
+          this.plugin.historyStore.setPath(this.plugin.settings.historyFile);
+          await this.plugin.saveSettings();
+        });
+      });
   }
 
   private renderInferenceSettings(containerEl: HTMLElement): void {

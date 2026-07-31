@@ -1,15 +1,20 @@
 /* global activeDocument -- Allow activeDocument for canvas creation in Obsidian/Electron environment (ESLint browser globals) */
-import type { LayoutNode, Simplex } from "../core/types";
+import type { Hyperedge, LayoutNode, Simplex } from "../core/types";
 import { SimplicialModel } from "../core/model";
 import { effectiveColorForSimplex } from "./palette";
 
 type Point = { x: number; y: number };
 type BlobCacheEntry = { canvas: HTMLCanvasElement; x: number; y: number; positions: Point[] };
 
+/**
+ * Keyed by the *namespaced* relation key. Keying by node set alone would let a
+ * simplex and a hyperedge over the same nodes collide in here and render as each
+ * other — which is precisely the state promotion creates.
+ */
 const cache = new Map<string, BlobCacheEntry>();
 
-function resolveNodes(simplex: Simplex, nodes: LayoutNode[]): LayoutNode[] {
-  return simplex.nodes.map((id) => nodes.find((node) => node.id === id)).filter(Boolean) as LayoutNode[];
+function resolveNodes(relation: { nodes: string[] }, nodes: LayoutNode[]): LayoutNode[] {
+  return relation.nodes.map((id) => nodes.find((node) => node.id === id)).filter(Boolean) as LayoutNode[];
 }
 
 function centroid(points: Point[]): Point {
@@ -81,11 +86,12 @@ function areCollinear(points: Point[]): boolean {
 }
 
 function renderBlobToOffscreen(
-  simplexKey: string,
-  simplex: Simplex,
+  cacheKey: string,
+  simplex: { nodes: string[] },
   nodes: LayoutNode[],
   blobR: number,
 ): BlobCacheEntry | null {
+  const simplexKey = cacheKey;
   const ns = resolveNodes(simplex, nodes);
   if (!ns.length) return null;
   const positions = ns.map((node) => ({ x: node.px, y: node.py }));
@@ -152,6 +158,67 @@ export function drawBlobShape(ctx: CanvasRenderingContext2D, ns: LayoutNode[], b
   drawSmoothClosed(ctx, expandPoints(sortByAngle(points), blobR));
 }
 
+/** Above this many members an enclosure stops reading as a shape; it gets a marker instead. */
+export const MAX_RENDERED_ENCOUNTER_ORDER = 8;
+
+/**
+ * A simplex reads as a stable field. An encounter must not: it asserts a moment of
+ * togetherness, not a standing structure. So: an open dashed boundary, low fill,
+ * no interior gradient and no blur passes — present, but visibly provisional.
+ */
+export function renderHyperedge(
+  ctx: CanvasRenderingContext2D,
+  hyperedge: Hyperedge,
+  nodes: LayoutNode[],
+  color: [number, number, number],
+  opacity: number,
+  focused: boolean,
+): void {
+  const ns = resolveNodes(hyperedge, nodes);
+  if (ns.length < 2) return;
+  const [r, g, b] = color;
+  const alpha = opacity * (focused ? 1 : 0.35);
+  const points = ns.map((node) => ({ x: node.px, y: node.py }));
+  const radius = 30 + (hyperedge.weight ?? 1) * 14;
+
+  ctx.save();
+  ctx.lineJoin = "round";
+  ctx.setLineDash([9, 7]);
+  ctx.lineWidth = focused ? 2 : 1.4;
+  ctx.strokeStyle = `rgba(${r},${g},${b},${Math.min(1, alpha * 1.5)})`;
+  ctx.fillStyle = `rgba(${r},${g},${b},${alpha * 0.12})`;
+
+  if (ns.length > MAX_RENDERED_ENCOUNTER_ORDER) {
+    // A large encounter: mark each participant rather than drawing a shape whose
+    // hull would say more about layout than about the relation.
+    points.forEach((point) => {
+      ctx.beginPath();
+      ctx.arc(point.x, point.y, radius * 0.42, 0, Math.PI * 2);
+      ctx.stroke();
+    });
+    ctx.restore();
+    return;
+  }
+
+  if (ns.length === 2 || areCollinear(points)) {
+    drawCapsule(ctx, points[0], points[points.length - 1], radius);
+  } else {
+    drawSmoothClosed(ctx, expandPoints(sortByAngle(points), radius));
+  }
+  ctx.fill();
+  ctx.stroke();
+
+  // Participation ticks: each member is held by the encounter, not bound to the others.
+  ctx.setLineDash([]);
+  ctx.fillStyle = `rgba(${r},${g},${b},${Math.min(1, alpha * 1.2)})`;
+  points.forEach((point) => {
+    ctx.beginPath();
+    ctx.arc(point.x, point.y, focused ? 3.4 : 2.6, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.restore();
+}
+
 export function renderBlob(
   ctx: CanvasRenderingContext2D,
   simplexKey: string,
@@ -171,7 +238,8 @@ export function renderBlob(
       : baseAlpha * 0.18
     : baseAlpha;
 
-  const entry = renderBlobToOffscreen(simplexKey, simplex, nodes, blobR);
+  // Namespaced so a hyperedge over the same nodes can never share this entry.
+  const entry = renderBlobToOffscreen(`s:${simplexKey}`, simplex, nodes, blobR);
   if (!entry) return;
 
   const passes: Array<{ alpha: number; blur: number }> = [

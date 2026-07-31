@@ -3,6 +3,8 @@ import { strict as assert } from "node:assert";
 import { normalizeKey, normalizeNodes, parseRelationKey, relationKey } from "../core/normalize.js";
 import { SimplicialModel } from "../core/model.js";
 import { RelationHistory, deserializeEvent, serializeEvent, syncEncounterPersistence } from "../core/history.js";
+import { LayoutEngine } from "../layout/engine.js";
+import type { LayoutNode } from "../core/types.js";
 import { parseRelations, type ParserDeps } from "../data/parser-core.js";
 import {
   parseManagedFrontmatter,
@@ -571,6 +573,42 @@ test("no code path promotes without an explicit call — recurrence alone never 
   assert.equal(model.getHyperedge(key)!.persistence, "recurring");
   assert.equal(model.simplices.size, 0, "ten recurrences and a crystallization still assert no faces");
   assert.equal(model.getHyperedge(key)!.promotedTo, undefined);
+});
+
+// ---------------------------------------------------------------------------
+// HG-16 — rendering and layout
+// ---------------------------------------------------------------------------
+
+function layoutNode(id: string, px: number, py: number): LayoutNode {
+  return { id, px, py, vx: 0, vy: 0, isVirtual: false, isPinned: false, displayAlpha: 1 };
+}
+
+test("an encounter draws its members together without creating pairwise springs", () => {
+  const engine = new LayoutEngine();
+  engine.configure({ noiseAmount: 0, repulsionStrength: 0, gravityStrength: 0, dampingFactor: 1 });
+  const nodes = [layoutNode("a.md", -200, 0), layoutNode("b.md", 200, 0), layoutNode("c.md", 0, 200)];
+  const spread = (list: LayoutNode[]) =>
+    Math.max(...list.map((node) => Math.hypot(node.px, node.py - 200 / 3))) -
+    Math.min(...list.map((node) => Math.hypot(node.px, node.py - 200 / 3)));
+  const before = spread(nodes);
+
+  for (let i = 0; i < 60; i++) {
+    engine.tick(nodes, [], { width: 800, height: 600 }, null, [{ nodes: ["a.md", "b.md", "c.md"] }]);
+  }
+
+  const distance = Math.hypot(nodes[0].px - nodes[1].px, nodes[0].py - nodes[1].py);
+  assert.ok(distance < 400, "members converge toward a shared centroid");
+  assert.ok(spread(nodes) <= before + 1, "and do so as a group, not as three springs");
+});
+
+test("hyperedge order is not capped by maxRenderedDim — it is not a dimension", () => {
+  const model = new SimplicialModel();
+  const nodes = ["a.md", "b.md", "c.md", "d.md", "e.md", "f.md"];
+  const key = model.addHyperedge({ nodes });
+
+  assert.equal(model.getHyperedge(key)!.nodes.length, 6);
+  // The simplicial layer would have refused to expand this; the hypergraph does not care.
+  assert.equal(model.simplices.size, 0);
 });
 
 // ---------------------------------------------------------------------------
