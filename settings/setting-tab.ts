@@ -18,6 +18,7 @@ export class SimplicialSettingTab extends PluginSettingTab {
     this.renderPersistenceSettings(containerEl);
     this.renderHypergraphSettings(containerEl);
     this.renderDynamicsSettings(containerEl);
+    this.renderSheafSettings(containerEl);
     this.renderLayoutSettings(containerEl);
     this.renderInferenceSettings(containerEl);
     this.renderCommandUiSettings(containerEl);
@@ -277,6 +278,19 @@ export class SimplicialSettingTab extends PluginSettingTab {
         await this.plugin.saveSettings();
       });
     }
+  }
+
+  private renderSheafSettings(containerEl: HTMLElement): void {
+    new Setting(containerEl).setName("Contextuality").setHeading();
+    new Setting(containerEl)
+      .setName("Contextuality lab")
+      .setDesc(
+        "Define overlapping contexts, assign local roles, and detect gluing obstructions. Contexts live in plugin settings and never alter note content.",
+      )
+      .addButton((button) => {
+        button.setButtonText("Open lab");
+        button.onClick(() => void this.plugin.activateSheafView());
+      });
   }
 
   private renderInferenceSettings(containerEl: HTMLElement): void {

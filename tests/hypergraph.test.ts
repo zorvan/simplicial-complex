@@ -43,6 +43,19 @@ import {
   synchronizationTimeSliced,
   type ActivationField,
 } from "../core/activation.js";
+import { frac, fromNumbers, nullspace, rank, sheafLaplacian, solve } from "../core/linalg.js";
+import {
+  analyzeSheaf,
+  backfillSection,
+  contextOverlaps,
+  contextSupport,
+  contextualFraction,
+  restrict,
+  type LocalSection,
+  type SheafContext,
+  type SheafData,
+  type SheafRole,
+} from "../core/sheaf.js";
 
 // ---------------------------------------------------------------------------
 // HG-01 — namespaced relation keys
@@ -1166,4 +1179,240 @@ test("activation never reaches a note — no persistence path can see it", async
     false,
     "activation exposes no way to be written down",
   );
+});
+
+// ---------------------------------------------------------------------------
+// HG-27 — exact linear algebra over ℚ
+// ---------------------------------------------------------------------------
+
+test("rank and nullspace are exact where floating point would guess", () => {
+  const matrix = fromNumbers([
+    [1, 2, 3],
+    [2, 4, 6],
+    [1, 1, 1],
+  ]);
+  assert.equal(rank(matrix), 2);
+  const kernel = nullspace(matrix);
+  assert.equal(kernel.length, 1);
+
+  // A matrix whose dependency only shows up under exact arithmetic.
+  const tricky = fromNumbers([
+    [1, 3],
+    [3, 9],
+  ]);
+  assert.equal(rank(tricky), 1);
+});
+
+test("an inconsistent system is reported as inconsistent, not approximated", () => {
+  const matrix = fromNumbers([[1], [1]]);
+  assert.equal(solve(matrix, [frac(1), frac(2)]).consistent, false);
+  assert.equal(solve(matrix, [frac(3), frac(3)]).consistent, true);
+});
+
+test("the sheaf Laplacian has the same kernel as the coboundary", () => {
+  const delta = fromNumbers([
+    [1, -1, 0],
+    [0, 1, -1],
+  ]);
+  const laplacian = sheafLaplacian(delta);
+  assert.equal(nullspace(laplacian).length, nullspace(delta).length);
+});
+
+// ---------------------------------------------------------------------------
+// HG-25 … HG-28 — the sheaf layer
+// ---------------------------------------------------------------------------
+
+function sheafFixture(assignments: Record<string, Record<string, string>>): {
+  model: SimplicialModel;
+  data: SheafData;
+} {
+  const model = new SimplicialModel();
+  const contexts: SheafContext[] = [];
+  const sections = new Map<string, LocalSection>();
+
+  Object.entries(assignments).forEach(([contextId, roles]) => {
+    const nodes = Object.keys(roles);
+    const key = model.addHyperedge({ nodes });
+    contexts.push({ id: contextId, name: contextId, source: "manual", definition: "", relations: [key] });
+    sections.set(contextId, new Map(Object.entries(roles) as Array<[string, SheafRole]>));
+  });
+
+  return { model, data: { contexts, sections } };
+}
+
+test("a note can carry a different role in each context it appears in", () => {
+  const { data } = sheafFixture({
+    c1: { "a.md": "research", "b.md": "idea" },
+    c2: { "a.md": "project", "c.md": "action" },
+    c3: { "a.md": "creative", "d.md": "reference" },
+  });
+
+  assert.equal(restrict(data.sections.get("c1")!, "a.md"), "research");
+  assert.equal(restrict(data.sections.get("c2")!, "a.md"), "project");
+  assert.equal(restrict(data.sections.get("c3")!, "a.md"), "creative");
+});
+
+test("when every context agrees, the sheaf layer reports nothing — the degenerate case is current behaviour", () => {
+  const { model, data } = sheafFixture({
+    c1: { "a.md": "research", "b.md": "research" },
+    c2: { "b.md": "research", "c.md": "research" },
+    c3: { "c.md": "research", "a.md": "research" },
+  });
+
+  const report = analyzeSheaf(model, data);
+  assert.equal(report.gluing.h1, 0, "an agreeing vault has no obstruction");
+  assert.equal(report.gluing.glues, true);
+  assert.equal(report.obstructions.length, 0);
+  assert.equal(report.fraction.value, 1);
+  assert.ok(report.gluing.h0 > 0, "an agreeing vault admits a global reading");
+});
+
+test("the canonical fixture: three contexts, pairwise compatible, globally impossible", () => {
+  // Each pair of contexts overlaps in exactly one note, so one baseline shift always
+  // reconciles any two of them. The cycle is what cannot be reconciled.
+  const { model, data } = sheafFixture({
+    c1: { "a.md": "research", "b.md": "idea" },
+    c2: { "b.md": "research", "c.md": "idea" },
+    c3: { "c.md": "research", "a.md": "idea" },
+  });
+
+  const report = analyzeSheaf(model, data);
+  assert.equal(report.gluing.pairwiseDisagreements.length, 0, "every pair is compatible on its overlap");
+  assert.equal(report.gluing.h1, 1, "exactly one obstruction class");
+  assert.equal(report.gluing.glues, false);
+  assert.equal(report.gluing.contextualityDetected, true);
+  assert.equal(report.obstructions.length, 1);
+  assert.ok(report.fraction.value < 1, "an obstructed cover cannot be fully explained");
+  assert.equal(report.fraction.exact, true);
+});
+
+test("the obstruction names the cycle of contexts it lives on", () => {
+  const { model, data } = sheafFixture({
+    c1: { "a.md": "research", "b.md": "idea" },
+    c2: { "b.md": "research", "c.md": "idea" },
+    c3: { "c.md": "research", "a.md": "idea" },
+  });
+
+  const [obstruction] = analyzeSheaf(model, data).obstructions;
+  assert.deepEqual(obstruction.contexts, ["c1", "c2", "c3"]);
+  assert.deepEqual(obstruction.nodes, ["a.md", "b.md", "c.md"]);
+  assert.ok(obstruction.magnitude > 0);
+});
+
+test("two contexts overlapping in one note always glue — a single shift reconciles them", () => {
+  const { model, data } = sheafFixture({
+    c1: { "a.md": "research", "b.md": "idea" },
+    c2: { "b.md": "action", "c.md": "project" },
+  });
+
+  const report = analyzeSheaf(model, data);
+  assert.equal(report.gluing.h1, 0, "no cycle, no obstruction");
+  assert.equal(report.fraction.value, 1);
+});
+
+test("plain local disagreement is reported as such and not mistaken for contextuality", () => {
+  // Two contexts share two notes and read them incompatibly: easy to find, and not
+  // the interesting case. It must not be labelled contextual.
+  const { model, data } = sheafFixture({
+    c1: { "a.md": "research", "b.md": "idea" },
+    c2: { "a.md": "research", "b.md": "action" },
+  });
+
+  const report = analyzeSheaf(model, data);
+  assert.equal(report.gluing.pairwiseDisagreements.length, 1);
+  assert.equal(report.gluing.contextualityDetected, false, "locally inconsistent is not locally consistent");
+  assert.deepEqual(report.gluing.pairwiseDisagreements[0].disagreeingNodes, ["b.md"]);
+});
+
+test("a uniform relabelling across the overlap is a relabelling, not a conflict", () => {
+  const { model, data } = sheafFixture({
+    c1: { "a.md": "research", "b.md": "research" },
+    c2: { "a.md": "project", "b.md": "project" },
+  });
+  assert.equal(analyzeSheaf(model, data).gluing.pairwiseDisagreements.length, 0);
+});
+
+test("the contextual fraction says how much of the cover still reads together", () => {
+  const { model, data } = sheafFixture({
+    c1: { "a.md": "research", "b.md": "idea" },
+    c2: { "b.md": "research", "c.md": "idea" },
+    c3: { "c.md": "research", "a.md": "idea" },
+  });
+
+  const fraction = contextualFraction(model, data);
+  // Dropping any one of the three breaks the cycle, so two thirds still glue.
+  assert.ok(Math.abs(fraction.value - 2 / 3) < 1e-9);
+  assert.equal(fraction.consistentContexts.length, 2);
+});
+
+test("contexts and their overlaps are enumerable so a user can see the intersection", () => {
+  const { model, data } = sheafFixture({
+    c1: { "a.md": "research", "b.md": "idea" },
+    c2: { "b.md": "research", "c.md": "idea" },
+  });
+
+  const overlaps = contextOverlaps(model, data.contexts);
+  assert.equal(overlaps.length, 1);
+  assert.deepEqual(overlaps[0].nodes, ["b.md"]);
+  assert.deepEqual(contextSupport(model, data.contexts[0]), ["a.md", "b.md"]);
+});
+
+test("backfilling from a global role assignment produces the agreeing case", () => {
+  const { model, data } = sheafFixture({
+    c1: { "a.md": "research", "b.md": "idea" },
+    c2: { "b.md": "action", "c.md": "project" },
+    c3: { "c.md": "creative", "a.md": "reference" },
+  });
+
+  const globalRoles = new Map<string, SheafRole>([
+    ["a.md", "research"],
+    ["b.md", "research"],
+    ["c.md", "research"],
+  ]);
+  const backfilled: SheafData = {
+    contexts: data.contexts,
+    sections: new Map(data.contexts.map((context) => [context.id, backfillSection(model, context, globalRoles)])),
+  };
+
+  assert.equal(analyzeSheaf(model, backfilled).gluing.h1, 0);
+  assert.equal(analyzeSheaf(model, backfilled).fraction.value, 1);
+});
+
+test("an empty cover is not an obstructed one", () => {
+  const model = new SimplicialModel();
+  const report = analyzeSheaf(model, { contexts: [], sections: new Map() });
+  assert.equal(report.gluing.h1, 0);
+  assert.equal(report.fraction.value, 1);
+  assert.equal(report.obstructions.length, 0);
+});
+
+test("a sheaf obstruction and a beta-one hole remain different objects", () => {
+  const obstructed = sheafFixture({
+    c1: { "a.md": "research", "b.md": "idea" },
+    c2: { "b.md": "research", "c.md": "idea" },
+    c3: { "c.md": "research", "a.md": "idea" },
+  });
+  assert.equal(obstructed.model.getCachedBetti().b1, 0, "encounter contexts create no simplicial hole");
+  assert.equal(analyzeSheaf(obstructed.model, obstructed.data).gluing.h1, 1);
+
+  const hole = new SimplicialModel();
+  hole.addSimplex({ nodes: ["a.md", "b.md"], userDefined: true });
+  hole.addSimplex({ nodes: ["b.md", "c.md"], userDefined: true });
+  hole.addSimplex({ nodes: ["a.md", "c.md"], userDefined: true });
+  assert.ok(hole.getCachedBetti().b1 > 0, "the triangular boundary has a topological hole");
+  assert.equal(
+    analyzeSheaf(hole, { contexts: [], sections: new Map() }).gluing.h1,
+    0,
+    "no cover means no gluing obstruction",
+  );
+});
+
+test("sheaf contexts and local roles have no note write-back path", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const noteWriters = ["data/persistence.ts", "data/frontmatter.ts", "data/history-store.ts"];
+  for (const path of noteWriters) {
+    const source = await readFile(new URL(`../../${path}`, import.meta.url), "utf8");
+    const writerSource = source.split("export function getDefaultSettings")[0];
+    assert.equal(/sheaf|contextuality/i.test(writerSource), false, `${path} must not serialize contextual readings`);
+  }
 });

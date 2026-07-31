@@ -69,6 +69,8 @@ Both views are projections of the same underlying simplicial model. Toggle betwe
 
 **Topological Analysis (v3):** Real-time Betti numbers (β₀, β₁, β₂), phantom hole visualization, and live Betti HUD.
 
+**Contextuality (v3):** Define overlapping contexts and give the same note a different local role in each. The Contextuality Lab reports whether those readings glue, identifies H¹ obstruction cycles, and shows the contextual fraction. A crimson failed seam means existing local meanings cannot be reconciled; it is not an orange topological hole, where a filler is absent.
+
 **Emergent Inference (v3):** Semantic clustering with TF-IDF, emergent edge detection, hybrid inference modes, domain-aware coloring.
 
 _See [Technical Details](#technical-details) for complete feature documentation._

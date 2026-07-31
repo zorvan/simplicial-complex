@@ -9,7 +9,14 @@ import { ActivationState, createKernel, propagate, type ActivationSource } from 
 import { createSubsetScorer } from "./data/inference/subset-scorer";
 import type { Hyperedge, PluginSettings, RelationKey, RelationSelection, Simplex } from "./core/types";
 import { deserializeReinforcement, serializeReinforcement, type ReinforcementState } from "./data/interactions";
-import { VIEW_TYPE_SIMPLICIAL, VIEW_TYPE_SIMPLICIAL_DYNAMICS, VIEW_TYPE_SIMPLICIAL_PANEL } from "./core/types";
+import {
+  VIEW_TYPE_SIMPLICIAL,
+  VIEW_TYPE_SIMPLICIAL_DYNAMICS,
+  VIEW_TYPE_SIMPLICIAL_PANEL,
+  VIEW_TYPE_SIMPLICIAL_SHEAF,
+} from "./core/types";
+import { analyzeSheaf } from "./core/sheaf";
+import { buildGlobalRoles, buildSheafData, readStoredSheaf } from "./data/sheaf-store";
 import {
   ensureCentralFile,
   getDefaultSettings,
@@ -30,6 +37,7 @@ import { CreateSimplexModal, type RelationDraft } from "./ui/create-simplex-moda
 import { PromoteEncounterModal } from "./ui/promote-encounter-modal";
 import { createPromotedNote, MetadataPanel } from "./ui/panel";
 import { DynamicsLabView } from "./ui/dynamics-view";
+import { SheafView } from "./ui/sheaf-view";
 import { SimplicialView } from "./ui/view";
 import { SimplicialSettingTab } from "./settings/setting-tab";
 
@@ -44,6 +52,7 @@ export default class SimplicialPlugin extends Plugin {
   historyStore!: HistoryStore;
   panelView: MetadataPanel | null = null;
   simplicialView: SimplicialView | null = null;
+  sheafView: SheafView | null = null;
   private saveTimer: number | null = null;
   private rescanTimer: number | null = null;
   /**
@@ -157,6 +166,19 @@ export default class SimplicialPlugin extends Plugin {
       panel.setSubsetScorer(this.subsetScorer);
       this.panelView = panel;
       return panel;
+    });
+    this.registerView(VIEW_TYPE_SIMPLICIAL_SHEAF, (leaf) => {
+      const view = new SheafView(leaf, this.model, this.settings, async () => {
+        await this.saveSettings();
+        this.refreshSheafAnalysis();
+      });
+      this.sheafView = view;
+      return view;
+    });
+    this.addCommand({
+      id: "open-contextuality-lab",
+      name: "Open contextuality lab",
+      callback: () => void this.activateSheafView(),
     });
 
     if (this.settings.enableDynamicsLab) {
@@ -376,6 +398,22 @@ export default class SimplicialPlugin extends Plugin {
 
   async activateDynamicsLab(): Promise<void> {
     await this.app.workspace.getLeaf(true).setViewState({ type: VIEW_TYPE_SIMPLICIAL_DYNAMICS, active: true });
+  }
+
+  async activateSheafView(): Promise<void> {
+    await this.app.workspace.getLeaf(true).setViewState({ type: VIEW_TYPE_SIMPLICIAL_SHEAF, active: true });
+  }
+
+  refreshSheafAnalysis(): void {
+    const stored = readStoredSheaf(this.settings);
+    if (stored.contexts.length === 0) {
+      this.renderer.setSheafReport(null);
+      this.sheafView?.refresh();
+      return;
+    }
+    const data = buildSheafData(this.model, stored, buildGlobalRoles(this.app, this.model));
+    this.renderer.setSheafReport(analyzeSheaf(this.model, data));
+    this.sheafView?.refresh();
   }
 
   private async persistSimplexMetadata(
@@ -1063,7 +1101,7 @@ export default class SimplicialPlugin extends Plugin {
       await this.index.fullScan();
       this.syncEncounterState();
       this.rebuildSubsetScorer();
-      this.renderer.render();
+      this.refreshSheafAnalysis();
       logger.info("plugin", "Full scan complete", {
         reason,
         indexedNodeCount: this.model.nodes.size,

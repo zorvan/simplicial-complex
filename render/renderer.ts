@@ -21,6 +21,8 @@ import { renderEdges } from "./edges";
 import { effectiveColorForSimplex } from "./palette";
 import { drawBettiHUD, drawEncounterHUD } from "./components/hud";
 import { drawPhantomHoles, type VisibleBounds } from "./components/holes";
+import { drawObstructionSeams } from "./components/obstructions";
+import type { SheafReport } from "../core/sheaf";
 import { explainHole, type SimplexExplanation } from "../data/explainer";
 import type { InferenceContext } from "../data/inference/types";
 
@@ -112,6 +114,7 @@ export class Renderer {
    * here is ever written to a note, and the renderer has no way to write one.
    */
   private activation: ActivationField = new Map();
+  private sheafReport: SheafReport | null = null;
 
   constructor(
     private model: SimplicialModel,
@@ -123,6 +126,11 @@ export class Renderer {
 
   setActivation(field: ActivationField): void {
     this.activation = field;
+  }
+
+  setSheafReport(report: SheafReport | null): void {
+    this.sheafReport = report;
+    this.render();
   }
 
   // Cached text measurement for performance
@@ -1017,6 +1025,17 @@ export class Renderer {
         }),
       );
     });
+
+    // Unlike a β₁ hole, this is not an absent filler. Existing fields fail to meet
+    // along an open seam, so it is drawn over relations and never closed or filled.
+    if (this.sheafReport?.obstructions.length) {
+      drawObstructionSeams(
+        ctx,
+        this.sheafReport.obstructions,
+        new Map(allNodes.map((node) => [node.id, node])),
+        this.isDark,
+      );
+    }
 
     // Only render progressively loaded visible nodes
     renderableNodes.forEach((node) => {

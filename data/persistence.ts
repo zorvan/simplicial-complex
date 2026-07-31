@@ -277,5 +277,6 @@ export function getDefaultSettings(): PluginSettings {
     enableRelationHistory: true,
     enableDynamicsLab: false,
     activationDecayHalfLifeMinutes: 30,
+    sheaf: { contexts: [], sections: {} },
   };
 }

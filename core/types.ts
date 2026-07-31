@@ -3,6 +3,7 @@ export type SimplexKey = string;
 
 export const VIEW_TYPE_SIMPLICIAL = "simplicial-view";
 export const VIEW_TYPE_SIMPLICIAL_PANEL = "simplicial-panel";
+export const VIEW_TYPE_SIMPLICIAL_SHEAF = "simplicial-sheaf";
 export const VIEW_TYPE_SIMPLICIAL_DYNAMICS = "simplicial-dynamics";
 export const MAX_FACE_GEN_DIM = 4;
 export const MAX_RENDERED_DIM = 3;
@@ -216,6 +217,8 @@ export interface PluginSettings {
    * only governs how long a note stays visibly in play after you leave it.
    */
   activationDecayHalfLifeMinutes: number;
+  /** HG-25…HG-29. Validated by `data/sheaf-store`; never written into notes. */
+  sheaf: unknown;
 }
 
 export interface RelationSelection {

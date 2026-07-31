@@ -42,6 +42,8 @@ The hypergraph layer. The plugin previously modelled one kind of togetherness �
 
 - **Dynamics Lab (HG-19…HG-21)** — ephemeral note activation, pairwise/simplicial/hypergraph propagation kernels, deterministic synchronization-time diagnostics, order-parameter traces, and competing-rhythm detection.
 - Dynamics simulations run in bounded UI slices and cancel when their view closes; opening, editing, and manually focusing notes feed transient canvas emphasis without writing attention state into notes.
+- **Contextuality lab (HG-25…HG-29)** — explicit overlapping contexts, per-context note roles, exact H⁰/H¹ gluing diagnostics, concrete obstruction cycles, and contextual fraction.
+- Gluing obstructions render as open crimson failed seams over existing fields, deliberately distinct from closed orange β₁ holes. Context definitions and local roles persist only in plugin settings, never in notes.
 - `.gitignore` file for proper repository hygiene
 - `LICENSE` file (MIT)
 - `SPEC.md` engineering specification

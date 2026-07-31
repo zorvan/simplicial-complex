@@ -604,3 +604,47 @@
   border-radius: 1px 1px 0 0;
   opacity: 0.75;
 }
+
+/* Phase 7: explicit contexts and failed-gluing seams. */
+.simplicial-sheaf-create,
+.simplicial-sheaf-report,
+.simplicial-sheaf-context {
+  border-top: 1px solid var(--background-modifier-border);
+  margin-top: 16px;
+  padding-top: 12px;
+}
+
+.simplicial-sheaf-relations {
+  max-height: 220px;
+  overflow-y: auto;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  padding: 4px 10px;
+}
+
+.simplicial-sheaf-context-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.simplicial-sheaf-context-head span,
+.simplicial-context-overlap {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.simplicial-context-overlap {
+  border-left: 2px solid var(--interactive-accent);
+  margin: 5px 0;
+  padding-left: 8px;
+}
+
+.simplicial-obstruction-reading {
+  color: var(--text-error);
+  border-left: 3px solid var(--text-error);
+  margin: 8px 0;
+  padding-left: 9px;
+  line-height: 1.45;
+}
