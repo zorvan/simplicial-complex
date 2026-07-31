@@ -1017,10 +1017,10 @@ export class Renderer {
         allNodes,
         this.hyperedgeColor(hyperedge),
         encounterStyle({
-          opacity: this.settings.hyperedgeOpacity,
+          opacity: this.settings.hyperedgeOpacity * (hyperedge.suggested ? 0.62 : 1),
           focused,
           deficit: this.encounterDeficit(key),
-          emergent: hyperedge.persistence === "recurring" && !hyperedge.crystallizedInto,
+          emergent: !hyperedge.suggested && hyperedge.persistence === "recurring" && !hyperedge.crystallizedInto,
           pulse: isPulseTarget ? pulse : 0,
         }),
       );

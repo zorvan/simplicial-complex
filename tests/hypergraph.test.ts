@@ -29,6 +29,7 @@ import {
   simpliciality,
 } from "../core/diagnostics.js";
 import { explainEncounter, explainSimpliciality } from "../data/explainer.js";
+import { suggestEncounters } from "../data/inference/encounters.js";
 import { PULSE_PERIOD_MS, encounterStyle, pulsePhase, pulsedNodeRadius } from "../render/encounter-style.js";
 import {
   ActivationState,
@@ -1415,4 +1416,24 @@ test("sheaf contexts and local roles have no note write-back path", async () => 
     const writerSource = source.split("export function getDefaultSettings")[0];
     assert.equal(/sheaf|contextuality/i.test(writerSource), false, `${path} must not serialize contextual readings`);
   }
+});
+
+test("encounter discovery proposes bounded candidates without asserting provenance", () => {
+  const model = new SimplicialModel();
+  model.addSimplex({ nodes: ["a.md", "b.md", "c.md"], weight: 0.9, userDefined: true });
+  const suggestions = suggestEncounters(model, { threshold: 0.5, limit: 5 });
+  assert.equal(suggestions.length, 1);
+  assert.equal(suggestions[0].suggested, true);
+  assert.equal(suggestions[0].inferred, true);
+  assert.equal(suggestions[0].occurredAt, undefined, "a proposal must not pretend an encounter happened");
+  assert.equal(model.hyperedges.size, 0, "discovery is pure until the caller chooses to display candidates");
+});
+
+test("encounter discovery finds a cross-field junction and respects its cap", () => {
+  const model = new SimplicialModel();
+  model.addSimplex({ nodes: ["hub.md", "a.md", "b.md"], userDefined: true });
+  model.addSimplex({ nodes: ["hub.md", "x.md", "y.md"], userDefined: true });
+  const suggestions = suggestEncounters(model, { threshold: 0.4, limit: 1 });
+  assert.equal(suggestions.length, 1);
+  assert.ok(suggestions[0].nodes.includes("hub.md"));
 });

@@ -21,6 +21,7 @@ export interface RelationPanelActions {
   promoteEncounter: (_key: RelationKey) => void;
   crystallizeEncounter: (_key: RelationKey) => Promise<void>;
   dissolveHyperedge: (_key: RelationKey) => Promise<void>;
+  confirmSuggestedEncounter: (_key: RelationKey) => Promise<void>;
 }
 
 export class MetadataPanel extends ItemView {
@@ -253,6 +254,20 @@ export class MetadataPanel extends ItemView {
       halfLifeDays: this.settings?.decayHalfLifeDays ?? 90,
     });
 
+    if (hyperedge.suggested) {
+      contentEl.createEl("div", {
+        cls: "simplicial-explanation-tension",
+        text: `Probabilistic suggestion · ${Math.round((hyperedge.confidence ?? 0) * 100)}% confidence. Nothing has been recorded in your notes or history.`,
+      });
+      new Setting(contentEl)
+        .setName("Record this encounter")
+        .setDesc("Confirm that these notes genuinely came together as one irreducible whole.")
+        .addButton((button) => {
+          button.setButtonText("Confirm encounter").setCta();
+          button.onClick(async () => this.actions?.confirmSuggestedEncounter(key));
+        });
+    }
+
     contentEl.createEl("div", {
       cls: "simplicial-explanation-tension",
       text: "These notes came together as one irreducible whole. No pair among them is asserted to be meaningful on its own.",
@@ -264,6 +279,7 @@ export class MetadataPanel extends ItemView {
     const badges = contentEl.createDiv({ cls: "simplicial-panel-badges" });
     const color: [number, number, number] = [127, 119, 221];
     this.renderBadge(badges, `order ${hyperedge.nodes.length}`, color);
+    if (hyperedge.suggested) this.renderBadge(badges, "Suggested", color);
     this.renderBadge(badges, hyperedge.persistence === "recurring" ? "Recurring" : "Momentary", color);
     if (hyperedge.mode) this.renderBadge(badges, hyperedge.mode, color, true);
     if (hyperedge.promotedTo) this.renderBadge(badges, "promoted", color, true);
@@ -317,11 +333,11 @@ export class MetadataPanel extends ItemView {
       .setDesc("Assert that the sub-relations within this group are meaningful too. You will see the exact list first.")
       .addButton((button) => {
         button.setButtonText("Promote");
-        button.setDisabled(Boolean(hyperedge.promotedTo));
+        button.setDisabled(Boolean(hyperedge.promotedTo) || Boolean(hyperedge.suggested));
         button.onClick(() => this.actions?.promoteEncounter(key));
       });
 
-    const isRecurring = hyperedge.persistence === "recurring";
+    const isRecurring = hyperedge.persistence === "recurring" && !hyperedge.suggested;
     new Setting(contentEl)
       .setName("Crystallize concept")
       .setDesc(

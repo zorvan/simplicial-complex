@@ -7,6 +7,7 @@ import { RelationHistory, syncEncounterPersistence, type RelationEventInput } fr
 import type { SubsetScorer } from "./core/diagnostics";
 import { ActivationState, createKernel, propagate, type ActivationSource } from "./core/activation";
 import { createSubsetScorer } from "./data/inference/subset-scorer";
+import { suggestEncounters } from "./data/inference/encounters";
 import type { Hyperedge, PluginSettings, RelationKey, RelationSelection, Simplex } from "./core/types";
 import { deserializeReinforcement, serializeReinforcement, type ReinforcementState } from "./data/interactions";
 import {
@@ -160,6 +161,7 @@ export default class SimplicialPlugin extends Plugin {
         promoteEncounter: (key) => this.promoteEncounter(key),
         crystallizeEncounter: (key) => this.crystallizeEncounter(key),
         dissolveHyperedge: (key) => this.dissolveHyperedge(key),
+        confirmSuggestedEncounter: (key) => this.confirmSuggestedEncounter(key),
       });
       panel.setHistory(this.history);
       panel.setSettings(this.settings);
@@ -191,6 +193,8 @@ export default class SimplicialPlugin extends Plugin {
     }
 
     this.addRibbonIcon("network", "Simplicial graph", () => void this.activateView());
+    this.addRibbonIcon("diamond", "Record encounter from open note", () => void this.createEncounterFromOpenNote());
+    this.addRibbonIcon("combine", "Contextuality lab", () => void this.activateSheafView());
     this.addCommand({
       id: "open-simplicial",
       name: "Open simplicial graph",
@@ -498,6 +502,41 @@ export default class SimplicialPlugin extends Plugin {
     syncEncounterPersistence(this.model, this.history, this.settings.encounterRecurrenceThreshold);
   }
 
+  private refreshEncounterSuggestions(): number {
+    for (const [key, hyperedge] of [...this.model.hyperedges]) {
+      if (hyperedge.suggested) this.model.removeHyperedge(key);
+    }
+    if (!this.settings.enableEncounterSuggestions) return 0;
+    const suggestions = suggestEncounters(this.model, {
+      threshold: this.settings.encounterSuggestionThreshold,
+      limit: this.settings.maxEncounterSuggestions,
+      ...(this.subsetScorer ? { score: this.subsetScorer } : {}),
+    });
+    suggestions.forEach((candidate) => this.model.addHyperedge(candidate));
+    return suggestions.length;
+  }
+
+  private async confirmSuggestedEncounter(key: RelationKey): Promise<void> {
+    const candidate = this.model.getHyperedge(key);
+    if (!candidate?.suggested) return;
+    const sourcePath =
+      this.settings.persistenceMode === "central-file" ? this.settings.centralFile : candidate.nodes[0];
+    const confirmed: Hyperedge = {
+      ...candidate,
+      suggested: false,
+      inferred: false,
+      mode: "encounter",
+      occurredAt: Date.now(),
+      persistence: "momentary",
+      sourcePath,
+    };
+    this.model.addHyperedge(confirmed);
+    this.recordEncounter(confirmed, "user");
+    await this.persistHyperedge(this.model.getHyperedge(key)!);
+    this.panelView?.setSelection({ kind: "hyperedge", key });
+    new Notice("Encounter confirmed and recorded.");
+  }
+
   /**
    * HG-19. Record that a note is in play and spread that to whatever it is in
    * relation with.
@@ -582,6 +621,7 @@ export default class SimplicialPlugin extends Plugin {
   }
 
   private async persistHyperedge(hyperedge: Hyperedge): Promise<void> {
+    if (hyperedge.suggested) return;
     const shouldWriteCentral =
       hyperedge.sourcePath === this.settings.centralFile ||
       (!hyperedge.sourcePath && this.settings.persistenceMode === "central-file");
@@ -724,6 +764,12 @@ export default class SimplicialPlugin extends Plugin {
   private async dissolveHyperedge(hyperedgeKey: RelationKey): Promise<void> {
     const hyperedge = this.model.getHyperedge(hyperedgeKey);
     if (!hyperedge) return;
+    if (hyperedge.suggested) {
+      this.model.removeHyperedge(hyperedgeKey);
+      this.panelView?.setSelection(null);
+      new Notice("Encounter suggestion dismissed.");
+      return;
+    }
     await this.removeHyperedgeFromNote(hyperedge);
     this.model.removeHyperedge(hyperedgeKey);
     this.history.append({
@@ -1101,7 +1147,18 @@ export default class SimplicialPlugin extends Plugin {
       await this.index.fullScan();
       this.syncEncounterState();
       this.rebuildSubsetScorer();
+      const suggestionCount = this.refreshEncounterSuggestions();
       this.refreshSheafAnalysis();
+      if (!this.settings.discoveryNoticeShown) {
+        this.settings.discoveryNoticeShown = true;
+        await this.saveSettings();
+        new Notice(
+          suggestionCount > 0
+            ? `Found ${suggestionCount} possible ◇ encounter${suggestionCount === 1 ? "" : "s"}. Open the Simplicial graph to review them; nothing was written automatically.`
+            : "New: record irreducible groups with ◇, compare attention in Dynamics Lab, and define overlapping readings in the Contextuality Lab.",
+          9000,
+        );
+      }
       logger.info("plugin", "Full scan complete", {
         reason,
         indexedNodeCount: this.model.nodes.size,

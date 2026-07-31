@@ -94,6 +94,10 @@ export interface Hyperedge {
   promotedTo?: SimplexKey;
   /** Note produced by "crystallize concept", if any. */
   crystallizedInto?: NodeID;
+  /** Probabilistic, in-memory candidate. It asserts no encounter and is never written until confirmed. */
+  suggested?: boolean;
+  inferred?: boolean;
+  confidence?: number;
 }
 
 export type HigherOrderRelation = ({ kind: "simplex" } & Simplex) | ({ kind: "hyperedge" } & Hyperedge);
@@ -219,6 +223,10 @@ export interface PluginSettings {
   activationDecayHalfLifeMinutes: number;
   /** HG-25…HG-29. Validated by `data/sheaf-store`; never written into notes. */
   sheaf: unknown;
+  enableEncounterSuggestions: boolean;
+  encounterSuggestionThreshold: number;
+  maxEncounterSuggestions: number;
+  discoveryNoticeShown: boolean;
 }
 
 export interface RelationSelection {

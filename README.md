@@ -63,6 +63,8 @@ Both views are projections of the same underlying simplicial model. Toggle betwe
 
 **Hypergraph layer (v0.4.0):** A second kind of togetherness. `◇` records an irreducible encounter that makes no claim about its subgroups — no faces generated, no effect on topology. Four explicit transformations between encounters and simplices, and an append-only history of how each relation came to be.
 
+On first scan the plugin also proposes lightweight, in-memory `◇` candidates from existing coherent fields and cross-field junctions. These are visibly marked as suggestions and create no provenance or note changes until explicitly confirmed.
+
 **Core:** Organic blob renderer, living force-based layout, hover focus, dimension filtering, node pinning, real-time vault updates, formal geometric view, lasso selection, simplex-to-note promotion, centrality analysis.
 
 **Analysis & Inference:** Edge inference from tags/links/folders, suggestion system for missing connections, temporal decay, and centrality measures.

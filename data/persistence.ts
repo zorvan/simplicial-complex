@@ -278,5 +278,9 @@ export function getDefaultSettings(): PluginSettings {
     enableDynamicsLab: false,
     activationDecayHalfLifeMinutes: 30,
     sheaf: { contexts: [], sections: {} },
+    enableEncounterSuggestions: true,
+    encounterSuggestionThreshold: 0.55,
+    maxEncounterSuggestions: 20,
+    discoveryNoticeShown: false,
   };
 }

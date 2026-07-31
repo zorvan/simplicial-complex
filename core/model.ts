@@ -238,13 +238,14 @@ export class SimplicialModel {
     const normalizedNodes = normalizeNodes(nodes);
     const key = relationKey("hyperedge", normalizedNodes);
     const existing = this.hyperedges.get(key);
+    const base = existing?.suggested && !hyperedge.suggested ? undefined : existing;
     const normalized: Hyperedge = {
-      ...existing,
+      ...base,
       ...hyperedge,
       nodes: normalizedNodes,
-      weight: clampWeight(hyperedge.weight ?? existing?.weight),
-      colorKey: hyperedge.colorKey ?? existing?.colorKey ?? hashLabel(hyperedge.label),
-      occurredAt: existing?.occurredAt ?? hyperedge.occurredAt ?? Date.now(),
+      weight: clampWeight(hyperedge.weight ?? base?.weight),
+      colorKey: hyperedge.colorKey ?? base?.colorKey ?? hashLabel(hyperedge.label),
+      ...(!hyperedge.suggested ? { occurredAt: base?.occurredAt ?? hyperedge.occurredAt ?? Date.now() } : {}),
     };
     this.hyperedges.set(key, normalized);
     this.invalidateAnalysisCache();

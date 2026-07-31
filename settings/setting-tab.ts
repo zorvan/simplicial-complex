@@ -173,6 +173,38 @@ export class SimplicialSettingTab extends PluginSettingTab {
         });
       });
 
+    new Setting(containerEl)
+      .setName("Discover possible encounters")
+      .setDesc(
+        "Propose in-memory ◇ candidates from coherent fields and cross-field junctions. Suggestions are never written to notes or history until you confirm them.",
+      )
+      .addToggle((toggle) => {
+        toggle.setValue(this.plugin.settings.enableEncounterSuggestions);
+        toggle.onChange(async (value) => {
+          this.plugin.settings.enableEncounterSuggestions = value;
+          await this.plugin.saveSettings();
+          this.plugin.scheduleFullScan("encounter-suggestions-changed", 0);
+        });
+      });
+
+    {
+      const setting = new Setting(containerEl)
+        .setName("Encounter suggestion confidence")
+        .setDesc("Minimum structural/evidence score for showing a possible encounter.");
+      this.addNumberSlider(
+        setting,
+        this.plugin.settings.encounterSuggestionThreshold,
+        0.4,
+        0.95,
+        0.01,
+        async (value) => {
+          this.plugin.settings.encounterSuggestionThreshold = value;
+          await this.plugin.saveSettings();
+          this.plugin.scheduleFullScan("encounter-suggestion-threshold", 0);
+        },
+      );
+    }
+
     {
       const setting = new Setting(containerEl)
         .setName("Encounter opacity")
