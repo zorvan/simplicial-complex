@@ -9,7 +9,8 @@ import type {
   Simplex,
   Hole,
 } from "../core/types";
-import { normalizeKey } from "../core/normalize";
+import { normalizeKey, relationKey } from "../core/normalize";
+import type { RelationReplayState } from "../core/history";
 import { SimplicialModel } from "../core/model";
 import { LayoutEngine } from "../layout/engine";
 import { InteractionController } from "../interaction/controller";
@@ -115,6 +116,13 @@ export class Renderer {
    */
   private activation: ActivationField = new Map();
   private sheafReport: SheafReport | null = null;
+  private replayState: RelationReplayState | null = null;
+
+  setReplayState(state: RelationReplayState | null): void {
+    this.replayState = state;
+    this.progressiveSceneKey = "";
+    this.render();
+  }
 
   constructor(
     private model: SimplicialModel,
@@ -246,6 +254,9 @@ export class Renderer {
     focusSimplexKeys: Set<string>,
   ): Array<[string, Simplex]> {
     const ranked = simplices
+      .filter(
+        ([, simplex]) => !this.replayState || this.replayState.simplices.has(relationKey("simplex", simplex.nodes)),
+      )
       .filter(([, simplex]) => this.passesRenderFilter(simplex))
       .filter(([, simplex]) => simplex.nodes.every((nodeId) => renderedNodeIds.has(nodeId)))
       .sort((a, b) => {
@@ -284,8 +295,10 @@ export class Renderer {
    */
   private getRenderableHyperedges(renderedNodeIds: Set<string>): Array<[RelationKey, Hyperedge]> {
     if (!this.settings.showHyperedges) return [];
-    return [...this.model.hyperedges.entries()].filter(([, hyperedge]) =>
-      hyperedge.nodes.some((nodeId) => renderedNodeIds.has(nodeId)),
+    return [...this.model.hyperedges.entries()].filter(
+      ([, hyperedge]) =>
+        (!this.replayState || this.replayState.hyperedges.has(relationKey("hyperedge", hyperedge.nodes))) &&
+        hyperedge.nodes.some((nodeId) => renderedNodeIds.has(nodeId)),
     );
   }
 

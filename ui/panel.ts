@@ -3,6 +3,7 @@ import { ItemView, Notice, Setting, TFile, WorkspaceLeaf, type App } from "obsid
 import { SimplicialModel } from "../core/model";
 import { encounterDiagnostics, type EncounterDiagnostics, type SubsetScorer } from "../core/diagnostics";
 import type { RelationHistory } from "../core/history";
+import { relationKey } from "../core/normalize";
 import type { PluginSettings, RelationKey, RelationSelection, Simplex, SimplexKey } from "../core/types";
 import { VIEW_TYPE_SIMPLICIAL_PANEL } from "../core/types";
 import { effectiveColorForSimplex } from "../render/palette";
@@ -121,6 +122,7 @@ export class MetadataPanel extends ItemView {
     ]);
     this.renderBadge(badges, `dim ${simplex.nodes.length - 1}`, [r, g, b]);
     if (simplex.sourcePath) this.renderBadge(badges, simplex.sourcePath.replace(/\.md$/, ""), [r, g, b], true);
+    this.renderJourney(contentEl, simplex.nodes, relationKey("simplex", simplex.nodes));
 
     if (simplex.inferred) {
       contentEl.createEl("div", {
@@ -292,6 +294,8 @@ export class MetadataPanel extends ItemView {
       });
     }
 
+    this.renderJourney(contentEl, hyperedge.nodes, key);
+
     if (diagnostics) this.renderEncounterDiagnostics(contentEl, diagnostics, threshold);
 
     if (hyperedge.crystallizedInto) {
@@ -420,6 +424,31 @@ export class MetadataPanel extends ItemView {
       readings.overlap,
       overlap?.pressure ?? null,
     );
+  }
+
+  private renderJourney(contentEl: HTMLElement, nodes: string[], key: RelationKey): void {
+    if (!this.history) return;
+    const events = this.history.forNodes(nodes).sort((a, b) => a.timestamp - b.timestamp);
+    const lineage = this.history.lineageFor(key);
+    if (events.length === 0 && lineage.length === 0) return;
+
+    const section = contentEl.createDiv({ cls: "simplicial-journey" });
+    section.createEl("div", { cls: "simplicial-panel-section-label", text: "Journey" });
+    events.forEach((event) => {
+      const row = section.createDiv({ cls: "simplicial-journey-event" });
+      row.createSpan({ cls: "simplicial-journey-time", text: new Date(event.timestamp).toLocaleString() });
+      row.createSpan({ cls: "simplicial-journey-action", text: `${event.type} · ${event.actor}` });
+      if (event.type === "promoted" && typeof event.detail?.createdFaceCount === "number") {
+        row.createSpan({ text: `${event.detail.createdFaceCount} faces asserted` });
+      }
+    });
+    lineage.forEach((link) => {
+      const target = link.target.startsWith("n:") ? link.target.slice(2) : "simplex over the same participants";
+      section.createEl("div", {
+        cls: "simplicial-journey-lineage",
+        text: link.type === "crystallization" ? `Produced ${target}` : `Produced ${target}`,
+      });
+    });
   }
 
   private renderMeasure(

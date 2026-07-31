@@ -24,6 +24,97 @@
   gap: 6px;
 }
 
+.simplicial-explore {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100% - 28px);
+  padding: 8px;
+  backdrop-filter: blur(12px);
+  background: color-mix(in srgb, var(--background-primary) 86%, transparent);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.simplicial-explore-copy {
+  display: grid;
+  gap: 1px;
+  padding: 0 4px;
+}
+
+.simplicial-explore-title {
+  color: var(--text-normal);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.simplicial-explore-hint {
+  color: var(--text-muted);
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.simplicial-explore-action {
+  white-space: nowrap;
+}
+
+.simplicial-replay {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-left: 8px;
+  border-left: 1px solid var(--background-modifier-border);
+}
+
+.simplicial-replay-label {
+  min-width: 90px;
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.simplicial-replay input[type="range"] {
+  width: 110px;
+}
+
+.simplicial-journey {
+  display: grid;
+  gap: 6px;
+  margin: 14px 0;
+}
+
+.simplicial-journey-event {
+  display: grid;
+  grid-template-columns: minmax(100px, auto) 1fr;
+  gap: 2px 8px;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.simplicial-journey-action {
+  color: var(--text-normal);
+  font-weight: 600;
+}
+
+.simplicial-journey-lineage {
+  color: var(--text-accent);
+  font-size: 11px;
+}
+
+@media (max-width: 700px) {
+  .simplicial-explore-copy {
+    display: none;
+  }
+
+  .simplicial-explore {
+    bottom: 54px;
+  }
+}
+
 .simplicial-hud {
   position: absolute;
   top: 14px;

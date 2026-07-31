@@ -4,6 +4,12 @@ import type { PluginSettings, RenderFilterMetric } from "../core/types";
 import { VIEW_TYPE_SIMPLICIAL } from "../core/types";
 import { Renderer } from "../render/renderer";
 import { computeFiltrationEvents, getEventThresholds, type FiltrationEvent } from "../core/filtration";
+import type { RelationHistory } from "../core/history";
+
+export interface SimplicialViewActions {
+  recordEncounter: () => void;
+  openContextuality: () => void;
+}
 
 export class SimplicialView extends ItemView {
   private filtrationEvents: FiltrationEvent[] = [];
@@ -18,6 +24,8 @@ export class SimplicialView extends ItemView {
     private settings: PluginSettings,
     private onSettingsChanged: () => void,
     onRescan?: (_reason: string, _delayMs: number) => void,
+    private actions?: SimplicialViewActions,
+    private history?: RelationHistory,
   ) {
     super(leaf);
     this.onRescan = onRescan;
@@ -91,12 +99,77 @@ export class SimplicialView extends ItemView {
 
     // Add floating canvas controls
     this.renderFloatingControls(contentEl);
+    this.renderExploreActions(contentEl);
 
     this.renderer.init(canvasWrap);
   }
 
+  private renderExploreActions(container: HTMLElement): void {
+    if (!this.actions) return;
+
+    const explore = container.createDiv({ cls: "simplicial-explore" });
+    const copy = explore.createDiv({ cls: "simplicial-explore-copy" });
+    copy.createSpan({ cls: "simplicial-explore-title", text: "Explore" });
+    copy.createSpan({
+      cls: "simplicial-explore-hint",
+      text: "Optional tools for groups and overlapping meanings",
+    });
+
+    const encounter = explore.createEl("button", {
+      cls: "simplicial-explore-action",
+      text: "◇ Record encounter",
+    });
+    encounter.title = "Record several notes as one meaningful group; this does not imply pairwise links.";
+    encounter.setAttr("aria-label", encounter.title);
+    encounter.addEventListener("click", () => this.actions?.recordEncounter());
+
+    const contextuality = explore.createEl("button", {
+      cls: "simplicial-explore-action",
+      text: "Contextuality",
+    });
+    contextuality.title = "Compare overlapping groups to find interpretations that cannot be reconciled globally.";
+    contextuality.setAttr("aria-label", contextuality.title);
+    contextuality.addEventListener("click", () => this.actions?.openContextuality());
+
+    this.renderJourneyReplay(explore);
+  }
+
+  private renderJourneyReplay(container: HTMLElement): void {
+    const events = this.history?.all().sort((a, b) => a.timestamp - b.timestamp) ?? [];
+    if (events.length === 0) return;
+    const wrap = container.createDiv({ cls: "simplicial-replay" });
+    const label = wrap.createSpan({ cls: "simplicial-replay-label", text: "Now" });
+    const slider = wrap.createEl("input", { type: "range" });
+    slider.min = "0";
+    slider.max = String(events.length);
+    slider.step = "1";
+    slider.value = String(events.length);
+    slider.title = "Replay relational history";
+    const update = (): void => {
+      const index = Number(slider.value);
+      if (index === events.length) {
+        this.renderer.setReplayState(null);
+        label.setText("Now");
+        return;
+      }
+      const event = events[index];
+      const state = this.history!.replayAt(event.timestamp);
+      this.renderer.setReplayState(state);
+      label.setText(
+        `${new Date(event.timestamp).toLocaleDateString()} · ${state.simplices.size} simplex · ${state.hyperedges.size} encounter`,
+      );
+    };
+    slider.addEventListener("input", update);
+    const live = wrap.createEl("button", { text: "Live" });
+    live.addEventListener("click", () => {
+      slider.value = String(events.length);
+      update();
+    });
+  }
+
   async onClose(): Promise<void> {
     await Promise.resolve();
+    this.renderer.setReplayState(null);
     this.renderer.destroy();
   }
 

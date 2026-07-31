@@ -413,6 +413,8 @@ Obstruction as a gap between fields that cannot glue — visually distinct from 
 
 ## Phase 8 — Persistence layer: persistence through time
 
+**Status:** Complete (HG-30, HG-31, HG-32)
+
 Preventing the journey from being retrospectively rewritten or lost. Every transformation in Phase 3 destroys or overwrites something; without this layer the plugin quietly asserts that the current state was always the state.
 
 ### HG-30 — Append-only relation event log

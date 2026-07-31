@@ -62,6 +62,8 @@ function hyperedgeFromObject(input: unknown, sourcePath: string, deps: ParserDep
     mode: typeof record.mode === "string" ? record.mode : undefined,
     occurredAt: typeof record.occurredAt === "number" ? record.occurredAt : undefined,
     persistence,
+    promotedTo: typeof record.promotedTo === "string" ? record.promotedTo : undefined,
+    crystallizedInto: typeof record.crystallizedInto === "string" ? record.crystallizedInto : undefined,
     sourcePath,
   };
 }

@@ -1,7 +1,7 @@
 /* global activeDocument, window -- Allow document/window references for context menu and resize handling in Obsidian/Electron environment (ESLint browser globals) */
 import { Menu, Notice, Plugin, TFile, type Editor, MarkdownView } from "obsidian";
 import { SimplicialModel } from "./core/model";
-import { normalizeKey, resolveNodeId } from "./core/normalize";
+import { normalizeKey, relationKey, resolveNodeId } from "./core/normalize";
 import { logger } from "./core/logger";
 import { RelationHistory, syncEncounterPersistence, type RelationEventInput } from "./core/history";
 import type { SubsetScorer } from "./core/diagnostics";
@@ -146,6 +146,11 @@ export default class SimplicialPlugin extends Plugin {
         this.settings,
         () => this.queueSaveSettings(),
         (reason, delayMs) => this.scheduleFullScan(reason, delayMs),
+        {
+          recordEncounter: () => this.createEncounterFromOpenNote(),
+          openContextuality: () => void this.activateSheafView(),
+        },
+        this.history,
       );
       this.simplicialView = view;
       return view;
@@ -193,8 +198,6 @@ export default class SimplicialPlugin extends Plugin {
     }
 
     this.addRibbonIcon("network", "Simplicial graph", () => void this.activateView());
-    this.addRibbonIcon("diamond", "Record encounter from open note", () => void this.createEncounterFromOpenNote());
-    this.addRibbonIcon("combine", "Contextuality lab", () => void this.activateSheafView());
     this.addCommand({
       id: "open-simplicial",
       name: "Open simplicial graph",
@@ -730,6 +733,7 @@ export default class SimplicialPlugin extends Plugin {
     const participants = hyperedge.nodes.map((nodeId) => `  - "[[${nodeId.replace(/\.md$/, "")}]]"`).join("\n");
     const body = [
       "---",
+      `originatingEncounter: "${relationKey("hyperedge", hyperedge.nodes)}"`,
       "crystallizedFrom:",
       participants,
       `crystallizedAt: ${Date.now()}`,

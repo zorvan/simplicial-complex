@@ -45,6 +45,7 @@ The hypergraph layer. The plugin previously modelled one kind of togetherness �
 - **Contextuality lab (HG-25…HG-29)** — explicit overlapping contexts, per-context note roles, exact H⁰/H¹ gluing diagnostics, concrete obstruction cycles, and contextual fraction.
 - Gluing obstructions render as open crimson failed seams over existing fields, deliberately distinct from closed orange β₁ holes. Context definitions and local roles persist only in plugin settings, never in notes.
 - **Encounter discovery and onboarding** — first scan explains the new instruments and proposes bounded, confidence-ranked `◇` candidates from existing simplicial fields and junctions. Candidates stay in memory and create no history or note writes until confirmed.
+- **Persistence journey (HG-31…HG-32)** — relation panels show dated lifecycle events and descendants, the canvas can replay the relation set at any logged event, and promotions/crystallizations expose durable lineage after reload.
 - `.gitignore` file for proper repository hygiene
 - `LICENSE` file (MIT)
 - `SPEC.md` engineering specification

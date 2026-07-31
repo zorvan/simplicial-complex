@@ -40,6 +40,20 @@ export interface RelationEventInput {
   detail?: Record<string, unknown>;
 }
 
+export interface RelationReplayState {
+  readonly timestamp: number;
+  readonly simplices: ReadonlyMap<RelationKey, readonly NodeID[]>;
+  readonly hyperedges: ReadonlyMap<RelationKey, readonly NodeID[]>;
+}
+
+export interface RelationLineageLink {
+  readonly type: "promotion" | "crystallization";
+  readonly timestamp: number;
+  readonly source: RelationKey;
+  readonly target: string;
+  readonly evidence?: readonly string[];
+}
+
 /**
  * Append-only. Nothing mutates or deletes a recorded event — corrections are new
  * events, not edits. That is what keeps a journey from being retrospectively
@@ -89,6 +103,86 @@ export class RelationHistory {
   forNodes(nodes: NodeID[]): RelationEvent[] {
     const nodeKey = normalizeKey(nodes);
     return this.events.filter((event) => event.nodeKey === nodeKey);
+  }
+
+  /** Reconstruct the asserted relation set at a point in time without touching the live model. */
+  replayAt(timestamp: number): RelationReplayState {
+    const simplices = new Map<RelationKey, readonly NodeID[]>();
+    const hyperedges = new Map<RelationKey, readonly NodeID[]>();
+    this.events
+      .filter((event) => event.timestamp <= timestamp)
+      .sort((a, b) => a.timestamp - b.timestamp)
+      .forEach((event) => {
+        const simplexKey = relationKey("simplex", [...event.nodes]);
+        const hyperedgeKey = relationKey("hyperedge", [...event.nodes]);
+        switch (event.type) {
+          case "encountered":
+          case "recurred":
+            hyperedges.set(hyperedgeKey, event.nodes);
+            break;
+          case "created":
+            (event.kind === "simplex" ? simplices : hyperedges).set(event.relationKey, event.nodes);
+            break;
+          case "promoted":
+            // Promotion retains encounter provenance and adds the closure claim.
+            hyperedges.set(hyperedgeKey, event.nodes);
+            simplices.set(simplexKey, event.nodes);
+            break;
+          case "relaxed":
+            simplices.delete(simplexKey);
+            hyperedges.set(hyperedgeKey, event.nodes);
+            break;
+          case "dissolved":
+            (event.kind === "simplex" ? simplices : hyperedges).delete(event.relationKey);
+            break;
+          case "crystallized":
+            // A consequence, not a change to the originating relation.
+            break;
+        }
+      });
+    return Object.freeze({ timestamp, simplices, hyperedges });
+  }
+
+  /** Derived lineage is durable because its source events and details are durable. */
+  lineage(): RelationLineageLink[] {
+    return this.events.flatMap((event): RelationLineageLink[] => {
+      if (event.type === "promoted") {
+        return [
+          {
+            type: "promotion",
+            timestamp: event.timestamp,
+            source: relationKey("hyperedge", [...event.nodes]),
+            target: relationKey("simplex", [...event.nodes]),
+            ...(Array.isArray(event.detail?.evidence)
+              ? { evidence: (event.detail.evidence as unknown[]).map(String) }
+              : {}),
+          },
+        ];
+      }
+      if (event.type === "crystallized" && typeof event.detail?.conceptNote === "string") {
+        return [
+          {
+            type: "crystallization",
+            timestamp: event.timestamp,
+            source: relationKey("hyperedge", [...event.nodes]),
+            target: `n:${event.detail.conceptNote}`,
+          },
+        ];
+      }
+      return [];
+    });
+  }
+
+  lineageFor(target: RelationKey | NodeID): RelationLineageLink[] {
+    const nodeTarget = target.startsWith("n:") ? target : `n:${target}`;
+    return this.lineage().filter(
+      (link) => link.source === target || link.target === target || link.target === nodeTarget,
+    );
+  }
+
+  get timeRange(): { start: number; end: number } | null {
+    if (this.events.length === 0) return null;
+    return { start: this.events[0].timestamp, end: this.events[this.events.length - 1].timestamp };
   }
 
   /**

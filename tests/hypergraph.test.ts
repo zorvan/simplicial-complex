@@ -477,6 +477,41 @@ test("deserializeEvent rejects junk lines rather than inventing history", () => 
   assert.equal(deserializeEvent('{"e":"created","k":"simplex","n":["a.md"]}'), null);
 });
 
+test("journey replay reconstructs relations at each lifecycle timestamp", () => {
+  const history = new RelationHistory();
+  const nodes = ["a.md", "b.md", "c.md"];
+  history.append({ type: "encountered", kind: "hyperedge", nodes, actor: "user", timestamp: 10 });
+  history.append({ type: "promoted", kind: "hyperedge", nodes, actor: "user", timestamp: 20 });
+  history.append({ type: "relaxed", kind: "simplex", nodes, actor: "user", timestamp: 30 });
+  history.append({ type: "promoted", kind: "hyperedge", nodes, actor: "user", timestamp: 40 });
+
+  assert.equal(history.replayAt(10).hyperedges.size, 1);
+  assert.equal(history.replayAt(10).simplices.size, 0);
+  assert.equal(history.replayAt(20).simplices.size, 1);
+  assert.equal(history.replayAt(30).simplices.size, 0);
+  assert.equal(history.replayAt(40).simplices.size, 1);
+});
+
+test("consequence lineage survives event serialization and reload", () => {
+  const nodes = ["a.md", "b.md"];
+  const original = new RelationHistory();
+  original.append({
+    type: "crystallized",
+    kind: "hyperedge",
+    nodes,
+    actor: "user",
+    timestamp: 50,
+    detail: { conceptNote: "concept.md" },
+  });
+  const restored = new RelationHistory();
+  restored.load(original.all().map((event) => deserializeEvent(serializeEvent(event))!));
+
+  const fromEncounter = restored.lineageFor(relationKey("hyperedge", nodes));
+  const fromNote = restored.lineageFor("concept.md");
+  assert.equal(fromEncounter[0].target, "n:concept.md");
+  assert.deepEqual(fromNote, fromEncounter);
+});
+
 // ---------------------------------------------------------------------------
 // HG-13 (derived) — recurrence
 // ---------------------------------------------------------------------------

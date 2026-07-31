@@ -38,6 +38,8 @@ function hyperedgeToSerializable(hyperedge: Hyperedge): Record<string, unknown> 
     ...(hyperedge.mode ? { mode: hyperedge.mode } : {}),
     ...(hyperedge.occurredAt !== undefined ? { occurredAt: hyperedge.occurredAt } : {}),
     ...(hyperedge.persistence ? { persistence: hyperedge.persistence } : {}),
+    ...(hyperedge.promotedTo ? { promotedTo: hyperedge.promotedTo } : {}),
+    ...(hyperedge.crystallizedInto ? { crystallizedInto: hyperedge.crystallizedInto } : {}),
   };
 }
 

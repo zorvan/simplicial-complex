@@ -201,6 +201,11 @@ Recurrence is a query over this log rather than a stored counter, so it cannot d
 
 Both the log and its path are configurable; disabling it stops new entries and never deletes existing ones.
 
+Select a simplex or encounter to see its dated journey and descendants in the metadata panel. The canvas replay
+slider scrubs the append-only log without mutating the live vault; **Live** returns to the present. Crystallized notes
+store their `originatingEncounter`, while the source encounter stores the resulting note, so lineage survives reloads
+in both directions.
+
 ---
 
 ## Defining Simplices
