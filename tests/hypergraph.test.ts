@@ -19,6 +19,16 @@ import {
   nodeDegrees,
   pairwiseCooccurrence,
 } from "../core/incidence.js";
+import {
+  closureDeficit,
+  encounterDiagnostics,
+  encounterVitality,
+  faceIndependence,
+  hypergraphComponents,
+  overlapPressure,
+  simpliciality,
+} from "../core/diagnostics.js";
+import { explainEncounter, explainSimpliciality } from "../data/explainer.js";
 
 // ---------------------------------------------------------------------------
 // HG-01 — namespaced relation keys
@@ -659,4 +669,219 @@ test("no hyperedge ever appears in model.simplices, whatever the mutation sequen
 
   model.removeHyperedge(key);
   assertNoLeak("removeHyperedge");
+});
+
+// ---------------------------------------------------------------------------
+// HG-11 — closure deficit and simpliciality
+// ---------------------------------------------------------------------------
+
+test("closure deficit counts every implied relation, including the full set", () => {
+  const model = new SimplicialModel();
+  const key = model.addHyperedge({ nodes: ["a.md", "b.md", "c.md"] });
+
+  const empty = closureDeficit(model, key);
+  assert.ok(empty);
+  // 2^3 − 3 − 1 = 4: the three pairs plus the triple itself.
+  assert.equal(empty!.impliedFaceCount, 4);
+  assert.equal(empty!.missingCount, 4);
+  assert.equal(empty!.deficit, 1);
+
+  // A 2-node simplex generates no faces of its own, so this adds exactly one.
+  model.addSimplex({ nodes: ["a.md", "b.md"], userDefined: true });
+  const partial = closureDeficit(model, key);
+  assert.equal(partial!.missingCount, 3);
+  assert.equal(partial!.deficit, 0.75);
+});
+
+test("promoting an encounter drives its closure deficit to zero", () => {
+  const model = new SimplicialModel();
+  const key = model.addHyperedge({ nodes: ["a.md", "b.md", "c.md"] });
+  model.promoteToSimplex(key);
+  assert.equal(closureDeficit(model, key)!.deficit, 0);
+});
+
+test("a large encounter reports an unbounded deficit instead of enumerating 2^n faces", () => {
+  const model = new SimplicialModel();
+  const nodes = Array.from({ length: 12 }, (_, index) => `n${index}.md`);
+  const started = Date.now();
+  const key = model.addHyperedge({ nodes });
+  const result = closureDeficit(model, key);
+
+  assert.ok(result);
+  assert.equal(result!.unbounded, true);
+  assert.equal(result!.deficit, null, "an unmeasured deficit must not be reported as a number");
+  assert.equal(result!.missingFaces.length, 0);
+  assert.ok(Date.now() - started < 1000, "enumerating a 12-node encounter should never be attempted");
+});
+
+test("simpliciality is one minus the mean measurable deficit, and splits by component", () => {
+  const model = new SimplicialModel();
+  model.addHyperedge({ nodes: ["a.md", "b.md", "c.md"] });
+  model.addSimplex({ nodes: ["a.md", "b.md"], userDefined: true });
+  model.addHyperedge({ nodes: ["x.md", "y.md"] });
+
+  // {a,b,c}: 3 of 4 missing = 0.75. {x,y}: 2^2 − 2 − 1 = 1 implied, missing = 1.0.
+  const measure = simpliciality(model);
+  assert.equal(measure.measuredEncounters, 2);
+  assert.equal(measure.unboundedEncounters, 0);
+  assert.ok(Math.abs(measure.value! - (1 - (0.75 + 1) / 2)) < 1e-9);
+
+  assert.equal(measure.components.length, 2, "two disjoint encounters are two components");
+  const abc = measure.components.find((component) => component.nodes.includes("a.md"));
+  assert.ok(Math.abs(abc!.simpliciality! - 0.25) < 1e-9);
+});
+
+test("hypergraph components join notes that share an encounter, ignoring the simplicial layer", () => {
+  const model = new SimplicialModel();
+  model.addHyperedge({ nodes: ["a.md", "b.md"] });
+  model.addHyperedge({ nodes: ["b.md", "c.md"] });
+  model.addSimplex({ nodes: ["z1.md", "z2.md"], userDefined: true });
+
+  const components = hypergraphComponents(model);
+  assert.equal(components.length, 1);
+  assert.deepEqual(components[0].nodes, ["a.md", "b.md", "c.md"]);
+});
+
+// ---------------------------------------------------------------------------
+// HG-12 — face independence
+// ---------------------------------------------------------------------------
+
+test("a triad with no pairwise evidence is maximally face-independent", () => {
+  const model = new SimplicialModel();
+  const key = model.addHyperedge({ nodes: ["a.md", "b.md", "c.md"] });
+  const result = faceIndependence(model, key, () => 0);
+
+  assert.ok(result);
+  assert.equal(result!.independence, 1);
+  assert.equal(result!.evaluatedSubsets, 3, "the three pairs are the only proper subgroups");
+});
+
+test("a triad whose pairs are all well evidenced is not face-independent", () => {
+  const model = new SimplicialModel();
+  const key = model.addHyperedge({ nodes: ["a.md", "b.md", "c.md"] });
+  const result = faceIndependence(model, key, () => 0.9);
+
+  assert.ok(Math.abs(result!.independence! - 0.1) < 1e-9);
+  assert.equal(result!.maxSubsetScore, 0.9);
+  assert.ok(result!.strongestSubset);
+});
+
+test("face independence names the subgroup that stands on its own", () => {
+  const model = new SimplicialModel();
+  const key = model.addHyperedge({ nodes: ["a.md", "b.md", "c.md"] });
+  const result = faceIndependence(model, key, (nodes) =>
+    nodes.length === 2 && nodes.includes("a.md") && nodes.includes("b.md") ? 0.8 : 0.05,
+  );
+
+  assert.deepEqual(result!.strongestSubset, ["a.md", "b.md"]);
+  assert.ok(Math.abs(result!.independence! - 0.2) < 1e-9);
+});
+
+test("a two-note encounter has no subgroup to be independent of", () => {
+  const model = new SimplicialModel();
+  const key = model.addHyperedge({ nodes: ["a.md", "b.md"] });
+  const result = faceIndependence(model, key, () => 1);
+  assert.equal(result!.independence, null);
+  assert.equal(result!.evaluatedSubsets, 0);
+});
+
+test("face independence refuses to enumerate an oversized encounter", () => {
+  const model = new SimplicialModel();
+  const nodes = Array.from({ length: 14 }, (_, index) => `n${index}.md`);
+  const key = model.addHyperedge({ nodes });
+  let calls = 0;
+  const result = faceIndependence(model, key, () => {
+    calls++;
+    return 1;
+  });
+  assert.equal(result!.unbounded, true);
+  assert.equal(calls, 0);
+});
+
+// ---------------------------------------------------------------------------
+// HG-13 — recurrence weighted by recency
+// ---------------------------------------------------------------------------
+
+test("encounter vitality decays each occurrence by the shared half-life", () => {
+  const now = Date.UTC(2026, 0, 1);
+  const day = 24 * 60 * 60 * 1000;
+  assert.equal(encounterVitality([], 90, now), 0);
+  assert.equal(encounterVitality([now, now, now], 90, now), 3);
+
+  const oneHalfLifeAgo = now - 90 * day;
+  assert.ok(Math.abs(encounterVitality([oneHalfLifeAgo, oneHalfLifeAgo], 90, now) - 1) < 1e-9);
+});
+
+test("three recent encounters and three ancient ones are the same count and not the same fact", () => {
+  const now = Date.UTC(2026, 0, 1);
+  const day = 24 * 60 * 60 * 1000;
+  const recent = [now - day, now - 2 * day, now - 3 * day];
+  const ancient = recent.map((timestamp) => timestamp - 900 * day);
+  assert.ok(encounterVitality(recent, 90, now) > 2.9);
+  assert.ok(encounterVitality(ancient, 90, now) < 0.01);
+});
+
+// ---------------------------------------------------------------------------
+// HG-14 — overlap pressure
+// ---------------------------------------------------------------------------
+
+test("a note in five disjoint encounters is under more pressure than one in five nested ones", () => {
+  const disjoint = new SimplicialModel();
+  for (let index = 0; index < 5; index++) {
+    disjoint.addHyperedge({ nodes: ["hub.md", `far${index}a.md`, `far${index}b.md`] });
+  }
+
+  const nested = new SimplicialModel();
+  for (let index = 0; index < 5; index++) {
+    nested.addHyperedge({ nodes: ["hub.md", "shared1.md", "shared2.md", `tail${index}.md`] });
+  }
+
+  const disjointPressure = overlapPressure(disjoint, "hub.md");
+  const nestedPressure = overlapPressure(nested, "hub.md");
+
+  assert.equal(disjointPressure.incidentEncounters, 5);
+  assert.equal(nestedPressure.incidentEncounters, 5);
+  assert.ok(
+    disjointPressure.pressure > nestedPressure.pressure,
+    `disjoint ${disjointPressure.pressure} should exceed nested ${nestedPressure.pressure}`,
+  );
+});
+
+test("a note in a single encounter is under no overlap pressure", () => {
+  const model = new SimplicialModel();
+  model.addHyperedge({ nodes: ["a.md", "b.md", "c.md"] });
+  assert.equal(overlapPressure(model, "a.md").pressure, 0);
+});
+
+// ---------------------------------------------------------------------------
+// HG-15 — the readings, not the figures
+// ---------------------------------------------------------------------------
+
+test("every diagnostic comes back with a sentence a reader can act on", () => {
+  const model = new SimplicialModel();
+  const key = model.addHyperedge({ nodes: ["a.md", "b.md", "c.md"], persistence: "momentary" });
+  const diagnostics = encounterDiagnostics(model, key, { score: () => 0, occurrences: [Date.now()] });
+
+  assert.ok(diagnostics);
+  const readings = explainEncounter(diagnostics!, 3);
+  assert.match(readings.closure!, /order 3/);
+  assert.ok(readings.independence);
+  assert.match(readings.persistence, /Recurring at 3/);
+  assert.equal(readings.overlap, null, "a single encounter is not an overload");
+});
+
+test("a fully filled-in encounter says so rather than reporting a zero", () => {
+  const model = new SimplicialModel();
+  const key = model.addHyperedge({ nodes: ["a.md", "b.md", "c.md"] });
+  model.promoteToSimplex(key);
+  const diagnostics = encounterDiagnostics(model, key, { occurrences: [] });
+  const readings = explainEncounter(diagnostics!, 3);
+  assert.match(readings.closure!, /already exists/);
+});
+
+test("the vault-level reading is absent until there is something to read", () => {
+  assert.equal(explainSimpliciality(null, 0), null);
+  assert.equal(explainSimpliciality(0.95, 0), null);
+  assert.match(explainSimpliciality(0.95, 4)!, /barely saying anything/);
+  assert.match(explainSimpliciality(0.1, 4)!, /may not decompose/);
 });

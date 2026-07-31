@@ -16,7 +16,7 @@ import { InteractionController } from "../interaction/controller";
 import { renderBlob, renderHyperedge } from "./blobs";
 import { renderEdges } from "./edges";
 import { effectiveColorForSimplex } from "./palette";
-import { drawBettiHUD } from "./components/hud";
+import { drawBettiHUD, drawEncounterHUD } from "./components/hud";
 import { drawPhantomHoles, type VisibleBounds } from "./components/holes";
 import { explainHole, type SimplexExplanation } from "../data/explainer";
 import type { InferenceContext } from "../data/inference/types";
@@ -1069,8 +1069,12 @@ export class Renderer {
     this.drawHoveredNodeOverlay(ctx);
 
     // Draw Betti HUD if enabled
-    if (this.settings.bettiDisplayOnCanvas && this.settings.enableBettiComputation) {
+    const showBettiHUD = this.settings.bettiDisplayOnCanvas && this.settings.enableBettiComputation;
+    if (showBettiHUD) {
       drawBettiHUD(ctx, this.model, this.isDark);
+    }
+    if (this.settings.showHyperedges) {
+      drawEncounterHUD(ctx, this.model, this.isDark, showBettiHUD ? 46 : 14);
     }
 
     // Draw phantom holes (void-as-prompt)

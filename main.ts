@@ -4,6 +4,8 @@ import { SimplicialModel } from "./core/model";
 import { normalizeKey, resolveNodeId } from "./core/normalize";
 import { logger } from "./core/logger";
 import { RelationHistory, syncEncounterPersistence, type RelationEventInput } from "./core/history";
+import type { SubsetScorer } from "./core/diagnostics";
+import { createSubsetScorer } from "./data/inference/subset-scorer";
 import type { Hyperedge, PluginSettings, RelationKey, RelationSelection, Simplex } from "./core/types";
 import { deserializeReinforcement, serializeReinforcement, type ReinforcementState } from "./data/interactions";
 import { VIEW_TYPE_SIMPLICIAL, VIEW_TYPE_SIMPLICIAL_PANEL } from "./core/types";
@@ -42,6 +44,11 @@ export default class SimplicialPlugin extends Plugin {
   simplicialView: SimplicialView | null = null;
   private saveTimer: number | null = null;
   private rescanTimer: number | null = null;
+  /**
+   * Rebuilt after each full scan. Building the raw signal graph is the expensive
+   * part, so it happens once per scan rather than once per panel render.
+   */
+  private subsetScorer: SubsetScorer | null = null;
 
   async onload(): Promise<void> {
     const saved = ((await this.loadData()) ?? {}) as Partial<PluginSettings>;
@@ -142,6 +149,7 @@ export default class SimplicialPlugin extends Plugin {
       });
       panel.setHistory(this.history);
       panel.setSettings(this.settings);
+      panel.setSubsetScorer(this.subsetScorer);
       this.panelView = panel;
       return panel;
     });
@@ -418,6 +426,13 @@ export default class SimplicialPlugin extends Plugin {
 
   private syncEncounterState(): void {
     syncEncounterPersistence(this.model, this.history, this.settings.encounterRecurrenceThreshold);
+  }
+
+  /** HG-12's evidence source. Absent until the vault has been scanned at least once. */
+  private rebuildSubsetScorer(): void {
+    const contexts = this.index.getInferenceContexts();
+    this.subsetScorer = contexts.length > 0 ? createSubsetScorer(contexts, this.settings) : null;
+    this.panelView?.setSubsetScorer(this.subsetScorer);
   }
 
   private createEncounterFromOpenNote(): void {
@@ -982,6 +997,7 @@ export default class SimplicialPlugin extends Plugin {
       logger.info("plugin", "Running full scan", { reason });
       await this.index.fullScan();
       this.syncEncounterState();
+      this.rebuildSubsetScorer();
       this.renderer.render();
       logger.info("plugin", "Full scan complete", {
         reason,

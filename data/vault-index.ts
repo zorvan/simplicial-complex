@@ -57,6 +57,15 @@ export class VaultIndex {
     });
   }
 
+  /**
+   * The per-note signal contexts the inference engine runs on. Exposed so the
+   * hypergraph diagnostics can score encounter subgroups against exactly the same
+   * evidence the simplicial layer is built from, rather than a second set of signals.
+   */
+  getInferenceContexts(): InferenceContext[] {
+    return [...this.inferenceContexts.values()];
+  }
+
   recordWrite(path: string, content: string): void {
     this.lastWrittenHash.set(path, djb2Hash(content));
     logger.debug("vault-index", "Recorded plugin write hash", {

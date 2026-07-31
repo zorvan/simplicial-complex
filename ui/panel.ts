@@ -1,13 +1,12 @@
 /* global window -- Allow window for setTimeout/clearTimeout in Obsidian/Electron environment (ESLint browser globals) */
 import { ItemView, Notice, Setting, TFile, WorkspaceLeaf, type App } from "obsidian";
 import { SimplicialModel } from "../core/model";
-import { crossLayerMap } from "../core/incidence";
-import { relationKey } from "../core/normalize";
+import { encounterDiagnostics, type EncounterDiagnostics, type SubsetScorer } from "../core/diagnostics";
 import type { RelationHistory } from "../core/history";
 import type { PluginSettings, RelationKey, RelationSelection, Simplex, SimplexKey } from "../core/types";
 import { VIEW_TYPE_SIMPLICIAL_PANEL } from "../core/types";
 import { effectiveColorForSimplex } from "../render/palette";
-import { explainSimplex } from "../data/explainer";
+import { explainEncounter, explainSimplex } from "../data/explainer";
 import type { NoteProfile } from "../data/inference/types";
 
 export interface RelationPanelActions {
@@ -34,6 +33,8 @@ export class MetadataPanel extends ItemView {
   private dissolveSimplex?: (_simplexKey: string) => Promise<void>;
   private settings: PluginSettings | null = null;
   private nodeProfiles: NoteProfile[] = [];
+  /** Supplied by the plugin once the vault has been indexed; absent until then. */
+  private subsetScorer: SubsetScorer | null = null;
 
   constructor(
     _leaf: WorkspaceLeaf,
@@ -48,6 +49,10 @@ export class MetadataPanel extends ItemView {
 
   setNodeProfiles(profiles: NoteProfile[]): void {
     this.nodeProfiles = profiles;
+  }
+
+  setSubsetScorer(scorer: SubsetScorer | null): void {
+    this.subsetScorer = scorer;
   }
 
   getViewType(): string {
@@ -240,6 +245,14 @@ export class MetadataPanel extends ItemView {
       return;
     }
 
+    const threshold = this.settings?.encounterRecurrenceThreshold ?? 3;
+    const occurrences = this.history?.occurrencesOf(hyperedge.nodes) ?? [];
+    const diagnostics = encounterDiagnostics(this.model, key, {
+      ...(this.subsetScorer ? { score: this.subsetScorer } : {}),
+      occurrences,
+      halfLifeDays: this.settings?.decayHalfLifeDays ?? 90,
+    });
+
     contentEl.createEl("div", {
       cls: "simplicial-explanation-tension",
       text: "These notes came together as one irreducible whole. No pair among them is asserted to be meaningful on its own.",
@@ -256,25 +269,14 @@ export class MetadataPanel extends ItemView {
     if (hyperedge.promotedTo) this.renderBadge(badges, "promoted", color, true);
     if (hyperedge.sourcePath) this.renderBadge(badges, hyperedge.sourcePath.replace(/\.md$/, ""), color, true);
 
-    const occurrences = this.history?.occurrencesOf(hyperedge.nodes) ?? [];
-    const threshold = this.settings?.encounterRecurrenceThreshold ?? 3;
-    contentEl.createEl("div", {
-      cls: "simplicial-panel-value",
-      text: `Encountered ${occurrences.length || 1}×${
-        occurrences.length > 0 ? ` · first ${new Date(occurrences[0]).toLocaleDateString()}` : ""
-      } · recurring at ${threshold}`,
-    });
-
-    const missingFaces = this.missingFaceCount(hyperedge);
-    if (missingFaces !== null) {
+    if (occurrences.length > 0) {
       contentEl.createEl("div", {
         cls: "simplicial-panel-value",
-        text:
-          missingFaces === 0
-            ? "Every relation this encounter implies already exists in the complex."
-            : `${missingFaces} implied relation${missingFaces === 1 ? "" : "s"} absent from the simplicial layer.`,
+        text: `First encountered ${new Date(occurrences[0]).toLocaleDateString()}`,
       });
     }
+
+    if (diagnostics) this.renderEncounterDiagnostics(contentEl, diagnostics, threshold);
 
     if (hyperedge.crystallizedInto) {
       contentEl.createEl("div", {
@@ -349,11 +351,80 @@ export class MetadataPanel extends ItemView {
     });
   }
 
-  /** Null when the encounter is too large to enumerate faces for. */
-  private missingFaceCount(hyperedge: { nodes: string[] }): number | null {
-    const entry = crossLayerMap(this.model).hyperedges.get(relationKey("hyperedge", hyperedge.nodes));
-    if (!entry || entry.unbounded) return null;
-    return entry.missingFaces.length;
+  /**
+   * HG-15. Four measures, each with the figure and the sentence that reads it.
+   *
+   * The sentence is the point. A user has no way to know what "closure deficit 0.83"
+   * means for their notes; "its meaning exists only at order three" they can act on.
+   */
+  private renderEncounterDiagnostics(
+    contentEl: HTMLElement,
+    diagnostics: EncounterDiagnostics,
+    recurrenceThreshold: number,
+  ): void {
+    const readings = explainEncounter(diagnostics, recurrenceThreshold);
+    const section = contentEl.createDiv({ cls: "simplicial-diagnostics" });
+    section.createEl("div", { cls: "simplicial-panel-section-label", text: "Diagnostics" });
+
+    const closure = diagnostics.closure;
+    this.renderMeasure(
+      section,
+      "Closure deficit",
+      closure === null || closure.deficit === null ? "unbounded" : closure.deficit.toFixed(2),
+      readings.closure,
+      closure?.deficit ?? null,
+    );
+
+    const independence = diagnostics.independence;
+    this.renderMeasure(
+      section,
+      "Face independence",
+      independence === null
+        ? "not measured"
+        : independence.independence === null
+          ? "n/a"
+          : `${independence.independence.toFixed(2)} · group evidence ${independence.fullSetScore.toFixed(2)}`,
+      readings.independence,
+      independence?.independence ?? null,
+    );
+
+    this.renderMeasure(
+      section,
+      "Persistence",
+      `${diagnostics.occurrences.length || 1}× · vitality ${diagnostics.vitality.toFixed(1)}`,
+      readings.persistence,
+      null,
+    );
+
+    const overlap = diagnostics.peakOverlap;
+    this.renderMeasure(
+      section,
+      "Overlap pressure",
+      overlap ? overlap.pressure.toFixed(2) : "0.00",
+      readings.overlap,
+      overlap?.pressure ?? null,
+    );
+  }
+
+  private renderMeasure(
+    container: HTMLElement,
+    name: string,
+    figure: string,
+    reading: string | null,
+    fill: number | null,
+  ): void {
+    const row = container.createDiv({ cls: "simplicial-measure" });
+    const head = row.createDiv({ cls: "simplicial-measure-head" });
+    head.createEl("span", { cls: "simplicial-measure-name", text: name });
+    head.createEl("span", { cls: "simplicial-measure-figure", text: figure });
+    if (fill !== null) {
+      const track = row.createDiv({ cls: "simplicial-measure-track" });
+      track.createDiv({
+        cls: "simplicial-measure-bar",
+        attr: { style: `width: ${Math.round(Math.max(0, Math.min(1, fill)) * 100)}%;` },
+      });
+    }
+    if (reading) row.createEl("div", { cls: "simplicial-measure-reading", text: reading });
   }
 
   private renderExplanationCard(contentEl: HTMLElement, simplex: Simplex): void {

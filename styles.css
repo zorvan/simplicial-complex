@@ -474,3 +474,53 @@
 .simplicial-hidden {
   display: none;
 }
+
+/* Hypergraph diagnostics: a figure and the sentence that reads it */
+.simplicial-diagnostics {
+  border-top: 1px solid var(--background-modifier-border);
+  padding-top: 12px;
+  margin: 4px 0 16px;
+}
+
+.simplicial-measure {
+  margin-bottom: 14px;
+}
+
+.simplicial-measure-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.simplicial-measure-name {
+  font-size: 12px;
+  color: var(--text-normal);
+}
+
+.simplicial-measure-figure {
+  font-family: var(--font-monospace);
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.simplicial-measure-track {
+  height: 3px;
+  border-radius: 999px;
+  background: var(--background-modifier-border);
+  margin: 6px 0 6px;
+  overflow: hidden;
+}
+
+.simplicial-measure-bar {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--interactive-accent);
+}
+
+.simplicial-measure-reading {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
