@@ -40,6 +40,8 @@ The hypergraph layer. The plugin previously modelled one kind of togetherness �
 
 ### Added
 
+- **Dynamics Lab (HG-19…HG-21)** — ephemeral note activation, pairwise/simplicial/hypergraph propagation kernels, deterministic synchronization-time diagnostics, order-parameter traces, and competing-rhythm detection.
+- Dynamics simulations run in bounded UI slices and cancel when their view closes; opening, editing, and manually focusing notes feed transient canvas emphasis without writing attention state into notes.
 - `.gitignore` file for proper repository hygiene
 - `LICENSE` file (MIT)
 - `SPEC.md` engineering specification

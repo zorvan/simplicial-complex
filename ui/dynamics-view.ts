@@ -3,7 +3,7 @@ import { ItemView, Notice, Setting, WorkspaceLeaf } from "obsidian";
 import {
   KERNEL_NAMES,
   competingRhythms,
-  synchronizationTime,
+  synchronizationTimeSliced,
   type KernelName,
   type SynchronizationResult,
 } from "../core/activation";
@@ -46,6 +46,7 @@ export class DynamicsLabView extends ItemView {
   private runs: EncounterRun[] = [];
   private isRunning = false;
   private lastRunAt: number | null = null;
+  private runGeneration = 0;
 
   constructor(
     leaf: WorkspaceLeaf,
@@ -71,6 +72,12 @@ export class DynamicsLabView extends ItemView {
     this.render();
   }
 
+  async onClose(): Promise<void> {
+    this.runGeneration++;
+    this.isRunning = false;
+    await Promise.resolve();
+  }
+
   /**
    * Yielding between encounters keeps a large vault from freezing the window. The
    * simulation is bounded per encounter by `maxIterations`; this bounds the wall
@@ -85,15 +92,23 @@ export class DynamicsLabView extends ItemView {
     }
 
     this.isRunning = true;
+    const generation = ++this.runGeneration;
     this.runs = [];
     this.render();
 
     for (const key of keys) {
       const hyperedge = this.model.getHyperedge(key);
       if (!hyperedge) continue;
-      const results = KERNEL_NAMES.map((name) => synchronizationTime(this.model, key, name)).filter(
-        (result): result is SynchronizationResult => result !== null,
-      );
+      const results: SynchronizationResult[] = [];
+      for (const name of KERNEL_NAMES) {
+        const result = await synchronizationTimeSliced(this.model, key, name, {
+          sliceIterations: 20,
+          yieldControl: yieldToWindow,
+          isCancelled: () => generation !== this.runGeneration,
+        });
+        if (generation !== this.runGeneration) return;
+        if (result) results.push(result);
+      }
       this.runs.push({
         key,
         label: hyperedge.label?.trim() || hyperedge.nodes.map((id) => shortName(id)).join(" · "),
@@ -102,6 +117,7 @@ export class DynamicsLabView extends ItemView {
       await yieldToWindow();
     }
 
+    if (generation !== this.runGeneration) return;
     this.isRunning = false;
     this.lastRunAt = Date.now();
     this.render();

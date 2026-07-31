@@ -217,6 +217,15 @@ export interface SynchronizationOptions {
   maxIterations?: number;
 }
 
+export interface AsyncSynchronizationOptions extends SynchronizationOptions {
+  /** Number of iterations computed before yielding control back to the host UI. */
+  sliceIterations?: number;
+  /** Host-provided yield. Keeping it injectable makes the simulation testable outside Obsidian. */
+  yieldControl?: () => Promise<void>;
+  /** Lets a closing or superseded view stop work without treating cancellation as convergence. */
+  isCancelled?: () => boolean;
+}
+
 export interface SynchronizationResult {
   kernel: KernelName;
   relationKey: RelationKey;
@@ -274,6 +283,59 @@ export function synchronizationTime(
       iterations = step;
       break;
     }
+  }
+
+  return {
+    kernel: kernelName,
+    relationKey: hyperedgeKey,
+    members: hyperedge.nodes,
+    iterations,
+    converged: iterations !== null,
+    orderTrace,
+    finalVariance: variance(memberValues(field)),
+  };
+}
+
+/**
+ * UI-safe counterpart to `synchronizationTime`.
+ *
+ * It deliberately uses the same seeded state and iteration rule, but yields after a
+ * bounded amount of work. Therefore it returns byte-for-byte equivalent diagnostic
+ * data while preventing one large encounter from monopolising Obsidian's main
+ * thread. A Web Worker can replace the injected yield later without changing the
+ * diagnostic contract.
+ */
+export async function synchronizationTimeSliced(
+  model: SimplicialModel,
+  hyperedgeKey: RelationKey,
+  kernelName: KernelName,
+  options: AsyncSynchronizationOptions = {},
+): Promise<SynchronizationResult | null> {
+  const hyperedge = model.getHyperedge(hyperedgeKey);
+  if (!hyperedge) return null;
+  const settings = { ...DEFAULT_SYNC_OPTIONS, ...options };
+  const sliceIterations = Math.max(1, Math.floor(options.sliceIterations ?? 20));
+  const yieldControl = options.yieldControl ?? (() => Promise.resolve());
+  const isCancelled = options.isCancelled ?? (() => false);
+  const kernel = createKernel(model, kernelName);
+  const random = mulberry32(settings.seed);
+  let field: ActivationField = new Map();
+  [...model.nodes.keys()].sort().forEach((nodeId) => field.set(nodeId, random()));
+
+  const memberValues = (source: ActivationField) => hyperedge.nodes.map((nodeId) => source.get(nodeId) ?? 0);
+  const orderTrace = [orderParameter(memberValues(field))];
+  let iterations: number | null = null;
+
+  for (let step = 1; step <= settings.maxIterations; step++) {
+    if (isCancelled()) return null;
+    field = kernel.step(field, settings.rate);
+    const values = memberValues(field);
+    orderTrace.push(orderParameter(values));
+    if (variance(values) <= settings.threshold) {
+      iterations = step;
+      break;
+    }
+    if (step % sliceIterations === 0) await yieldControl();
   }
 
   return {

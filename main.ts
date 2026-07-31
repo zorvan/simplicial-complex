@@ -246,6 +246,7 @@ export default class SimplicialPlugin extends Plugin {
         if (activeDocument.activeElement?.tagName === "INPUT" || activeDocument.activeElement?.tagName === "TEXTAREA")
           return;
         this.controller.focusHoveredNode();
+        if (this.controller.lockedNodeId) this.registerActivation(this.controller.lockedNodeId, "focused");
         this.renderer.render();
       },
     });

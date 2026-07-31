@@ -33,12 +33,14 @@ import { PULSE_PERIOD_MS, encounterStyle, pulsePhase, pulsedNodeRadius } from ".
 import {
   ActivationState,
   DEFAULT_SOURCE_WEIGHTS,
+  KERNEL_NAMES,
   competingRhythms,
   createKernel,
   kernelGroups,
   orderParameter,
   propagate,
   synchronizationTime,
+  synchronizationTimeSliced,
   type ActivationField,
 } from "../core/activation.js";
 
@@ -1053,6 +1055,34 @@ test("synchronization time is deterministic under a seeded initial state", () =>
   assert.deepEqual(first!.orderTrace, second!.orderTrace);
   assert.equal(first!.iterations, second!.iterations);
   assert.equal(first!.converged, true);
+});
+
+test("the sliced synchronization diagnostic is equivalent and yields bounded work", async () => {
+  const model = new SimplicialModel();
+  const key = model.addHyperedge({ nodes: ["a.md", "b.md", "c.md"] });
+  const options = { seed: 42, maxIterations: 80 };
+  const synchronous = synchronizationTime(model, key, "hypergraph", options)!;
+  let yields = 0;
+  const sliced = await synchronizationTimeSliced(model, key, "hypergraph", {
+    ...options,
+    sliceIterations: 2,
+    yieldControl: async () => {
+      yields++;
+    },
+  });
+
+  assert.deepEqual(sliced, synchronous);
+  assert.ok(yields > 0, "a non-trivial simulation must return control between slices");
+});
+
+test("the Dynamics Lab kernels give distinguishable traces on higher-order structure", () => {
+  const model = new SimplicialModel();
+  const key = model.addHyperedge({ nodes: ["a.md", "b.md", "c.md"] });
+  model.addSimplex({ nodes: ["a.md", "b.md", "c.md"], userDefined: true });
+
+  const traces = KERNEL_NAMES.map((kernel) => synchronizationTime(model, key, kernel, { seed: 91 })!.orderTrace);
+  assert.notDeepEqual(traces[0], traces[1], "pairwise and simplicial structure must remain experimentally distinct");
+  assert.notDeepEqual(traces[1], traces[2], "simplicial and irreducible propagation must remain distinct");
 });
 
 test("a kernel that cannot reach the members reports that it never settled", () => {
