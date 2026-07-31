@@ -1,160 +1,161 @@
 "use strict";
-var He = Object.defineProperty;
-var kn = Object.getOwnPropertyDescriptor;
-var In = Object.getOwnPropertyNames;
-var Dn = Object.prototype.hasOwnProperty;
-var Rn = (s, e) => {
-    for (var t in e) He(s, t, { get: e[t], enumerable: !0 });
+var $e = Object.defineProperty;
+var Vn = Object.getOwnPropertyDescriptor;
+var Gn = Object.getOwnPropertyNames;
+var Yn = Object.prototype.hasOwnProperty;
+var Un = (r, t) => {
+    for (var e in t) $e(r, e, { get: t[e], enumerable: !0 });
   },
-  Fn = (s, e, t, n) => {
-    if ((e && typeof e == "object") || typeof e == "function")
-      for (let i of In(e))
-        !Dn.call(s, i) && i !== t && He(s, i, { get: () => e[i], enumerable: !(n = kn(e, i)) || n.enumerable });
-    return s;
+  Xn = (r, t, e, n) => {
+    if ((t && typeof t == "object") || typeof t == "function")
+      for (let i of Gn(t))
+        !Yn.call(r, i) && i !== e && $e(r, i, { get: () => t[i], enumerable: !(n = Vn(t, i)) || n.enumerable });
+    return r;
   };
-var Hn = (s) => Fn(He({}, "__esModule", { value: !0 }), s);
-var Gi = {};
-Rn(Gi, { default: () => De });
-module.exports = Hn(Gi);
+var qn = (r) => Xn($e({}, "__esModule", { value: !0 }), r);
+var gs = {};
+Un(gs, { default: () => Le });
+module.exports = qn(gs);
 var M = require("obsidian");
-function B(s) {
-  let e = 5381;
-  for (let t = 0; t < s.length; t++) ((e = ((e << 5) + e) ^ s.charCodeAt(t)), (e = e >>> 0));
-  return e;
-}
-function _(s) {
-  let e = ["purple", "teal", "coral", "pink", "blue", "amber"];
-  return s ? e[B(s) % e.length] : "purple";
-}
-function X(s) {
-  return s.toLowerCase().trim();
-}
-function N(s) {
-  return [...s].map(X).sort().join("|");
-}
-var An = { simplex: "s", hyperedge: "h" };
-function k(s, e) {
-  return `${An[s]}:${N(e)}`;
-}
-function P(s) {
-  return [...s].sort((e, t) => X(e).localeCompare(X(t)));
-}
-function z(s) {
-  let e = new Set(),
-    t = [];
-  for (let n of P(s)) {
-    let i = X(n);
-    e.has(i) || (e.add(i), t.push(n));
-  }
+function z(r) {
+  let t = 5381;
+  for (let e = 0; e < r.length; e++) ((t = ((t << 5) + t) ^ r.charCodeAt(e)), (t = t >>> 0));
   return t;
 }
-var Ae = null,
-  st = -1,
-  Le = 0;
-function U() {
-  Le++;
+function j(r) {
+  let t = ["purple", "teal", "coral", "pink", "blue", "amber"];
+  return r ? t[z(r) % t.length] : "purple";
 }
-function Ln(s) {
-  if (Ae && st === Le) return Ae;
-  let e = new Map();
-  for (let t of s.vault.getMarkdownFiles()) {
-    let n = s.metadataCache.getFileCache(t)?.frontmatter?.aliases;
-    (Array.isArray(n) ? n : typeof n == "string" ? [n] : []).forEach((r) => {
-      let o = X(String(r));
-      o && !e.has(o) && e.set(o, t);
+function U(r) {
+  return r.toLowerCase().trim();
+}
+function N(r) {
+  return [...r].map(U).sort().join("|");
+}
+var Zn = { simplex: "s", hyperedge: "h" };
+function k(r, t) {
+  return `${Zn[r]}:${N(t)}`;
+}
+function D(r) {
+  return [...r].sort((t, e) => U(t).localeCompare(U(e)));
+}
+function V(r) {
+  let t = new Set(),
+    e = [];
+  for (let n of D(r)) {
+    let i = U(n);
+    t.has(i) || (t.add(i), e.push(n));
+  }
+  return e;
+}
+var We = null,
+  ut = -1,
+  _e = 0;
+function X() {
+  _e++;
+}
+function Jn(r) {
+  if (We && ut === _e) return We;
+  let t = new Map();
+  for (let e of r.vault.getMarkdownFiles()) {
+    let n = r.metadataCache.getFileCache(e)?.frontmatter?.aliases;
+    (Array.isArray(n) ? n : typeof n == "string" ? [n] : []).forEach((s) => {
+      let o = U(String(s));
+      o && !t.has(o) && t.set(o, e);
     });
   }
-  return ((Ae = e), (st = Le), e);
+  return ((We = t), (ut = _e), t);
 }
-function de(s, e, t) {
-  let n = s.trim();
+function ue(r, t, e) {
+  let n = r.trim();
   if (!n) return null;
-  let i = t.metadataCache.getFirstLinkpathDest(n, e);
-  return i || (Ln(t).get(X(n)) ?? null);
+  let i = e.metadataCache.getFirstLinkpathDest(n, t);
+  return i || (Jn(e).get(U(n)) ?? null);
 }
-var ie = "simplicial-view",
-  q = "simplicial-panel";
-function ot(s) {
-  return s.nodes.length - 1;
+var re = "simplicial-view",
+  q = "simplicial-panel",
+  oe = "simplicial-dynamics";
+function gt(r) {
+  return r.nodes.length - 1;
 }
-function* Z(s, e) {
-  if (e === 0) {
+function* Z(r, t) {
+  if (t === 0) {
     yield [];
     return;
   }
-  for (let t = 0; t <= s.length - e; t++) for (let n of Z(s.slice(t + 1), e - 1)) yield [s[t], ...n];
+  for (let e = 0; e <= r.length - t; e++) for (let n of Z(r.slice(e + 1), t - 1)) yield [r[e], ...n];
 }
-function Oe(s, e) {
-  if (ot(e) >= 4) return [];
-  let n = P(e.nodes),
+function Be(r, t) {
+  if (gt(t) >= 4) return [];
+  let n = D(t.nodes),
     i = [];
-  for (let r = 2; r < n.length; r++) for (let o of Z(n, r)) s.simplices.has(N(o)) || i.push(P(o));
+  for (let s = 2; s < n.length; s++) for (let o of Z(n, s)) r.simplices.has(N(o)) || i.push(D(o));
   return i;
 }
-function at(s, e) {
-  let t = ot(e);
-  if (t > 4) {
-    console.warn(`[Simplicial] Simplex dim=${t} exceeds cap. Faces not auto-generated.`);
+function mt(r, t) {
+  let e = gt(t);
+  if (e > 4) {
+    console.warn(`[Simplicial] Simplex dim=${e} exceeds cap. Faces not auto-generated.`);
     return;
   }
-  let n = N(e.nodes),
-    i = e.colorKey ?? _(e.label);
-  for (let r of Oe(s, e))
-    s.simplices.set(N(r), { nodes: r, autoGenerated: !0, userDefined: !1, parentKey: n, colorKey: i });
+  let n = N(t.nodes),
+    i = t.colorKey ?? j(t.label);
+  for (let s of Be(r, t))
+    r.simplices.set(N(s), { nodes: s, autoGenerated: !0, userDefined: !1, parentKey: n, colorKey: i });
 }
-function Ke(s, e = 2) {
-  let t = [...s.simplices.values()],
-    n = [...s.nodes.keys()],
-    i = t.filter((g) => g.nodes.length === 2),
-    r = t.filter((g) => g.nodes.length === 3),
-    o = t.filter((g) => g.nodes.length === 4),
-    a = On(n, i),
+function ze(r, t = 2) {
+  let e = [...r.simplices.values()],
+    n = [...r.nodes.keys()],
+    i = e.filter((g) => g.nodes.length === 2),
+    s = e.filter((g) => g.nodes.length === 3),
+    o = e.filter((g) => g.nodes.length === 4),
+    a = Qn(n, i),
     l = [];
-  e >= 1 && l.push(...Kn(n, i, r));
+  t >= 1 && l.push(...ei(n, i, s));
   let d = [];
-  return (e >= 2 && d.push(...$n(r, o)), { b0: a, b1: l.length, b2: d.length, holes: [...l, ...d] });
+  return (t >= 2 && d.push(...ti(s, o)), { b0: a, b1: l.length, b2: d.length, holes: [...l, ...d] });
 }
-function On(s, e) {
-  if (s.length === 0) return 0;
-  let t = new Map();
-  for (let r of s) t.set(r, new Set());
-  for (let r of e) {
-    let [o, a] = r.nodes;
-    (t.get(o)?.add(a), t.get(a)?.add(o));
+function Qn(r, t) {
+  if (r.length === 0) return 0;
+  let e = new Map();
+  for (let s of r) e.set(s, new Set());
+  for (let s of t) {
+    let [o, a] = s.nodes;
+    (e.get(o)?.add(a), e.get(a)?.add(o));
   }
   let n = 0,
     i = new Set();
-  for (let r of s) {
-    if (i.has(r)) continue;
+  for (let s of r) {
+    if (i.has(s)) continue;
     n++;
-    let o = [r];
+    let o = [s];
     for (; o.length > 0; ) {
       let a = o.pop();
       if (!i.has(a)) {
         i.add(a);
-        for (let l of t.get(a) ?? []) i.has(l) || o.push(l);
+        for (let l of e.get(a) ?? []) i.has(l) || o.push(l);
       }
     }
   }
   return n;
 }
-function Kn(s, e, t) {
+function ei(r, t, e) {
   let n = [],
     i = new Set();
-  for (let a of e) {
+  for (let a of t) {
     let [l, d] = a.nodes.sort();
     i.add(`${l}|${d}`);
   }
-  let r = new Set();
-  for (let a of t) r.add(a.nodes.sort().join("|"));
+  let s = new Set();
+  for (let a of e) s.add(a.nodes.sort().join("|"));
   let o = new Map();
-  for (let a of s) o.set(a, new Set());
-  for (let a of e) {
+  for (let a of r) o.set(a, new Set());
+  for (let a of t) {
     let [l, d] = a.nodes;
     (o.get(l)?.add(d), o.get(d)?.add(l));
   }
-  for (let a = 0; a < s.length; a++) {
-    let l = s[a],
+  for (let a = 0; a < r.length; a++) {
+    let l = r[a],
       d = [...(o.get(l) ?? [])];
     for (let g = 0; g < d.length; g++)
       for (let c = g + 1; c < d.length; c++) {
@@ -163,22 +164,22 @@ function Kn(s, e, t) {
         if (!o.get(p)?.has(u)) continue;
         let f = [l, p, u].sort(),
           h = f.join("|");
-        r.has(h) || n.push({ dimension: 1, boundaryNodes: f, missingSimplex: f });
+        s.has(h) || n.push({ dimension: 1, boundaryNodes: f, missingSimplex: f });
       }
   }
   return n;
 }
-function $n(s, e) {
-  let t = [],
+function ti(r, t) {
+  let e = [],
     n = new Set(),
     i = new Map();
-  for (let l of s) {
+  for (let l of r) {
     let d = l.nodes.sort(),
       g = d.join("|");
     (n.add(g), i.set(g, d));
   }
-  let r = new Set();
-  for (let l of e) r.add(l.nodes.sort().join("|"));
+  let s = new Set();
+  for (let l of t) s.add(l.nodes.sort().join("|"));
   let o = new Map();
   for (let [l, d] of i)
     for (let g = 0; g < 3; g++)
@@ -207,7 +208,7 @@ function $n(s, e) {
       }
   }
   for (let [l, d] of a) {
-    if (r.has(l)) continue;
+    if (s.has(l)) continue;
     let g = [...d].sort();
     if (g.length !== 4) continue;
     let c = 0;
@@ -215,74 +216,74 @@ function $n(s, e) {
       let u = g.filter((m, f) => f !== p).sort();
       n.has(u.join("|")) && c++;
     }
-    c === 4 && t.push({ dimension: 2, boundaryNodes: g, missingSimplex: g });
+    c === 4 && e.push({ dimension: 2, boundaryNodes: g, missingSimplex: g });
   }
-  return t;
+  return e;
 }
-function Wn(s) {
-  if (!s) return "";
+function ni(r) {
+  if (!r) return "";
   try {
-    return ` ${JSON.stringify(s)}`;
+    return ` ${JSON.stringify(r)}`;
   } catch {
     return " [unserializable-details]";
   }
 }
-function ce(s, e, t, n) {
-  let i = `[Simplicial:${e}] ${t}${Wn(n)}`;
-  if (s === "error") {
+function pe(r, t, e, n) {
+  let i = `[Simplicial:${t}] ${e}${ni(n)}`;
+  if (r === "error") {
     console.error(i);
     return;
   }
-  if (s === "warn") {
+  if (r === "warn") {
     console.warn(i);
     return;
   }
-  if (s === "debug") {
+  if (r === "debug") {
     console.debug(i);
     return;
   }
   console.debug(i);
 }
 var C = {
-  debug(s, e, t) {
-    ce("debug", s, e, t);
+  debug(r, t, e) {
+    pe("debug", r, t, e);
   },
-  info(s, e, t) {
-    ce("info", s, e, t);
+  info(r, t, e) {
+    pe("info", r, t, e);
   },
-  warn(s, e, t) {
-    ce("warn", s, e, t);
+  warn(r, t, e) {
+    pe("warn", r, t, e);
   },
-  error(s, e, t) {
-    ce("error", s, e, t);
+  error(r, t, e) {
+    pe("error", r, t, e);
   },
 };
-function he(s, e) {
-  return s + Math.random() * (e - s);
+function ge(r, t) {
+  return r + Math.random() * (t - r);
 }
-function Bn(s, e, t) {
-  let n = s / 2,
-    i = e / 2,
-    r = Math.max(t + 40, n - t),
-    o = Math.max(t + 40, i - t);
+function ii(r, t, e) {
+  let n = r / 2,
+    i = t / 2,
+    s = Math.max(e + 40, n - e),
+    o = Math.max(e + 40, i - e);
   switch (Math.floor(Math.random() * 4)) {
     case 0:
-      return { px: he(-r, r), py: -o };
+      return { px: ge(-s, s), py: -o };
     case 1:
-      return { px: r, py: he(-o, o) };
+      return { px: s, py: ge(-o, o) };
     case 2:
-      return { px: he(-r, r), py: o };
+      return { px: ge(-s, s), py: o };
     default:
-      return { px: -r, py: he(-o, o) };
+      return { px: -s, py: ge(-o, o) };
   }
 }
-function _n(s, e, t = !1) {
-  let n = e?.width ?? 960,
-    i = e?.height ?? 640,
-    { px: r, py: o } = Bn(n, i, 80);
-  return { id: s, px: r, py: o, vx: 0, vy: 0, isVirtual: t, isPinned: !1, displayAlpha: 1 };
+function si(r, t, e = !1) {
+  let n = t?.width ?? 960,
+    i = t?.height ?? 640,
+    { px: s, py: o } = ii(n, i, 80);
+  return { id: r, px: s, py: o, vx: 0, vy: 0, isVirtual: e, isPinned: !1, displayAlpha: 1 };
 }
-var pe = class {
+var fe = class {
   constructor() {
     this.nodes = new Map();
     this.simplices = new Map();
@@ -294,8 +295,8 @@ var pe = class {
     this._analysisDirty = !0;
     this._crossLayerCache = null;
   }
-  subscribe(e) {
-    return (this.listeners.add(e), () => this.listeners.delete(e));
+  subscribe(t) {
+    return (this.listeners.add(t), () => this.listeners.delete(t));
   }
   emitChange() {
     if (this.batchDepth > 0) {
@@ -305,136 +306,136 @@ var pe = class {
     this.flushChange();
   }
   flushChange() {
-    this.listeners.forEach((e) => e());
+    this.listeners.forEach((t) => t());
   }
-  batch(e) {
+  batch(t) {
     this.batchDepth++;
     try {
-      return e();
+      return t();
     } finally {
       (this.batchDepth--,
         this.batchDepth === 0 && this.hasPendingEmit && ((this.hasPendingEmit = !1), this.flushChange()));
     }
   }
-  setNode(e, t) {
-    let n = this.nodes.get(e);
+  setNode(t, e) {
+    let n = this.nodes.get(t);
     if (n) {
-      (Object.assign(n, t ?? {}), t?.isVirtual === !1 && (n.isVirtual = !1), this.emitChange());
+      (Object.assign(n, e ?? {}), e?.isVirtual === !1 && (n.isVirtual = !1), this.emitChange());
       return;
     }
-    let i = _n(e, void 0, t?.isVirtual ?? !1);
-    (t?.px !== void 0 && (i.px = t.px),
-      t?.py !== void 0 && (i.py = t.py),
-      t?.isPinned !== void 0 && (i.isPinned = t.isPinned),
-      this.nodes.set(e, i),
+    let i = si(t, void 0, e?.isVirtual ?? !1);
+    (e?.px !== void 0 && (i.px = e.px),
+      e?.py !== void 0 && (i.py = e.py),
+      e?.isPinned !== void 0 && (i.isPinned = e.isPinned),
+      this.nodes.set(t, i),
       this.invalidateAnalysisCache(),
       this.emitChange());
   }
-  removeNode(e) {
-    this.nodes.delete(e);
-    for (let [t, n] of [...this.simplices]) n.nodes.includes(e) && this.simplices.delete(t);
-    for (let [t, n] of [...this.hyperedges]) n.nodes.includes(e) && this.hyperedges.delete(t);
+  removeNode(t) {
+    this.nodes.delete(t);
+    for (let [e, n] of [...this.simplices]) n.nodes.includes(t) && this.simplices.delete(e);
+    for (let [e, n] of [...this.hyperedges]) n.nodes.includes(t) && this.hyperedges.delete(e);
     (this.invalidateAnalysisCache(), this.emitChange());
   }
-  updateNodeId(e, t) {
-    if (e === t) return;
-    let n = this.nodes.get(e);
-    n && (this.nodes.set(t, { ...n, id: t }), this.nodes.delete(e));
-    for (let [i, r] of [...this.simplices]) {
-      if (!r.nodes.includes(e)) continue;
-      let o = { ...r, nodes: P(r.nodes.map((a) => (a === e ? t : a))) };
+  updateNodeId(t, e) {
+    if (t === e) return;
+    let n = this.nodes.get(t);
+    n && (this.nodes.set(e, { ...n, id: e }), this.nodes.delete(t));
+    for (let [i, s] of [...this.simplices]) {
+      if (!s.nodes.includes(t)) continue;
+      let o = { ...s, nodes: D(s.nodes.map((a) => (a === t ? e : a))) };
       (this.simplices.delete(i), this.simplices.set(N(o.nodes), o));
     }
-    for (let [i, r] of [...this.hyperedges]) {
-      if (!r.nodes.includes(e)) continue;
-      let o = { ...r, nodes: P(r.nodes.map((a) => (a === e ? t : a))) };
+    for (let [i, s] of [...this.hyperedges]) {
+      if (!s.nodes.includes(t)) continue;
+      let o = { ...s, nodes: D(s.nodes.map((a) => (a === t ? e : a))) };
       (this.hyperedges.delete(i), this.hyperedges.set(k("hyperedge", o.nodes), o));
     }
     (this.invalidateAnalysisCache(), this.emitChange());
   }
-  addSimplex(e) {
-    if (e.kind === "hyperedge")
-      return (C.error("model", "Refused to add a hyperedge through addSimplex", { nodes: e.nodes }), "");
-    let t = z(e.nodes);
-    if (t.length < 2) return "";
-    t.forEach((r) => {
-      this.nodes.has(r) || this.setNode(r, { isVirtual: !1 });
+  addSimplex(t) {
+    if (t.kind === "hyperedge")
+      return (C.error("model", "Refused to add a hyperedge through addSimplex", { nodes: t.nodes }), "");
+    let e = V(t.nodes);
+    if (e.length < 2) return "";
+    e.forEach((s) => {
+      this.nodes.has(s) || this.setNode(s, { isVirtual: !1 });
     });
     let n = {
-        ...e,
-        nodes: P(t),
-        weight: ue(e.weight),
-        autoGenerated: e.autoGenerated ?? !1,
-        userDefined: e.userDefined ?? !e.autoGenerated,
-        colorKey: e.autoGenerated ? (e.colorKey ?? "neutral") : (e.colorKey ?? _(e.label)),
+        ...t,
+        nodes: D(e),
+        weight: me(t.weight),
+        autoGenerated: t.autoGenerated ?? !1,
+        userDefined: t.userDefined ?? !t.autoGenerated,
+        colorKey: t.autoGenerated ? (t.colorKey ?? "neutral") : (t.colorKey ?? j(t.label)),
       },
       i = N(n.nodes);
-    return (this.simplices.set(i, n), at(this, n), this.invalidateAnalysisCache(), this.emitChange(), i);
+    return (this.simplices.set(i, n), mt(this, n), this.invalidateAnalysisCache(), this.emitChange(), i);
   }
-  removeSimplex(e) {
-    if (this.simplices.delete(e)) {
-      for (let [t, n] of [...this.simplices]) {
+  removeSimplex(t) {
+    if (this.simplices.delete(t)) {
+      for (let [e, n] of [...this.simplices]) {
         if (!n.autoGenerated) continue;
-        [...this.simplices.entries()].some(([r, o]) =>
-          r === t || o.autoGenerated ? !1 : n.nodes.every((a) => o.nodes.includes(a)),
-        ) || this.simplices.delete(t);
+        [...this.simplices.entries()].some(([s, o]) =>
+          s === e || o.autoGenerated ? !1 : n.nodes.every((a) => o.nodes.includes(a)),
+        ) || this.simplices.delete(e);
       }
       (this.invalidateAnalysisCache(), this.emitChange());
     }
   }
-  addHyperedge(e) {
-    let t = z(e.nodes);
-    if (t.length < 2) return "";
-    t.forEach((a) => {
+  addHyperedge(t) {
+    let e = V(t.nodes);
+    if (e.length < 2) return "";
+    e.forEach((a) => {
       this.nodes.has(a) || this.setNode(a, { isVirtual: !1 });
     });
-    let n = P(t),
+    let n = D(e),
       i = k("hyperedge", n),
-      r = this.hyperedges.get(i),
+      s = this.hyperedges.get(i),
       o = {
-        ...r,
-        ...e,
+        ...s,
+        ...t,
         nodes: n,
-        weight: ue(e.weight ?? r?.weight),
-        colorKey: e.colorKey ?? r?.colorKey ?? _(e.label),
-        occurredAt: r?.occurredAt ?? e.occurredAt ?? Date.now(),
+        weight: me(t.weight ?? s?.weight),
+        colorKey: t.colorKey ?? s?.colorKey ?? j(t.label),
+        occurredAt: s?.occurredAt ?? t.occurredAt ?? Date.now(),
       };
     return (this.hyperedges.set(i, o), this.invalidateAnalysisCache(), this.emitChange(), i);
   }
-  removeHyperedge(e) {
-    return this.hyperedges.delete(e) ? (this.invalidateAnalysisCache(), this.emitChange(), !0) : !1;
+  removeHyperedge(t) {
+    return this.hyperedges.delete(t) ? (this.invalidateAnalysisCache(), this.emitChange(), !0) : !1;
   }
-  getHyperedge(e) {
-    return this.hyperedges.get(e);
+  getHyperedge(t) {
+    return this.hyperedges.get(t);
   }
-  getHyperedgesForNode(e) {
-    return [...this.hyperedges.values()].filter((t) => t.nodes.includes(e));
+  getHyperedgesForNode(t) {
+    return [...this.hyperedges.values()].filter((e) => e.nodes.includes(t));
   }
-  updateHyperedge(e, t) {
-    let n = this.hyperedges.get(e);
+  updateHyperedge(t, e) {
+    let n = this.hyperedges.get(t);
     if (!n) return;
-    let i = { ...n, ...t, nodes: n.nodes };
+    let i = { ...n, ...e, nodes: n.nodes };
     return (
-      t.label !== void 0 && (i.colorKey = _(t.label)),
-      t.weight !== void 0 && (i.weight = ue(t.weight)),
-      this.hyperedges.set(e, i),
+      e.label !== void 0 && (i.colorKey = j(e.label)),
+      e.weight !== void 0 && (i.weight = me(e.weight)),
+      this.hyperedges.set(t, i),
       this.invalidateAnalysisCache(),
       this.emitChange(),
       i
     );
   }
-  facesImpliedByPromotion(e) {
-    let t = this.hyperedges.get(e);
-    return t ? Oe(this, { nodes: t.nodes }) : [];
+  facesImpliedByPromotion(t) {
+    let e = this.hyperedges.get(t);
+    return e ? Be(this, { nodes: e.nodes }) : [];
   }
-  promoteToSimplex(e, t = {}) {
-    let n = this.hyperedges.get(e);
+  promoteToSimplex(t, e = {}) {
+    let n = this.hyperedges.get(t);
     if (!n) return null;
-    let i = this.facesImpliedByPromotion(e),
-      r = "";
+    let i = this.facesImpliedByPromotion(t),
+      s = "";
     return (
       this.batch(() => {
-        ((r = this.addSimplex({
+        ((s = this.addSimplex({
           nodes: n.nodes,
           label: n.label,
           weight: n.weight,
@@ -442,41 +443,41 @@ var pe = class {
           userDefined: !0,
           autoGenerated: !1,
         })),
-          t.retainEncounter === !1 ? this.hyperedges.delete(e) : this.hyperedges.set(e, { ...n, promotedTo: r }),
+          e.retainEncounter === !1 ? this.hyperedges.delete(t) : this.hyperedges.set(t, { ...n, promotedTo: s }),
           this.invalidateAnalysisCache(),
           this.emitChange());
       }),
-      r ? { simplexKey: r, createdFaces: i } : null
+      s ? { simplexKey: s, createdFaces: i } : null
     );
   }
-  relaxToHyperedge(e) {
-    let t = this.simplices.get(e);
-    if (!t || t.autoGenerated) return null;
-    let n = k("hyperedge", t.nodes),
+  relaxToHyperedge(t) {
+    let e = this.simplices.get(t);
+    if (!e || e.autoGenerated) return null;
+    let n = k("hyperedge", e.nodes),
       i = this.hyperedges.get(n),
-      r = "";
+      s = "";
     return (
       this.batch(() => {
-        ((r = this.addHyperedge({
+        ((s = this.addHyperedge({
           ...i,
-          nodes: t.nodes,
-          label: i?.label ?? t.label,
-          weight: i?.weight ?? t.weight,
-          sourcePath: i?.sourcePath ?? t.sourcePath,
+          nodes: e.nodes,
+          label: i?.label ?? e.label,
+          weight: i?.weight ?? e.weight,
+          sourcePath: i?.sourcePath ?? e.sourcePath,
           occurredAt: i?.occurredAt,
           promotedTo: void 0,
         })),
-          this.removeSimplex(e));
+          this.removeSimplex(t));
       }),
-      r || null
+      s || null
     );
   }
-  crystallizeHyperedge(e, t) {
-    let n = this.hyperedges.get(e);
+  crystallizeHyperedge(t, e) {
+    let n = this.hyperedges.get(t);
     return n
       ? (this.batch(() => {
-          (this.nodes.has(t) || this.setNode(t, { isVirtual: !1 }),
-            this.hyperedges.set(e, { ...n, crystallizedInto: t }),
+          (this.nodes.has(e) || this.setNode(e, { isVirtual: !1 }),
+            this.hyperedges.set(t, { ...n, crystallizedInto: e }),
             this.invalidateAnalysisCache(),
             this.emitChange());
         }),
@@ -484,89 +485,89 @@ var pe = class {
       : !1;
   }
   getAllRelations() {
-    let e = [];
+    let t = [];
     return (
-      this.simplices.forEach((t, n) => {
-        e.push({ key: k("simplex", t.nodes), relation: { kind: "simplex", ...t } });
+      this.simplices.forEach((e, n) => {
+        t.push({ key: k("simplex", e.nodes), relation: { kind: "simplex", ...e } });
       }),
-      this.hyperedges.forEach((t, n) => {
-        e.push({ key: n, relation: { kind: "hyperedge", ...t } });
+      this.hyperedges.forEach((e, n) => {
+        t.push({ key: n, relation: { kind: "hyperedge", ...e } });
       }),
-      e
+      t
     );
   }
-  replaceInferredSimplices(e) {
+  replaceInferredSimplices(t) {
     this.batch(() => {
-      for (let [t, n] of [...this.simplices]) n.inferred && this.simplices.delete(t);
-      (e.forEach((t) => {
-        (t.nodes.forEach((n) => {
+      for (let [e, n] of [...this.simplices]) n.inferred && this.simplices.delete(e);
+      (t.forEach((e) => {
+        (e.nodes.forEach((n) => {
           this.nodes.has(n) || this.setNode(n, { isVirtual: !1 });
         }),
-          this.addSimplex(t));
+          this.addSimplex(e));
       }),
         this.invalidateAnalysisCache(),
         this.emitChange());
     });
   }
-  replaceSourceRelations(e, t, n) {
+  replaceSourceRelations(t, e, n) {
     this.batch(() => {
-      for (let [i, r] of [...this.simplices]) r.sourcePath === e && !r.autoGenerated && this.simplices.delete(i);
-      for (let [i, r] of [...this.hyperedges]) r.sourcePath === e && this.hyperedges.delete(i);
-      (t.forEach((i) => {
-        (i.nodes.forEach((r) => {
-          this.nodes.has(r) || this.setNode(r, { isVirtual: !0 });
+      for (let [i, s] of [...this.simplices]) s.sourcePath === t && !s.autoGenerated && this.simplices.delete(i);
+      for (let [i, s] of [...this.hyperedges]) s.sourcePath === t && this.hyperedges.delete(i);
+      (e.forEach((i) => {
+        (i.nodes.forEach((s) => {
+          this.nodes.has(s) || this.setNode(s, { isVirtual: !0 });
         }),
-          this.addSimplex({ ...i, sourcePath: e }));
+          this.addSimplex({ ...i, sourcePath: t }));
       }),
         n.forEach((i) => {
-          (i.nodes.forEach((r) => {
-            this.nodes.has(r) || this.setNode(r, { isVirtual: !0 });
+          (i.nodes.forEach((s) => {
+            this.nodes.has(s) || this.setNode(s, { isVirtual: !0 });
           }),
-            this.addHyperedge({ ...i, sourcePath: e }));
+            this.addHyperedge({ ...i, sourcePath: t }));
         }),
         this.invalidateAnalysisCache(),
         this.emitChange());
     });
   }
-  replaceSourceSimplices(e, t) {
-    this.replaceSourceRelations(e, t, []);
+  replaceSourceSimplices(t, e) {
+    this.replaceSourceRelations(t, e, []);
   }
-  updateMetadata(e, t) {
-    let n = this.simplices.get(e);
+  updateMetadata(t, e) {
+    let n = this.simplices.get(t);
     if (!n) return;
-    let i = { ...n, ...t };
-    (t.label !== void 0 && (i.colorKey = n.autoGenerated ? "neutral" : _(t.label)),
-      t.weight !== void 0 && (i.weight = ue(t.weight)),
-      this.simplices.set(e, i),
+    let i = { ...n, ...e };
+    (e.label !== void 0 && (i.colorKey = n.autoGenerated ? "neutral" : j(e.label)),
+      e.weight !== void 0 && (i.weight = me(e.weight)),
+      this.simplices.set(t, i),
       this.invalidateAnalysisCache(),
       this.emitChange());
   }
-  setPinnedState(e, t, n, i) {
-    let r = this.nodes.get(e);
-    r && ((r.isPinned = t), n !== void 0 && (r.px = n), i !== void 0 && (r.py = i), this.emitChange());
+  setPinnedState(t, e, n, i) {
+    let s = this.nodes.get(t);
+    s && ((s.isPinned = e), n !== void 0 && (s.px = n), i !== void 0 && (s.py = i), this.emitChange());
   }
-  getSimplicesForNode(e) {
-    return [...this.simplices.values()].filter((t) => t.nodes.includes(e));
+  getSimplicesForNode(t) {
+    return [...this.simplices.values()].filter((e) => e.nodes.includes(t));
   }
-  getNeighbors(e) {
-    let t = new Set();
+  getNeighbors(t) {
+    let e = new Set();
     return (
-      this.getSimplicesForNode(e).forEach((n) => {
+      this.getSimplicesForNode(t).forEach((n) => {
         n.nodes.forEach((i) => {
-          i !== e && t.add(i);
+          i !== t && e.add(i);
         });
       }),
-      [...t]
+      [...e]
     );
   }
-  getSimplicesByDim(e) {
-    return [...this.simplices.values()].filter((t) => t.nodes.length - 1 === e);
+  getSimplicesByDim(t) {
+    return [...this.simplices.values()].filter((e) => e.nodes.length - 1 === t);
   }
   getAllNodes() {
     return [...this.nodes.values()];
   }
-  getSimplex(e) {
-    return this.simplices.get(e);
+  getSimplex(t) {
+    return this.simplices.get(t);
   }
   invalidateAnalysisCache() {
     ((this._analysisDirty = !0), (this._crossLayerCache = null));
@@ -574,8 +575,8 @@ var pe = class {
   readCrossLayerCache() {
     return this._crossLayerCache;
   }
-  writeCrossLayerCache(e) {
-    return ((this._crossLayerCache = e), e);
+  writeCrossLayerCache(t) {
+    return ((this._crossLayerCache = t), t);
   }
   getAnalysisSummary() {
     return !this._analysisDirty && this._analysisCache
@@ -585,29 +586,29 @@ var pe = class {
   getCachedBetti() {
     return !this._analysisDirty && this._analysisCache
       ? (this._analysisCache.betti ?? { b0: 0, b1: 0, b2: 0, holes: [] })
-      : Ke(this, 2);
+      : ze(this, 2);
   }
   computeAnalysisSummary() {
-    let e = [...this.simplices.values()],
-      t = e.filter((h) => h.nodes.length === 2),
+    let t = [...this.simplices.values()],
+      e = t.filter((h) => h.nodes.length === 2),
       n = new Map(),
       i = new Map();
     (this.nodes.forEach((h, y) => n.set(y, new Set())),
       this.nodes.forEach((h, y) => i.set(y, 0)),
-      t.forEach((h) => {
+      e.forEach((h) => {
         let [y, v] = h.nodes;
         (n.get(y)?.add(v), n.get(v)?.add(y));
       }),
-      e.forEach((h) => {
+      t.forEach((h) => {
         h.nodes.forEach((y) => {
           i.set(y, (i.get(y) ?? 0) + 1);
         });
       }));
-    let r = 0,
+    let s = 0,
       o = new Set();
     n.forEach((h, y) => {
       if (o.has(y)) return;
-      r++;
+      s++;
       let v = [y];
       for (; v.length > 0; ) {
         let b = v.pop();
@@ -631,20 +632,20 @@ var pe = class {
     i.forEach((h, y) => {
       ((p += h), h > c && ((c = h), (g = y)));
     });
-    let u = Ke(this, 2),
+    let u = ze(this, 2),
       m = u.holes.length,
       f = [...this.hyperedges.values()];
     return {
       nodeCount: this.nodes.size,
-      simplexCount: e.length,
+      simplexCount: t.length,
       hyperedgeCount: f.length,
       recurringEncounterCount: f.filter((h) => h.persistence === "recurring").length,
-      edgeCount: t.length,
-      clusterCount: e.filter((h) => h.nodes.length === 3).length,
-      coreCount: e.filter((h) => h.nodes.length >= 4).length,
-      inferredCount: e.filter((h) => h.inferred).length,
-      suggestedCount: e.filter((h) => h.suggested).length,
-      connectedComponents: r,
+      edgeCount: e.length,
+      clusterCount: t.filter((h) => h.nodes.length === 3).length,
+      coreCount: t.filter((h) => h.nodes.length >= 4).length,
+      inferredCount: t.filter((h) => h.inferred).length,
+      suggestedCount: t.filter((h) => h.suggested).length,
+      connectedComponents: s,
       averageDegree: this.nodes.size ? Number((d / this.nodes.size).toFixed(2)) : 0,
       maxDegreeNodeId: a,
       maxDegree: Math.max(0, l),
@@ -656,29 +657,29 @@ var pe = class {
     };
   }
 };
-function ue(s) {
-  return s === void 0 || Number.isNaN(s) ? 1 : Math.max(0.1, Math.min(1, s));
+function me(r) {
+  return r === void 0 || Number.isNaN(r) ? 1 : Math.max(0.1, Math.min(1, r));
 }
-var ge = class {
+var ye = class {
   constructor() {
     this.events = [];
     this.listeners = new Set();
   }
-  onAppend(e) {
-    return (this.listeners.add(e), () => this.listeners.delete(e));
+  onAppend(t) {
+    return (this.listeners.add(t), () => this.listeners.delete(t));
   }
-  append(e) {
-    let t = [...e.nodes],
+  append(t) {
+    let e = [...t.nodes],
       n = Object.freeze({
-        timestamp: e.timestamp ?? Date.now(),
-        type: e.type,
-        kind: e.kind,
-        relationKey: k(e.kind, t),
-        nodeKey: N(t),
-        nodes: Object.freeze(t),
-        actor: e.actor,
-        ...(e.prior ? { prior: Object.freeze({ ...e.prior }) } : {}),
-        ...(e.detail ? { detail: Object.freeze({ ...e.detail }) } : {}),
+        timestamp: t.timestamp ?? Date.now(),
+        type: t.type,
+        kind: t.kind,
+        relationKey: k(t.kind, e),
+        nodeKey: N(e),
+        nodes: Object.freeze(e),
+        actor: t.actor,
+        ...(t.prior ? { prior: Object.freeze({ ...t.prior }) } : {}),
+        ...(t.detail ? { detail: Object.freeze({ ...t.detail }) } : {}),
       });
     return (this.events.push(n), this.listeners.forEach((i) => i(n)), n);
   }
@@ -688,106 +689,253 @@ var ge = class {
   get size() {
     return this.events.length;
   }
-  forRelation(e) {
-    return this.events.filter((t) => t.relationKey === e);
+  forRelation(t) {
+    return this.events.filter((e) => e.relationKey === t);
   }
-  forNodes(e) {
-    let t = N(e);
-    return this.events.filter((n) => n.nodeKey === t);
+  forNodes(t) {
+    let e = N(t);
+    return this.events.filter((n) => n.nodeKey === e);
   }
-  occurrencesOf(e) {
-    return this.forNodes(e)
-      .filter((t) => t.type === "encountered" || t.type === "recurred")
-      .map((t) => t.timestamp)
-      .sort((t, n) => t - n);
+  occurrencesOf(t) {
+    return this.forNodes(t)
+      .filter((e) => e.type === "encountered" || e.type === "recurred")
+      .map((e) => e.timestamp)
+      .sort((e, n) => e - n);
   }
-  isRecurring(e, t) {
-    return this.occurrencesOf(e).length >= Math.max(2, t);
+  isRecurring(t, e) {
+    return this.occurrencesOf(t).length >= Math.max(2, e);
   }
-  load(e) {
-    (e.forEach((t) => this.events.push(Object.freeze({ ...t, nodes: Object.freeze([...t.nodes]) }))),
-      this.events.sort((t, n) => t.timestamp - n.timestamp));
+  load(t) {
+    (t.forEach((e) => this.events.push(Object.freeze({ ...e, nodes: Object.freeze([...e.nodes]) }))),
+      this.events.sort((e, n) => e.timestamp - n.timestamp));
   }
 };
-function lt(s, e, t) {
+function ft(r, t, e) {
   let n = 0;
   return (
-    [...s.hyperedges].forEach(([i, r]) => {
-      let o = e.occurrencesOf(r.nodes),
-        a = e.isRecurring(r.nodes, t) ? "recurring" : "momentary";
-      ((r.occurrences?.length ?? 0) === o.length && r.persistence === a) ||
-        (s.updateHyperedge(i, { occurrences: o, persistence: a }), n++);
+    [...r.hyperedges].forEach(([i, s]) => {
+      let o = t.occurrencesOf(s.nodes),
+        a = t.isRecurring(s.nodes, e) ? "recurring" : "momentary";
+      ((s.occurrences?.length ?? 0) === o.length && s.persistence === a) ||
+        (r.updateHyperedge(i, { occurrences: o, persistence: a }), n++);
     }),
     n
   );
 }
-var zn = new Set(["encountered", "recurred", "created", "promoted", "relaxed", "crystallized", "dissolved"]);
-function dt(s) {
+var ri = new Set(["encountered", "recurred", "created", "promoted", "relaxed", "crystallized", "dissolved"]);
+function yt(r) {
   return JSON.stringify({
-    t: s.timestamp,
-    e: s.type,
-    k: s.kind,
-    n: s.nodes,
-    a: s.actor,
-    ...(s.prior ? { p: s.prior } : {}),
-    ...(s.detail ? { d: s.detail } : {}),
+    t: r.timestamp,
+    e: r.type,
+    k: r.kind,
+    n: r.nodes,
+    a: r.actor,
+    ...(r.prior ? { p: r.prior } : {}),
+    ...(r.detail ? { d: r.detail } : {}),
   });
 }
-function ct(s) {
-  let e = s.trim();
-  if (!e.startsWith("{")) return null;
-  let t;
+function vt(r) {
+  let t = r.trim();
+  if (!t.startsWith("{")) return null;
+  let e;
   try {
-    t = JSON.parse(e);
+    e = JSON.parse(t);
   } catch {
     return null;
   }
-  let n = String(t.e ?? ""),
-    i = t.k === "hyperedge" ? "hyperedge" : "simplex",
-    r = Array.isArray(t.n) ? t.n.map(String) : [],
-    o = typeof t.t == "number" ? t.t : NaN;
-  return !zn.has(n) || r.length === 0 || Number.isNaN(o)
+  let n = String(e.e ?? ""),
+    i = e.k === "hyperedge" ? "hyperedge" : "simplex",
+    s = Array.isArray(e.n) ? e.n.map(String) : [],
+    o = typeof e.t == "number" ? e.t : NaN;
+  return !ri.has(n) || s.length === 0 || Number.isNaN(o)
     ? null
     : Object.freeze({
         timestamp: o,
         type: n,
         kind: i,
-        relationKey: k(i, r),
-        nodeKey: N(r),
-        nodes: Object.freeze(r),
-        actor: t.a === "user" || t.a === "inference" || t.a === "parser" ? t.a : "user",
-        ...(t.p && typeof t.p == "object" ? { prior: Object.freeze(t.p) } : {}),
-        ...(t.d && typeof t.d == "object" ? { detail: Object.freeze(t.d) } : {}),
+        relationKey: k(i, s),
+        nodeKey: N(s),
+        nodes: Object.freeze(s),
+        actor: e.a === "user" || e.a === "inference" || e.a === "parser" ? e.a : "user",
+        ...(e.p && typeof e.p == "object" ? { prior: Object.freeze(e.p) } : {}),
+        ...(e.d && typeof e.d == "object" ? { detail: Object.freeze(e.d) } : {}),
       });
 }
-var jn = { k: 8, minClusterSize: 3, maxIterations: 100 };
-function $e(s, e = {}) {
-  let t = { ...jn, ...e };
-  if (s.length < t.minClusterSize) return new Map(s.map((o) => [o.path, "default"]));
-  let n = Math.min(t.k, Math.floor(s.length / t.minClusterSize));
-  if (n < 2) return new Map(s.map((o) => [o.path, "default"]));
-  let i = We(s),
-    r = Vn(i, n, t.maxIterations);
-  return new Map(r.map((o, a) => [i[a].path, `cluster-${o}`]));
+var oi = { opened: 1, edited: 1, focused: 0.7, query: 0.5, recency: 0.25 },
+  ai = { halfLifeMinutes: 30, sourceWeights: oi };
+function Ve(r) {
+  return Math.max(0, Math.min(1, r));
 }
-function We(s) {
-  let e = s.length,
-    t = new Map(),
+var ve = class {
+    constructor(t = ai) {
+      this.config = t;
+      this.stamps = new Map();
+    }
+    configure(t) {
+      this.config = { ...this.config, ...t };
+    }
+    register(t, e, n = Date.now()) {
+      let i = this.config.sourceWeights[e] ?? 0;
+      if (i <= 0) return;
+      let s = this.valueAt(t, n);
+      this.stamps.set(t, { value: Ve(Math.max(s, i)), at: n });
+    }
+    clear() {
+      this.stamps.clear();
+    }
+    valueAt(t, e = Date.now()) {
+      let n = this.stamps.get(t);
+      if (!n) return 0;
+      let i = Math.max(0, (e - n.at) / 6e4);
+      return this.config.halfLifeMinutes <= 0 ? 0 : n.value * Math.pow(0.5, i / this.config.halfLifeMinutes);
+    }
+    field(t = Date.now()) {
+      let e = new Map();
+      return (
+        this.stamps.forEach((n, i) => {
+          let s = this.valueAt(i, t);
+          s > 0.001 && e.set(i, s);
+        }),
+        e
+      );
+    }
+    get size() {
+      return this.stamps.size;
+    }
+  },
+  Ge = ["pairwise", "simplicial", "hypergraph"];
+function li(r, t) {
+  if (t === "hypergraph") return [...r.hyperedges.values()].map((n) => n.nodes);
+  let e = [...r.simplices.values()];
+  return t === "pairwise"
+    ? e.filter((n) => n.nodes.length === 2).map((n) => n.nodes)
+    : e.filter((n) => n.nodes.length >= 2).map((n) => n.nodes);
+}
+function Ye(r, t) {
+  let e = li(r, t),
+    n = new Map();
+  return (
+    e.forEach((i, s) => {
+      i.forEach((o) => {
+        let a = n.get(o) ?? [];
+        (a.push(s), n.set(o, a));
+      });
+    }),
+    {
+      name: t,
+      groups: e,
+      step(i, s) {
+        let o = e.map((l) => (l.length === 0 ? 0 : l.reduce((d, g) => d + (i.get(g) ?? 0), 0) / l.length)),
+          a = new Map(i);
+        return (
+          n.forEach((l, d) => {
+            let g = i.get(d) ?? 0,
+              c = l.reduce((p, u) => p + o[u], 0) / l.length;
+            a.set(d, Ve(g + s * (c - g)));
+          }),
+          a
+        );
+      },
+    }
+  );
+}
+function St(r, t, e, n = 0.4) {
+  let i = t;
+  for (let s = 0; s < e; s++) i = r.step(i, n);
+  return i;
+}
+function di(r) {
+  let t = r >>> 0;
+  return () => {
+    t = (t + 1831565813) >>> 0;
+    let e = t;
+    return (
+      (e = Math.imul(e ^ (e >>> 15), e | 1)),
+      (e ^= e + Math.imul(e ^ (e >>> 7), e | 61)),
+      ((e ^ (e >>> 14)) >>> 0) / 4294967296
+    );
+  };
+}
+function je(r) {
+  if (r.length === 0) return 0;
+  let t = r.reduce((e, n) => e + n, 0) / r.length;
+  return r.reduce((e, n) => e + (n - t) ** 2, 0) / r.length;
+}
+function bt(r) {
+  return Ve(1 - 2 * Math.sqrt(je(r)));
+}
+var ci = { seed: 20260401, rate: 0.35, threshold: 1e-4, maxIterations: 400 };
+function xt(r, t, e, n = {}) {
+  let i = r.getHyperedge(t);
+  if (!i) return null;
+  let s = { ...ci, ...n },
+    o = Ye(r, e),
+    a = di(s.seed),
+    l = new Map();
+  [...r.nodes.keys()].sort().forEach((p) => l.set(p, a()));
+  let d = (p) => i.nodes.map((u) => p.get(u) ?? 0),
+    g = [bt(d(l))],
+    c = null;
+  for (let p = 1; p <= s.maxIterations; p++) {
+    l = o.step(l, s.rate);
+    let u = d(l);
+    if ((g.push(bt(u)), je(u) <= s.threshold)) {
+      c = p;
+      break;
+    }
+  }
+  return {
+    kernel: e,
+    relationKey: t,
+    members: i.nodes,
+    iterations: c,
+    converged: c !== null,
+    orderTrace: g,
+    finalVariance: je(d(l)),
+  };
+}
+function wt(r, t = 5) {
+  let e = [];
+  for (let n = 0; n < r.length; n++)
+    for (let i = n + 1; i < r.length; i++) {
+      let s = r[n],
+        o = r[i];
+      if (s.iterations === null || o.iterations === null) continue;
+      let a = s.members.filter((d) => o.members.includes(d));
+      if (a.length === 0) continue;
+      let l = Math.abs(s.iterations - o.iterations);
+      l < t || e.push({ a: s.relationKey, b: o.relationKey, sharedNodes: a, separation: l });
+    }
+  return e.sort((n, i) => i.separation - n.separation);
+}
+var hi = { k: 8, minClusterSize: 3, maxIterations: 100 };
+function Ue(r, t = {}) {
+  let e = { ...hi, ...t };
+  if (r.length < e.minClusterSize) return new Map(r.map((o) => [o.path, "default"]));
+  let n = Math.min(e.k, Math.floor(r.length / e.minClusterSize));
+  if (n < 2) return new Map(r.map((o) => [o.path, "default"]));
+  let i = Xe(r),
+    s = ui(i, n, e.maxIterations);
+  return new Map(s.map((o, a) => [i[a].path, `cluster-${o}`]));
+}
+function Xe(r) {
+  let t = r.length,
+    e = new Map(),
     n = [];
-  for (let r of s) {
+  for (let s of r) {
     let o = new Map();
-    for (let a of r.titleTokens) o.set(a, (o.get(a) ?? 0) + 3);
-    for (let a of r.contentTokens) o.set(a, (o.get(a) ?? 0) + 1);
-    for (let a of r.tags) {
+    for (let a of s.titleTokens) o.set(a, (o.get(a) ?? 0) + 3);
+    for (let a of s.contentTokens) o.set(a, (o.get(a) ?? 0) + 1);
+    for (let a of s.tags) {
       let l = a.replace(/^#/, "");
       o.set(l, (o.get(l) ?? 0) + 5);
     }
-    for (let a of o.keys()) t.set(a, (t.get(a) ?? 0) + 1);
+    for (let a of o.keys()) e.set(a, (e.get(a) ?? 0) + 1);
     n.push(o);
   }
   let i = new Map();
-  for (let [r, o] of t) i.set(r, Math.log(e / (o + 1)) + 1);
-  return s.map((r, o) => {
+  for (let [s, o] of e) i.set(s, Math.log(t / (o + 1)) + 1);
+  return r.map((s, o) => {
     let a = n[o],
       l = new Map(),
       d = 0;
@@ -795,47 +943,47 @@ function We(s) {
       let p = c * (i.get(g) ?? 1);
       (l.set(g, p), (d += p * p));
     }
-    return { path: r.path, vector: l, magnitude: Math.sqrt(d) };
+    return { path: s.path, vector: l, magnitude: Math.sqrt(d) };
   });
 }
-function Be(s, e) {
-  if (s.magnitude === 0 || e.magnitude === 0) return 0;
-  let t = 0;
-  for (let [n, i] of s.vector) {
-    let r = e.vector.get(n);
-    r !== void 0 && (t += i * r);
+function qe(r, t) {
+  if (r.magnitude === 0 || t.magnitude === 0) return 0;
+  let e = 0;
+  for (let [n, i] of r.vector) {
+    let s = t.vector.get(n);
+    s !== void 0 && (e += i * s);
   }
-  return t / (s.magnitude * e.magnitude);
+  return e / (r.magnitude * t.magnitude);
 }
-function Vn(s, e, t) {
-  let n = s.length,
-    i = new Array(n).fill(0).map(() => Math.floor(Math.random() * e)),
-    r = [];
-  for (let o = 0; o < t; o++) {
-    for (let l = 0; l < e; l++) {
-      let d = s.filter((p, u) => i[u] === l);
+function ui(r, t, e) {
+  let n = r.length,
+    i = new Array(n).fill(0).map(() => Math.floor(Math.random() * t)),
+    s = [];
+  for (let o = 0; o < e; o++) {
+    for (let l = 0; l < t; l++) {
+      let d = r.filter((p, u) => i[u] === l);
       if (d.length === 0) {
-        r[l] = new Map(s[Math.floor(Math.random() * n)].vector);
+        s[l] = new Map(r[Math.floor(Math.random() * n)].vector);
         continue;
       }
       let g = new Map(),
         c = new Map();
       for (let p of d) for (let [u, m] of p.vector) (c.set(u, (c.get(u) ?? 0) + 1), g.set(u, (g.get(u) ?? 0) + m));
       for (let [p, u] of g) g.set(p, u / d.length);
-      r[l] = g;
+      s[l] = g;
     }
     let a = !1;
     for (let l = 0; l < n; l++) {
-      let d = s[l],
+      let d = r[l],
         g = 0,
         c = -1;
-      for (let p = 0; p < e; p++) {
+      for (let p = 0; p < t; p++) {
         let u = {
             path: `centroid-${p}`,
-            vector: r[p],
-            magnitude: Math.sqrt([...r[p].values()].reduce((f, h) => f + h * h, 0)),
+            vector: s[p],
+            magnitude: Math.sqrt([...s[p].values()].reduce((f, h) => f + h * h, 0)),
           },
-          m = Be(d, u);
+          m = qe(d, u);
         m > c && ((c = m), (g = p));
       }
       i[l] !== g && ((i[l] = g), (a = !0));
@@ -844,57 +992,57 @@ function Vn(s, e, t) {
   }
   return i;
 }
-function ht(s, e) {
-  let t = new Map();
-  for (let n of s) {
-    let i = e.get(n.path);
-    !i || i === "default" ? t.set(n.path, n.topFolder || n.folder || "misc") : t.set(n.path, i);
+function Ct(r, t) {
+  let e = new Map();
+  for (let n of r) {
+    let i = t.get(n.path);
+    !i || i === "default" ? e.set(n.path, n.topFolder || n.folder || "misc") : e.set(n.path, i);
   }
-  return t;
+  return e;
 }
-function ut(s, e) {
-  return [s, e].sort().join("|");
+function Nt(r, t) {
+  return [r, t].sort().join("|");
 }
-function Gn(s, e) {
-  let t = new Set(s);
-  return e.filter((n) => t.has(n));
+function pi(r, t) {
+  let e = new Set(r);
+  return t.filter((n) => e.has(n));
 }
-function Yn(s, e, t, n, i = 0) {
-  let r = 0,
-    o = t.get(s.id),
-    a = t.get(e.id),
-    l = o?.outgoingLinks.has(e.id) ?? !1,
-    d = a?.outgoingLinks.has(s.id) ?? !1;
-  l && d ? (r += 0.8) : (l || d) && (r += 0.5);
-  let g = Gn(s.tags, e.tags),
-    c = [...t.values()].flatMap((v) => [...v.tags]),
+function gi(r, t, e, n, i = 0) {
+  let s = 0,
+    o = e.get(r.id),
+    a = e.get(t.id),
+    l = o?.outgoingLinks.has(t.id) ?? !1,
+    d = a?.outgoingLinks.has(r.id) ?? !1;
+  l && d ? (s += 0.8) : (l || d) && (s += 0.5);
+  let g = pi(r.tags, t.tags),
+    c = [...e.values()].flatMap((v) => [...v.tags]),
     p = new Map();
   for (let v of c) p.set(v, (p.get(v) ?? 0) + 1);
-  let u = t.size,
+  let u = e.size,
     m = new Set(),
     f = new Set();
   for (let [v, b] of p.entries()) b / u < n.tagRarityThreshold ? m.add(v) : f.add(v);
   let h = g.filter((v) => m.has(v)),
     y = g.filter((v) => f.has(v));
   return (
-    (r += h.length * 0.15),
-    (r -= y.length * 0.1),
-    s.domain && e.domain && s.domain === e.domain && (r += 0.15),
-    (r += i * 0.35),
-    Math.max(0, Math.min(1, r))
+    (s += h.length * 0.15),
+    (s -= y.length * 0.1),
+    r.domain && t.domain && r.domain === t.domain && (s += 0.15),
+    (s += i * 0.35),
+    Math.max(0, Math.min(1, s))
   );
 }
-function se(s, e) {
-  let t = new Map(),
-    n = new Map(s.map((p) => [p.path, p])),
+function ae(r, t) {
+  let e = new Map(),
+    n = new Map(r.map((p) => [p.path, p])),
     i;
-  if (e.domainSource === "content-cluster") i = $e(s, { k: e.contentClusterCount });
-  else if (e.domainSource === "hybrid") {
-    let p = $e(s, { k: e.contentClusterCount });
-    i = ht(s, p);
-  } else i = new Map(s.map((p) => [p.path, p.topFolder || p.folder || ""]));
-  for (let p of s)
-    t.set(p.path, {
+  if (t.domainSource === "content-cluster") i = Ue(r, { k: t.contentClusterCount });
+  else if (t.domainSource === "hybrid") {
+    let p = Ue(r, { k: t.contentClusterCount });
+    i = Ct(r, p);
+  } else i = new Map(r.map((p) => [p.path, p.topFolder || p.folder || ""]));
+  for (let p of r)
+    e.set(p.path, {
       id: p.path,
       role: p.role,
       domain: i.get(p.path) || p.topFolder || p.folder || "",
@@ -902,9 +1050,9 @@ function se(s, e) {
       modifiedAt: p.modifiedAt,
       linkCount: p.outgoingLinks.size,
     });
-  let r = new Map(),
-    o = [...t.values()],
-    a = We(s),
+  let s = new Map(),
+    o = [...e.values()],
+    a = Xe(r),
     l = new Map(a.map((p) => [p.path, p]));
   for (let p = 0; p < o.length; p++)
     for (let u = p + 1; u < o.length; u++) {
@@ -912,62 +1060,62 @@ function se(s, e) {
         f = o[u],
         h = l.get(m.id),
         y = l.get(f.id),
-        v = h && y ? Be(h, y) : 0,
-        b = Yn(m, f, n, e, v),
-        S = ut(m.id, f.id);
-      r.set(S, { a: m.id, b: f.id, strength: b });
+        v = h && y ? qe(h, y) : 0,
+        b = gi(m, f, n, t, v),
+        S = Nt(m.id, f.id);
+      s.set(S, { a: m.id, b: f.id, strength: b });
     }
   let d = new Map();
-  for (let p of r.values()) p.strength > 0 && (d.set(p.a, (d.get(p.a) ?? 0) + 1), d.set(p.b, (d.get(p.b) ?? 0) + 1));
+  for (let p of s.values()) p.strength > 0 && (d.set(p.a, (d.get(p.a) ?? 0) + 1), d.set(p.b, (d.get(p.b) ?? 0) + 1));
   let c = [...d.values()].reduce((p, u) => p + u, 0) / Math.max(d.size, 1);
-  for (let [p, u] of r) {
+  for (let [p, u] of s) {
     let m = d.get(u.a) ?? 1,
       f = d.get(u.b) ?? 1,
       y = 0.5 + 0.5 * Math.min(1, (c * c) / (m * f));
-    r.set(p, { ...u, strength: Math.min(1, u.strength * y) });
+    s.set(p, { ...u, strength: Math.min(1, u.strength * y) });
   }
-  return { nodes: t, edges: r };
+  return { nodes: e, edges: s };
 }
-function R(s, e, t) {
-  let n = ut(s, e);
-  return t.edges.get(n)?.strength ?? 0;
+function P(r, t, e) {
+  let n = Nt(r, t);
+  return e.edges.get(n)?.strength ?? 0;
 }
-function K(s, e, t) {
+function O(r, t, e) {
   let n = [];
-  for (let i of t.edges.values()) i.strength < e || (i.a === s ? n.push(i.b) : i.b === s && n.push(i.a));
+  for (let i of e.edges.values()) i.strength < t || (i.a === r ? n.push(i.b) : i.b === r && n.push(i.a));
   return n;
 }
-function pt(s, e) {
-  let t = se(s, e);
-  return (n) => Xn(n, t);
+function Mt(r, t) {
+  let e = ae(r, t);
+  return (n) => mi(n, e);
 }
-function Xn(s, e) {
-  if (s.length < 2) return 0;
-  let t = 0,
+function mi(r, t) {
+  if (r.length < 2) return 0;
+  let e = 0,
     n = 0;
-  for (let i = 0; i < s.length; i++) for (let r = i + 1; r < s.length; r++) ((t += R(s[i], s[r], e)), n++);
-  return n > 0 ? t / n : 0;
+  for (let i = 0; i < r.length; i++) for (let s = i + 1; s < r.length; s++) ((e += P(r[i], r[s], t)), n++);
+  return n > 0 ? e / n : 0;
 }
-function _e() {
+function Ze() {
   return { events: [], nodeScores: new Map(), simplexScores: new Map() };
 }
-function $(s, e) {
-  let t = { ...e, timestamp: Date.now() };
-  s.events.push(t);
-  let n = Un(e.type);
-  if (e.simplexKey && e.type !== "hover") {
-    let i = s.simplexScores.get(e.simplexKey) ?? 1;
-    s.simplexScores.set(e.simplexKey, Math.min(3, i + n));
+function W(r, t) {
+  let e = { ...t, timestamp: Date.now() };
+  r.events.push(e);
+  let n = fi(t.type);
+  if (t.simplexKey && t.type !== "hover") {
+    let i = r.simplexScores.get(t.simplexKey) ?? 1;
+    r.simplexScores.set(t.simplexKey, Math.min(3, i + n));
   }
-  if (e.nodeIds)
-    for (let i of e.nodeIds) {
-      let r = s.nodeScores.get(i) ?? 1;
-      s.nodeScores.set(i, Math.min(3, r + n * 0.5));
+  if (t.nodeIds)
+    for (let i of t.nodeIds) {
+      let s = r.nodeScores.get(i) ?? 1;
+      r.nodeScores.set(i, Math.min(3, s + n * 0.5));
     }
-  qn(s);
+  yi(r);
 }
-function Un(s) {
-  switch (s) {
+function fi(r) {
+  switch (r) {
     case "confirm":
       return 0.5;
     case "promote":
@@ -986,141 +1134,141 @@ function Un(s) {
       return 0;
   }
 }
-function qn(s) {
-  let e = Date.now() - 2592e6;
-  s.events = s.events.filter((t) => t.timestamp > e);
+function yi(r) {
+  let t = Date.now() - 2592e6;
+  r.events = r.events.filter((e) => e.timestamp > t);
 }
-function gt(s, e, t) {
+function Et(r, t, e) {
   let n = 1;
-  if (e) {
-    let i = s.simplexScores.get(e) ?? 1;
+  if (t) {
+    let i = r.simplexScores.get(t) ?? 1;
     n *= i;
   }
-  if (t && t.length > 0) {
-    let i = t.reduce((r, o) => r + (s.nodeScores.get(o) ?? 1), 0) / t.length;
+  if (e && e.length > 0) {
+    let i = e.reduce((s, o) => s + (r.nodeScores.get(o) ?? 1), 0) / e.length;
     n *= 1 + (i - 1) * 0.3;
   }
   return Math.min(3, Math.max(0.3, n));
 }
-function mt(s) {
+function Tt(r) {
   return {
-    events: s.events.slice(-100),
-    nodeScores: Array.from(s.nodeScores.entries()),
-    simplexScores: Array.from(s.simplexScores.entries()),
+    events: r.events.slice(-100),
+    nodeScores: Array.from(r.nodeScores.entries()),
+    simplexScores: Array.from(r.simplexScores.entries()),
   };
 }
-function ft(s) {
-  let e = _e();
-  if (typeof s != "object" || s === null) return e;
-  let t = s;
+function Dt(r) {
+  let t = Ze();
+  if (typeof r != "object" || r === null) return t;
+  let e = r;
   if (
-    (Array.isArray(t.events) &&
-      (e.events = t.events.filter((n) => {
+    (Array.isArray(e.events) &&
+      (t.events = e.events.filter((n) => {
         if (typeof n != "object" || n === null) return !1;
         let i = n;
         return typeof i.timestamp == "number" && typeof i.type == "string";
       })),
-    Array.isArray(t.nodeScores))
+    Array.isArray(e.nodeScores))
   )
-    for (let [n, i] of t.nodeScores) typeof i == "number" && e.nodeScores.set(n, i);
-  if (Array.isArray(t.simplexScores))
-    for (let [n, i] of t.simplexScores) typeof i == "number" && e.simplexScores.set(n, i);
-  return e;
+    for (let [n, i] of e.nodeScores) typeof i == "number" && t.nodeScores.set(n, i);
+  if (Array.isArray(e.simplexScores))
+    for (let [n, i] of e.simplexScores) typeof i == "number" && t.simplexScores.set(n, i);
+  return t;
 }
-var j = require("obsidian");
-function yt(s, e, t) {
+var G = require("obsidian");
+function kt(r, t, e) {
   return `---
-${t.stringify(s).trimEnd()}
+${e.stringify(r).trimEnd()}
 ---
-${e.replace(/^\n*/, "")}`;
+${t.replace(/^\n*/, "")}`;
 }
-function vt(s, e) {
-  let t = s.match(/^---\n([\s\S]*?)\n---\n?/);
-  if (!t) return { frontmatter: {}, body: s };
-  let n = s.replace(/^---\n[\s\S]*?\n---\n?/, "");
+function It(r, t) {
+  let e = r.match(/^---\n([\s\S]*?)\n---\n?/);
+  if (!e) return { frontmatter: {}, body: r };
+  let n = r.replace(/^---\n[\s\S]*?\n---\n?/, "");
   try {
-    return { frontmatter: e.parse(t[1]) ?? {}, body: n };
+    return { frontmatter: t.parse(e[1]) ?? {}, body: n };
   } catch {
     return { frontmatter: {}, body: n };
   }
 }
-function ze(s, e, t, n) {
-  let i = Object.prototype.hasOwnProperty.call(s, e),
-    o = (Array.isArray(s[e]) ? [...s[e]] : []).filter((a) => {
+function Je(r, t, e, n) {
+  let i = Object.prototype.hasOwnProperty.call(r, t),
+    o = (Array.isArray(r[t]) ? [...r[t]] : []).filter((a) => {
       let l = a && typeof a == "object" && Array.isArray(a.nodes) ? a.nodes.map(String) : [];
-      return N(l) !== t;
+      return N(l) !== e;
     });
-  return (n && o.push(n), (o.length > 0 || i) && (s[e] = o), s);
+  return (n && o.push(n), (o.length > 0 || i) && (r[t] = o), r);
 }
-var bt = { parse: (s) => (0, j.parseYaml)(s) ?? null, stringify: (s) => (0, j.stringifyYaml)(s) };
-function J(s, e) {
-  return yt(s, e, bt);
+var Pt = { parse: (r) => (0, G.parseYaml)(r) ?? null, stringify: (r) => (0, G.stringifyYaml)(r) };
+function J(r, t) {
+  return kt(r, t, Pt);
 }
-function Q(s) {
-  return vt(s, bt);
+function Q(r) {
+  return It(r, Pt);
 }
-function St(s) {
+function Rt(r) {
   return {
-    nodes: s.nodes,
-    ...(s.label ? { label: s.label } : {}),
-    ...(s.weight !== void 0 ? { weight: s.weight } : {}),
+    nodes: r.nodes,
+    ...(r.label ? { label: r.label } : {}),
+    ...(r.weight !== void 0 ? { weight: r.weight } : {}),
   };
 }
-function xt(s) {
+function Ft(r) {
   return {
-    nodes: s.nodes,
-    ...(s.label ? { label: s.label } : {}),
-    ...(s.weight !== void 0 ? { weight: s.weight } : {}),
-    ...(s.mode ? { mode: s.mode } : {}),
-    ...(s.occurredAt !== void 0 ? { occurredAt: s.occurredAt } : {}),
-    ...(s.persistence ? { persistence: s.persistence } : {}),
+    nodes: r.nodes,
+    ...(r.label ? { label: r.label } : {}),
+    ...(r.weight !== void 0 ? { weight: r.weight } : {}),
+    ...(r.mode ? { mode: r.mode } : {}),
+    ...(r.occurredAt !== void 0 ? { occurredAt: r.occurredAt } : {}),
+    ...(r.persistence ? { persistence: r.persistence } : {}),
   };
 }
-function je(s, e, t) {
-  return ze(s, "simplices", e, t);
+function Qe(r, t, e) {
+  return Je(r, "simplices", t, e);
 }
-function Ve(s, e, t) {
-  return ze(s, "hyperedges", e, t);
+function et(r, t, e) {
+  return Je(r, "hyperedges", t, e);
 }
-async function Ge(s, e, t) {
-  let n = await s.vault.read(e),
-    { frontmatter: i, body: r } = Q(n),
-    o = N(t.nodes);
-  je(i, o, St(t));
+async function tt(r, t, e) {
+  let n = await r.vault.read(t),
+    { frontmatter: i, body: s } = Q(n),
+    o = N(e.nodes);
+  Qe(i, o, Rt(e));
   let a = Array.isArray(i.simplices) ? i.simplices.length : 0;
   return (
     C.info("persistence", "Prepared source-note write", {
       mode: "source-note",
-      file: e.path,
+      file: t.path,
       simplexKey: o,
       simplexCount: a,
     }),
-    J(i, r)
+    J(i, s)
   );
 }
-async function wt(s, e, t) {
-  let n = await s.vault.read(e),
-    { frontmatter: i, body: r } = Q(n),
-    o = N(t.nodes);
+async function At(r, t, e) {
+  let n = await r.vault.read(t),
+    { frontmatter: i, body: s } = Q(n),
+    o = N(e.nodes);
   return (
-    Ve(i, o, xt(t)),
+    et(i, o, Ft(e)),
     C.info("persistence", "Prepared source-note hyperedge write", {
       mode: "source-note",
-      file: e.path,
+      file: t.path,
       nodeKey: o,
       hyperedgeCount: Array.isArray(i.hyperedges) ? i.hyperedges.length : 0,
     }),
-    J(i, r)
+    J(i, s)
   );
 }
-async function Ct(s, e, t) {
-  let n = await W(s, e),
-    i = await s.vault.read(n),
-    { frontmatter: r, body: o } = Q(i),
-    a = N(t.nodes);
-  ((r.managedBy = "simplicial-complex"), Ve(r, a, xt(t)));
+async function Ht(r, t, e) {
+  let n = await _(r, t),
+    i = await r.vault.read(n),
+    { frontmatter: s, body: o } = Q(i),
+    a = N(e.nodes);
+  ((s.managedBy = "simplicial-complex"), et(s, a, Ft(e)));
   let l = J(
-    r,
+    s,
     o ||
       `<!-- managed by Simplicial Complex plugin -->
 `,
@@ -1130,27 +1278,27 @@ async function Ct(s, e, t) {
       mode: "central-file",
       file: n.path,
       nodeKey: a,
-      hyperedgeCount: Array.isArray(r.hyperedges) ? r.hyperedges.length : 0,
+      hyperedgeCount: Array.isArray(s.hyperedges) ? s.hyperedges.length : 0,
     }),
     { file: n, content: l }
   );
 }
-async function Nt(s, e, t) {
-  let n = await s.vault.read(e),
-    { frontmatter: i, body: r } = Q(n);
+async function Lt(r, t, e) {
+  let n = await r.vault.read(t),
+    { frontmatter: i, body: s } = Q(n);
   return (
-    Ve(i, t),
+    et(i, e),
     C.info("persistence", "Prepared hyperedge removal", {
-      file: e.path,
-      nodeKey: t,
+      file: t.path,
+      nodeKey: e,
       remainingHyperedgeCount: Array.isArray(i.hyperedges) ? i.hyperedges.length : 0,
     }),
-    J(i, r)
+    J(i, s)
   );
 }
-async function W(s, e) {
-  let t = s.vault.getAbstractFileByPath(e);
-  if (t instanceof j.TFile) return t;
+async function _(r, t) {
+  let e = r.vault.getAbstractFileByPath(t);
+  if (e instanceof G.TFile) return e;
   let n = [
       "---",
       "managedBy: simplicial-complex",
@@ -1162,18 +1310,18 @@ async function W(s, e) {
       "",
     ].join(`
 `),
-    i = await s.vault.create(e, n);
-  return (C.info("persistence", "Created central file", { path: e }), i);
+    i = await r.vault.create(t, n);
+  return (C.info("persistence", "Created central file", { path: t }), i);
 }
-async function Mt(s, e, t) {
-  let n = await W(s, e),
-    i = await s.vault.read(n),
-    { frontmatter: r, body: o } = Q(i),
-    a = N(t.nodes);
-  ((r.managedBy = "simplicial-complex"), je(r, a, St(t)));
-  let l = Array.isArray(r.simplices) ? r.simplices.length : 0,
+async function Kt(r, t, e) {
+  let n = await _(r, t),
+    i = await r.vault.read(n),
+    { frontmatter: s, body: o } = Q(i),
+    a = N(e.nodes);
+  ((s.managedBy = "simplicial-complex"), Qe(s, a, Rt(e)));
+  let l = Array.isArray(s.simplices) ? s.simplices.length : 0,
     d = J(
-      r,
+      s,
       o ||
         `<!-- managed by Simplicial Complex plugin -->
 `,
@@ -1188,33 +1336,33 @@ async function Mt(s, e, t) {
     { file: n, content: d }
   );
 }
-async function re(s, e, t) {
-  let n = await s.vault.read(e),
-    { frontmatter: i, body: r } = Q(n);
+async function le(r, t, e) {
+  let n = await r.vault.read(t),
+    { frontmatter: i, body: s } = Q(n);
   return (
-    je(i, t),
+    Qe(i, e),
     C.info("persistence", "Prepared simplex removal", {
-      file: e.path,
-      simplexKey: t,
+      file: t.path,
+      simplexKey: e,
       remainingSimplexCount: Array.isArray(i.simplices) ? i.simplices.length : 0,
     }),
-    J(i, r)
+    J(i, s)
   );
 }
-async function Et(s, e) {
-  let t = s.vault.getAbstractFileByPath(e);
-  if (!(t instanceof j.TFile))
+async function Ot(r, t) {
+  let e = r.vault.getAbstractFileByPath(t);
+  if (!(e instanceof G.TFile))
     return (
-      C.warn("persistence", "Central file does not exist", { mode: "central-file", path: e }),
-      { exists: !1, path: e, length: 0 }
+      C.warn("persistence", "Central file does not exist", { mode: "central-file", path: t }),
+      { exists: !1, path: t, length: 0 }
     );
-  let n = await s.vault.read(t);
+  let n = await r.vault.read(e);
   return (
-    C.info("persistence", "Central file state", { mode: "central-file", path: e, exists: !0, length: n.length }),
-    { exists: !0, path: t.path, length: n.length }
+    C.info("persistence", "Central file state", { mode: "central-file", path: t, exists: !0, length: n.length }),
+    { exists: !0, path: e.path, length: n.length }
   );
 }
-function Tt() {
+function $t() {
   return {
     domainSource: "hybrid",
     contentClusterCount: 8,
@@ -1292,10 +1440,12 @@ function Tt() {
     crystallizeFolder: "",
     historyFile: "_simplicial-history.md",
     enableRelationHistory: !0,
+    enableDynamicsLab: !1,
+    activationDecayHalfLifeMinutes: 30,
   };
 }
-var Ye = require("obsidian");
-var Zn = [
+var nt = require("obsidian");
+var vi = [
     "---",
     "managedBy: simplicial-complex",
     "---",
@@ -1305,37 +1455,37 @@ var Zn = [
     "",
   ].join(`
 `),
-  me = class {
-    constructor(e, t) {
-      this.app = e;
-      this.historyFile = t;
+  be = class {
+    constructor(t, e) {
+      this.app = t;
+      this.historyFile = e;
       this.queue = [];
       this.flushing = null;
     }
-    setPath(e) {
-      this.historyFile = e;
+    setPath(t) {
+      this.historyFile = t;
     }
     get path() {
       return this.historyFile;
     }
-    async load(e) {
-      let t = this.app.vault.getAbstractFileByPath(this.historyFile);
-      if (!(t instanceof Ye.TFile)) return 0;
-      let i = (await this.app.vault.read(t))
+    async load(t) {
+      let e = this.app.vault.getAbstractFileByPath(this.historyFile);
+      if (!(e instanceof nt.TFile)) return 0;
+      let i = (await this.app.vault.read(e))
         .split(
           `
 `,
         )
-        .map((r) => ct(r))
-        .filter((r) => r !== null);
+        .map((s) => vt(s))
+        .filter((s) => s !== null);
       return (
-        e.load(i),
+        t.load(i),
         C.info("history", "Loaded relation history", { path: this.historyFile, eventCount: i.length }),
         i.length
       );
     }
-    record(e) {
-      (this.queue.push(e), this.flush());
+    record(t) {
+      (this.queue.push(t), this.flush());
     }
     async flush() {
       return this.flushing
@@ -1343,14 +1493,14 @@ var Zn = [
         : ((this.flushing = (async () => {
             try {
               for (; this.queue.length > 0; ) {
-                let t = this.queue.splice(0, this.queue.length).map((n) => dt(n)).join(`
+                let e = this.queue.splice(0, this.queue.length).map((n) => yt(n)).join(`
 `);
-                await this.appendLines(t);
+                await this.appendLines(e);
               }
-            } catch (e) {
+            } catch (t) {
               C.error("history", "Failed to append relation history", {
                 path: this.historyFile,
-                error: e instanceof Error ? e.message : String(e),
+                error: t instanceof Error ? t.message : String(t),
               });
             } finally {
               this.flushing = null;
@@ -1358,96 +1508,96 @@ var Zn = [
           })()),
           this.flushing);
     }
-    async appendLines(e) {
-      let t = this.app.vault.getAbstractFileByPath(this.historyFile);
-      if (t instanceof Ye.TFile) {
+    async appendLines(t) {
+      let e = this.app.vault.getAbstractFileByPath(this.historyFile);
+      if (e instanceof nt.TFile) {
         await this.app.vault.append(
-          t,
-          `${e}
+          e,
+          `${t}
 `,
         );
         return;
       }
       (await this.app.vault.create(
         this.historyFile,
-        `${Zn}${e}
+        `${vi}${t}
 `,
       ),
         C.info("history", "Created relation history file", { path: this.historyFile }));
     }
   };
-var V = require("obsidian");
-function Pt(s, e, t) {
+var Y = require("obsidian");
+function Wt(r, t, e) {
   let n = [];
-  for (let i of s) {
+  for (let i of r) {
     if (i.dimension !== 1 || i.boundaryNodes.length !== 3) continue;
-    let [r, o, a] = i.boundaryNodes,
-      l = R(r, o, e),
-      d = R(o, a, e),
-      g = R(r, a, e);
+    let [s, o, a] = i.boundaryNodes,
+      l = P(s, o, t),
+      d = P(o, a, t),
+      g = P(s, a, t);
     if (l === 0 || d === 0 || g === 0) continue;
     let c = l + d + g,
       p = Math.min(0.9, Math.max(0.3, c / 3)),
-      u = K(r, 0, e).length,
-      m = K(o, 0, e).length,
-      f = K(a, 0, e).length,
-      h = [r, o, a].sort((y, v) => (v === r ? u : v === o ? m : f) - (y === r ? u : y === o ? m : f))[0];
-    n.push({ nodes: [r, o, a], source: "inferred-bridge", bridgeNode: h, triadScore: c, label: null, weight: p });
+      u = O(s, 0, t).length,
+      m = O(o, 0, t).length,
+      f = O(a, 0, t).length,
+      h = [s, o, a].sort((y, v) => (v === s ? u : v === o ? m : f) - (y === s ? u : y === o ? m : f))[0];
+    n.push({ nodes: [s, o, a], source: "inferred-bridge", bridgeNode: h, triadScore: c, label: null, weight: p });
   }
   return n;
 }
-function kt(s, e) {
-  let t = [],
-    n = [...s.nodes.keys()],
-    i = e.linkStrengthThreshold,
-    r = e.closureThreshold;
+function _t(r, t) {
+  let e = [],
+    n = [...r.nodes.keys()],
+    i = t.linkStrengthThreshold,
+    s = t.closureThreshold;
   for (let o of n) {
-    let a = K(o, i, s);
+    let a = O(o, i, r);
     for (let l = 0; l < a.length; l++)
       for (let d = l + 1; d < a.length; d++) {
         let g = a[l],
           c = a[d],
-          p = R(g, c, s);
-        if (p >= r) continue;
-        let u = R(g, o, s),
-          m = R(o, c, s),
+          p = P(g, c, r);
+        if (p >= s) continue;
+        let u = P(g, o, r),
+          m = P(o, c, r),
           f = u + m - p * 2,
           h = Math.min(0.9, Math.max(0.3, f / 2));
-        t.push({ nodes: [g, o, c], source: "inferred-bridge", bridgeNode: o, triadScore: f, label: null, weight: h });
+        e.push({ nodes: [g, o, c], source: "inferred-bridge", bridgeNode: o, triadScore: f, label: null, weight: h });
       }
   }
-  return t;
+  return e;
 }
-function Jn(s) {
-  return [...s].sort().join("|");
+function bi(r) {
+  return [...r].sort().join("|");
 }
-function Qn(s, e) {
-  if (s.length < 2) return { average: 0, density: 0 };
-  let t = 0,
+function Si(r, t) {
+  if (r.length < 2) return { average: 0, density: 0 };
+  let e = 0,
     n = 0,
-    i = (s.length * (s.length - 1)) / 2;
-  for (let r = 0; r < s.length; r++)
-    for (let o = r + 1; o < s.length; o++) {
-      let a = R(s[r], s[o], e);
-      ((t += a), a > 0 && n++);
+    i = (r.length * (r.length - 1)) / 2;
+  for (let s = 0; s < r.length; s++)
+    for (let o = s + 1; o < r.length; o++) {
+      let a = P(r[s], r[o], t);
+      ((e += a), a > 0 && n++);
     }
-  return { average: i > 0 ? t / i : 0, density: i > 0 ? n / i : 0 };
+  return { average: i > 0 ? e / i : 0, density: i > 0 ? n / i : 0 };
 }
-function Xe(s, e) {
-  let t = Math.max(0.22, e.linkStrengthThreshold * 0.7),
+function it(r, t) {
+  let e = Math.max(0.22, t.linkStrengthThreshold * 0.7),
     n = 2,
     i = 0.6,
-    r = Math.max(0.16, e.closureThreshold * 0.8),
+    s = Math.max(0.16, t.closureThreshold * 0.8),
     o = new Set(),
     a = new Set(),
     l = [];
-  for (let d of s.nodes.keys()) {
-    if (o.has(d) || K(d, t, s).length < n) continue;
+  for (let d of r.nodes.keys()) {
+    if (o.has(d) || O(d, e, r).length < n) continue;
     let c = new Set([d]),
       p = [d];
     for (o.add(d); p.length > 0; ) {
       let y = p.shift(),
-        v = K(y, t, s);
+        v = O(y, e, r);
       if (!(v.length < n)) for (let b of v) (c.add(b), !o.has(b) && (o.add(b), p.push(b)));
     }
     if (c.size < 3) continue;
@@ -1457,18 +1607,18 @@ function Xe(s, e) {
           ? u
               .map((y) => ({
                 id: y,
-                strength: K(y, t, s)
+                strength: O(y, e, r)
                   .filter((v) => c.has(v))
-                  .reduce((v, b) => v + R(y, b, s), 0),
+                  .reduce((v, b) => v + P(y, b, r), 0),
               }))
               .sort((y, v) => v.strength - y.strength)
               .slice(0, 5)
               .map(({ id: y }) => y)
               .sort()
           : u,
-      f = Qn(m, s);
-    if (f.density < i || f.average < r) continue;
-    let h = Jn(m);
+      f = Si(m, r);
+    if (f.density < i || f.average < s) continue;
+    let h = bi(m);
     a.has(h) ||
       (a.add(h),
       l.push({
@@ -1481,81 +1631,81 @@ function Xe(s, e) {
   }
   return l;
 }
-function It(s, e) {
-  let t = new Set(s.map((i) => i.role)),
-    n = new Set(s.map((i) => i.domain));
-  return e === 1 ? t.size >= 2 || n.size >= 2 : e === 2 ? n.size >= 2 && t.size >= 2 : !0;
+function Bt(r, t) {
+  let e = new Set(r.map((i) => i.role)),
+    n = new Set(r.map((i) => i.domain));
+  return t === 1 ? e.size >= 2 || n.size >= 2 : t === 2 ? n.size >= 2 && e.size >= 2 : !0;
 }
-function Dt(s, e, t) {
-  let n = new Set(s.map((l) => l.domain)),
-    i = new Set(s.map((l) => l.role)),
-    r = s.some((l) => l.role === "action");
-  if (n.size < e) return { qualifies: !1, isSuper: !1, class: "folder-cluster" };
+function zt(r, t, e) {
+  let n = new Set(r.map((l) => l.domain)),
+    i = new Set(r.map((l) => l.role)),
+    s = r.some((l) => l.role === "action");
+  if (n.size < t) return { qualifies: !1, isSuper: !1, class: "folder-cluster" };
   let o = n.size >= 3 && i.size >= 3;
-  return { qualifies: !0, isSuper: o, class: r ? "project-nucleus" : o ? "super-insight" : "cross-domain-core" };
+  return { qualifies: !0, isSuper: o, class: s ? "project-nucleus" : o ? "super-insight" : "cross-domain-core" };
 }
-var ei = {
+var xi = {
   halfLifeDays: 90,
   minimumWeight: 0.1,
   roleModifier: { action: 0.3, project: 0.5, research: 0.7, idea: 1, creative: 1.2, reference: 1.5 },
   enableReinforcement: !1,
   reinforcementStrength: 0.5,
 };
-function Rt(s, e, t = ei, n, i) {
-  let r = Date.now(),
-    o = Math.max(...e.map((c) => c.modifiedAt)),
-    a = (r - o) / (1e3 * 60 * 60 * 24),
-    l = e.reduce((c, p) => c + t.roleModifier[p.role], 0) / e.length,
-    d = Math.pow(0.5, (a * l) / t.halfLifeDays),
-    g = s * d;
-  if (t.enableReinforcement && n) {
-    let c = e.map((m) => m.id),
-      u = 1 + (gt(n, i, c) - 1) * t.reinforcementStrength;
+function jt(r, t, e = xi, n, i) {
+  let s = Date.now(),
+    o = Math.max(...t.map((c) => c.modifiedAt)),
+    a = (s - o) / (1e3 * 60 * 60 * 24),
+    l = t.reduce((c, p) => c + e.roleModifier[p.role], 0) / t.length,
+    d = Math.pow(0.5, (a * l) / e.halfLifeDays),
+    g = r * d;
+  if (e.enableReinforcement && n) {
+    let c = t.map((m) => m.id),
+      u = 1 + (Et(n, i, c) - 1) * e.reinforcementStrength;
     g *= u;
   }
-  return Math.max(t.minimumWeight, Math.min(1, g));
+  return Math.max(e.minimumWeight, Math.min(1, g));
 }
-function Ue(s, e, t) {
-  let n = s.nodes.map((f) => e.find((h) => h.id === f)),
+function st(r, t, e) {
+  let n = r.nodes.map((f) => t.find((h) => h.id === f)),
     i = n.length - 1,
-    r = s.triadScore ?? 0,
+    s = r.triadScore ?? 0,
     o = new Set(n.map((f) => f.role)).size;
-  r += o * t.roleDiversityWeight;
+  s += o * e.roleDiversityWeight;
   let a = new Set(n.map((f) => f.domain)).size;
-  ((r += a * t.domainDiversityWeight), n.some((f) => f.role === "action") && (r += t.actionBonus));
+  ((s += a * e.domainDiversityWeight), n.some((f) => f.role === "action") && (s += e.actionBonus));
   let d = n.flatMap((f) => f.tags),
     g = new Map();
   for (let f of d) g.set(f, (g.get(f) ?? 0) + 1);
   let c = [...g.entries()].filter(([, f]) => f > 1 && f <= 2).length;
-  r += c * t.rareTagWeight;
+  s += c * e.rareTagWeight;
   let p = [...g.entries()].filter(([, f]) => f > 2).length;
-  if (((r -= p * t.commonTagPenalty), !It(n, i)))
-    return { ...s, insightScore: 0, class: "folder-cluster", decayedWeight: 0 };
+  if (((s -= p * e.commonTagPenalty), !Bt(n, i)))
+    return { ...r, insightScore: 0, class: "folder-cluster", decayedWeight: 0 };
   let u =
-    i === 2 ? Dt(n, t.minDomainsForTetra, t.minRolesForTetra) : { qualifies: !0, isSuper: !1, class: "cross-domain" };
-  if (!u.qualifies) return { ...s, insightScore: 0, class: "folder-cluster", decayedWeight: 0 };
-  let m = Rt(s.weight ?? 1, n, {
-    halfLifeDays: t.decayHalfLifeDays,
-    minimumWeight: t.decayMinimumWeight,
+    i === 2 ? zt(n, e.minDomainsForTetra, e.minRolesForTetra) : { qualifies: !0, isSuper: !1, class: "cross-domain" };
+  if (!u.qualifies) return { ...r, insightScore: 0, class: "folder-cluster", decayedWeight: 0 };
+  let m = jt(r.weight ?? 1, n, {
+    halfLifeDays: e.decayHalfLifeDays,
+    minimumWeight: e.decayMinimumWeight,
     roleModifier: { action: 0.3, project: 0.5, research: 0.7, idea: 1, creative: 1.2, reference: 1.5 },
     enableReinforcement: !1,
     reinforcementStrength: 0.5,
   });
-  return { ...s, insightScore: r, class: u.class, decayedWeight: m };
+  return { ...r, insightScore: s, class: u.class, decayedWeight: m };
 }
-function ti(s, e) {
-  let t = se(s, e),
-    n = kt(t, e),
-    i = Xe(t, e),
-    r = new Map();
+function wi(r, t) {
+  let e = ae(r, t),
+    n = _t(e, t),
+    i = it(e, t),
+    s = new Map();
   [...n, ...i].forEach((u) => {
     let m = [...u.nodes].sort().join("|"),
-      f = r.get(m);
-    (!f || (u.weight ?? 0) > (f.weight ?? 0)) && r.set(m, u);
+      f = s.get(m);
+    (!f || (u.weight ?? 0) > (f.weight ?? 0)) && s.set(m, u);
   });
-  let a = [...r.values()]
-      .map((u) => Ue(u, [...t.nodes.values()], e))
-      .filter((u) => u.insightScore >= e.insightThreshold && u.class !== "folder-cluster")
+  let a = [...s.values()]
+      .map((u) => st(u, [...e.nodes.values()], t))
+      .filter((u) => u.insightScore >= t.insightThreshold && u.class !== "folder-cluster")
       .sort((u, m) => m.insightScore - u.insightScore)
       .map((u) => ({
         nodes: u.nodes,
@@ -1574,14 +1724,14 @@ function ti(s, e) {
         dominantSignal: u.label === "density cluster" ? "semantic" : "soft-cluster",
       })),
     l = [],
-    d = [...t.edges.values()]
+    d = [...e.edges.values()]
       .map((u) => u.strength)
       .filter((u) => u > 0)
       .sort((u, m) => m - u),
-    g = 1 - e.linkStrengthThreshold,
+    g = 1 - t.linkStrengthThreshold,
     c = Math.max(0, Math.floor(d.length * g) - 1),
     p = d[c] ?? 0;
-  for (let u of t.edges.values())
+  for (let u of e.edges.values())
     u.strength >= p &&
       l.push({
         nodes: [u.a, u.b],
@@ -1591,7 +1741,7 @@ function ti(s, e) {
         autoGenerated: !0,
         inferred: !0,
         userDefined: !1,
-        suggested: u.strength >= e.closureThreshold,
+        suggested: u.strength >= t.closureThreshold,
         colorKey: "neutral",
         confidence: u.strength,
         decayedWeight: u.strength,
@@ -1600,22 +1750,22 @@ function ti(s, e) {
       });
   return [...l, ...a];
 }
-function Ft(s, e) {
-  return ti(s, e);
+function Vt(r, t) {
+  return wi(r, t);
 }
-function Ht(s, e, t) {
-  let n = se(s, e),
-    i = Pt(t, n, e),
-    r = Xe(n, e),
+function Gt(r, t, e) {
+  let n = ae(r, t),
+    i = Wt(e, n, t),
+    s = it(n, t),
     o = new Map();
-  [...i, ...r].forEach((m) => {
+  [...i, ...s].forEach((m) => {
     let f = [...m.nodes].sort().join("|"),
       h = o.get(f);
     (!h || (m.weight ?? 0) > (h.weight ?? 0)) && o.set(f, m);
   });
   let l = [...o.values()]
-      .map((m) => Ue(m, [...n.nodes.values()], e))
-      .filter((m) => m.insightScore >= e.insightThreshold && m.class !== "folder-cluster")
+      .map((m) => st(m, [...n.nodes.values()], t))
+      .filter((m) => m.insightScore >= t.insightThreshold && m.class !== "folder-cluster")
       .sort((m, f) => f.insightScore - m.insightScore)
       .map((m) => ({
         nodes: m.nodes,
@@ -1638,7 +1788,7 @@ function Ht(s, e, t) {
       .map((m) => m.strength)
       .filter((m) => m > 0)
       .sort((m, f) => f - m),
-    c = 1 - e.linkStrengthThreshold,
+    c = 1 - t.linkStrengthThreshold,
     p = Math.max(0, Math.floor(g.length * c) - 1),
     u = g[p] ?? 0;
   for (let m of n.edges.values())
@@ -1651,7 +1801,7 @@ function Ht(s, e, t) {
         autoGenerated: !0,
         inferred: !0,
         userDefined: !1,
-        suggested: m.strength >= e.closureThreshold,
+        suggested: m.strength >= t.closureThreshold,
         colorKey: "neutral",
         confidence: m.strength,
         decayedWeight: m.strength,
@@ -1660,22 +1810,22 @@ function Ht(s, e, t) {
       });
   return [...d, ...l];
 }
-function At(s, e, t) {
-  let n = (e?.tags ?? []).map((r) => r.tag?.toLowerCase?.() ?? ""),
-    i = e?.frontmatter ?? {};
-  return /- \[ \]/.test(t)
+function Yt(r, t, e) {
+  let n = (t?.tags ?? []).map((s) => s.tag?.toLowerCase?.() ?? ""),
+    i = t?.frontmatter ?? {};
+  return /- \[ \]/.test(e)
     ? "action"
-    : i.status || n.some((r) => ["#project", "#plan", "#initiative"].includes(r))
+    : i.status || n.some((s) => ["#project", "#plan", "#initiative"].includes(s))
       ? "project"
-      : n.some((r) => ["#research", "#paper", "#study", "#analysis"].includes(r))
+      : n.some((s) => ["#research", "#paper", "#study", "#analysis"].includes(s))
         ? "research"
-        : n.some((r) => ["#story", "#fiction", "#game", "#worldbuilding", "#writing"].includes(r))
+        : n.some((s) => ["#story", "#fiction", "#game", "#worldbuilding", "#writing"].includes(s))
           ? "creative"
-          : n.some((r) => ["#idea", "#concept", "#hypothesis", "#thought"].includes(r))
+          : n.some((s) => ["#idea", "#concept", "#hypothesis", "#thought"].includes(s))
             ? "idea"
             : "reference";
 }
-var Lt = new Set([
+var Ut = new Set([
     "the",
     "a",
     "an",
@@ -1937,7 +2087,7 @@ var Lt = new Set([
     "folder",
     "vault",
   ]),
-  ni = new Set([
+  Ci = new Set([
     "\u0627\u06CC\u0646",
     "\u0622\u0646",
     "\u0622\u0646\u0627\u0646",
@@ -2269,7 +2419,7 @@ var Lt = new Set([
     "folder",
     "vault",
   ]),
-  ii = new Set([
+  Ni = new Set([
     "el",
     "la",
     "de",
@@ -2384,7 +2534,7 @@ var Lt = new Set([
     "folder",
     "vault",
   ]),
-  si = new Set([
+  Mi = new Set([
     "le",
     "de",
     "un",
@@ -2478,7 +2628,7 @@ var Lt = new Set([
     "dossier",
     "coffre",
   ]),
-  ri = new Set([
+  Ei = new Set([
     "der",
     "die",
     "und",
@@ -2570,139 +2720,139 @@ var Lt = new Set([
     "ordner",
     "tresor",
   ]),
-  oi = { en: Lt, fa: ni, es: ii, fr: si, de: ri };
-function ai(s) {
-  let e = s.toLowerCase().split("-")[0];
-  return oi[e] ?? Lt;
+  Ti = { en: Ut, fa: Ci, es: Ni, fr: Mi, de: Ei };
+function Di(r) {
+  let t = r.toLowerCase().split("-")[0];
+  return Ti[t] ?? Ut;
 }
-function Ot(s, e = "en") {
-  return ai(e).has(s.toLowerCase());
+function Xt(r, t = "en") {
+  return Di(t).has(r.toLowerCase());
 }
-var li = "en";
-function Kt(s, e = li) {
+var ki = "en";
+function qt(r, t = ki) {
   return new Set(
-    s
+    r
       .toLocaleLowerCase()
       .split(/[^\p{L}\p{N}_]+/gu)
-      .filter((t) => t.length >= 3 && !Ot(t, e)),
+      .filter((e) => e.length >= 3 && !Xt(e, t)),
   );
 }
-function $t(s) {
-  return s.replace(/^#/, "").trim().toLowerCase();
+function Zt(r) {
+  return r.replace(/^#/, "").trim().toLowerCase();
 }
-function Bt(s, e) {
-  let t = 0;
-  for (let n of s) e.has(n) && t++;
-  return t;
+function Qt(r, t) {
+  let e = 0;
+  for (let n of r) t.has(n) && e++;
+  return e;
 }
-function fe(s, e) {
-  return [s, e].sort().join("|");
+function Se(r, t) {
+  return [r, t].sort().join("|");
 }
-function di(s) {
-  if (s.includes("soft-cluster")) return "soft-cluster";
-  if (s.some((e) => e.startsWith("tags:"))) return "tags";
-  if (s.some((e) => e === "folder:same" || e === "folder:top")) return "folder";
-  if (s.some((e) => e.startsWith("title:") || e.startsWith("content:"))) return "semantic";
-  if (s.some((e) => e.startsWith("link:"))) return "link";
+function Ii(r) {
+  if (r.includes("soft-cluster")) return "soft-cluster";
+  if (r.some((t) => t.startsWith("tags:"))) return "tags";
+  if (r.some((t) => t === "folder:same" || t === "folder:top")) return "folder";
+  if (r.some((t) => t.startsWith("title:") || t.startsWith("content:"))) return "semantic";
+  if (r.some((t) => t.startsWith("link:"))) return "link";
 }
-function ci(s) {
-  let e = new Map();
+function Pi(r) {
+  let t = new Map();
   return (
-    s.forEach((t) => {
-      (t.titleTokens.forEach((n) => {
-        (e.has(n) || e.set(n, new Set()), e.get(n).add(t.path));
+    r.forEach((e) => {
+      (e.titleTokens.forEach((n) => {
+        (t.has(n) || t.set(n, new Set()), t.get(n).add(e.path));
       }),
-        t.contentTokens.forEach((n) => {
-          (e.get(n)?.size ?? 0) < Math.max(3, s.length * 0.1) &&
-            (e.has(n) || e.set(n, new Set()), e.get(n).add(t.path));
+        e.contentTokens.forEach((n) => {
+          (t.get(n)?.size ?? 0) < Math.max(3, r.length * 0.1) &&
+            (t.has(n) || t.set(n, new Set()), t.get(n).add(e.path));
         }),
-        t.tags.forEach((n) => {
+        e.tags.forEach((n) => {
           let i = `tag:${n}`;
-          (e.has(i) || e.set(i, new Set()), e.get(i).add(t.path));
+          (t.has(i) || t.set(i, new Set()), t.get(i).add(e.path));
         }));
     }),
-    e
+    t
   );
 }
-function hi(s, e, t) {
+function Ri(r, t, e) {
   let n = new Set();
-  (s.titleTokens.forEach((o) => {
-    e.get(o)?.forEach((a) => {
-      a !== s.path && n.add(a);
+  (r.titleTokens.forEach((o) => {
+    t.get(o)?.forEach((a) => {
+      a !== r.path && n.add(a);
     });
   }),
-    s.contentTokens.forEach((o) => {
-      e.get(o)?.forEach((a) => {
-        a !== s.path && n.add(a);
+    r.contentTokens.forEach((o) => {
+      t.get(o)?.forEach((a) => {
+        a !== r.path && n.add(a);
       });
     }),
-    s.tags.forEach((o) => {
+    r.tags.forEach((o) => {
       let a = `tag:${o}`;
-      e.get(a)?.forEach((l) => {
-        l !== s.path && n.add(l);
+      t.get(a)?.forEach((l) => {
+        l !== r.path && n.add(l);
       });
     }));
-  let i = `folder:${s.folder}`;
-  e.has(i) &&
-    e.get(i).forEach((o) => {
-      o !== s.path && n.add(o);
+  let i = `folder:${r.folder}`;
+  t.has(i) &&
+    t.get(i).forEach((o) => {
+      o !== r.path && n.add(o);
     });
-  let r = Array.from(n);
-  return (r.length > 50 && r.splice(50), r);
+  let s = Array.from(n);
+  return (s.length > 50 && s.splice(50), s);
 }
-function Wt(s, e, t) {
-  if (!s.size || !e.size) return 0;
-  let n = Bt(s, e);
-  return n ? Math.min(t, (n / Math.max(s.size, e.size)) * t * 2) : 0;
+function Jt(r, t, e) {
+  if (!r.size || !t.size) return 0;
+  let n = Qt(r, t);
+  return n ? Math.min(e, (n / Math.max(r.size, t.size)) * e * 2) : 0;
 }
-function ui(s) {
-  let e = new Set();
-  s?.tags?.forEach((i) => e.add($t(i.tag)));
-  let t = s?.frontmatter?.tags;
-  return ((Array.isArray(t) ? t : typeof t == "string" ? [t] : []).forEach((i) => e.add($t(String(i)))), e);
+function Fi(r) {
+  let t = new Set();
+  r?.tags?.forEach((i) => t.add(Zt(i.tag)));
+  let e = r?.frontmatter?.tags;
+  return ((Array.isArray(e) ? e : typeof e == "string" ? [e] : []).forEach((i) => t.add(Zt(String(i)))), t);
 }
-function pi(s, e, t) {
+function Ai(r, t, e) {
   let n = new Set();
   return (
-    e?.links?.forEach((i) => {
-      let r = t.metadataCache.getFirstLinkpathDest(i.link, s.path);
-      r && n.add(r.path);
+    t?.links?.forEach((i) => {
+      let s = e.metadataCache.getFirstLinkpathDest(i.link, r.path);
+      s && n.add(s.path);
     }),
     n
   );
 }
-function _t(s, e, t) {
-  let n = s.metadataCache.getFileCache(e),
-    i = e.parent?.path ?? "",
-    r = i.split("/")[0] ?? "",
-    o = t.replace(/^---\n[\s\S]*?\n---\n?/, "");
+function en(r, t, e) {
+  let n = r.metadataCache.getFileCache(t),
+    i = t.parent?.path ?? "",
+    s = i.split("/")[0] ?? "",
+    o = e.replace(/^---\n[\s\S]*?\n---\n?/, "");
   return {
-    path: e.path,
+    path: t.path,
     folder: i,
-    topFolder: r,
-    titleTokens: Kt(e.basename),
-    contentTokens: Kt(o),
-    tags: ui(n),
-    outgoingLinks: pi(e, n, s),
-    role: At(e, n, t),
-    modifiedAt: e.stat?.mtime ?? Date.now(),
+    topFolder: s,
+    titleTokens: qt(t.basename),
+    contentTokens: qt(o),
+    tags: Fi(n),
+    outgoingLinks: Ai(t, n, r),
+    role: Yt(t, n, e),
+    modifiedAt: t.stat?.mtime ?? Date.now(),
   };
 }
-function qe(s, e) {
-  if (!e.enableInferredEdges && !e.linkGraphBaseline)
+function rt(r, t) {
+  if (!t.enableInferredEdges && !t.linkGraphBaseline)
     return (C.info("inference", "Inferred simplices disabled by settings"), []);
-  let t = [],
+  let e = [],
     n = new Map(),
-    i = new Map(s.map((a) => [a.path, a])),
-    r = ci(s),
-    o = new Set(s.map((a) => a.path));
+    i = new Map(r.map((a) => [a.path, a])),
+    s = Pi(r),
+    o = new Set(r.map((a) => a.path));
   if (
-    (s.forEach((a) => {
+    (r.forEach((a) => {
       let l = `folder:${a.folder}`;
-      (r.has(l) || r.set(l, new Set()), r.get(l).add(a.path));
+      (s.has(l) || s.set(l, new Set()), s.get(l).add(a.path));
     }),
-    s.forEach((a) => {
-      hi(a, r, o).forEach((d) => {
+    r.forEach((a) => {
+      Ri(a, s, o).forEach((d) => {
         let g = i.get(d);
         if (!g || a.path > d) return;
         let c = a,
@@ -2711,65 +2861,65 @@ function qe(s, e) {
           m = [],
           f = !1;
         if (
-          (e.enableLinkInference !== !1 &&
+          (t.enableLinkInference !== !1 &&
             c.outgoingLinks.has(p.path) &&
-            ((f = !0), (u += e.linkWeight), m.push("link:a->b")),
-          e.enableMutualLinkBonus !== !1 &&
+            ((f = !0), (u += t.linkWeight), m.push("link:a->b")),
+          t.enableMutualLinkBonus !== !1 &&
             p.outgoingLinks.has(c.path) &&
-            ((f = !0), (u += e.mutualLinkBonus), m.push("link:b->a")),
-          !e.linkGraphBaseline && f && ((u = 0), (f = !1), (m.length = 0)),
-          !e.enableInferredEdges && !f)
+            ((f = !0), (u += t.mutualLinkBonus), m.push("link:b->a")),
+          !t.linkGraphBaseline && f && ((u = 0), (f = !1), (m.length = 0)),
+          !t.enableInferredEdges && !f)
         )
           return;
-        let h = Bt(c.tags, p.tags);
-        if (e.enableInferredEdges && e.enableSharedTags !== !1 && h > 0) {
-          let S = Math.min(e.sharedTagWeight * 3, h * e.sharedTagWeight);
+        let h = Qt(c.tags, p.tags);
+        if (t.enableInferredEdges && t.enableSharedTags !== !1 && h > 0) {
+          let S = Math.min(t.sharedTagWeight * 3, h * t.sharedTagWeight);
           ((u += S), m.push(`tags:${h}`));
         }
         let y =
-          e.enableInferredEdges && e.enableTitleOverlap !== !1
-            ? Wt(c.titleTokens, p.titleTokens, e.titleOverlapWeight)
+          t.enableInferredEdges && t.enableTitleOverlap !== !1
+            ? Jt(c.titleTokens, p.titleTokens, t.titleOverlapWeight)
             : 0;
         y > 0 && ((u += y), m.push(`title:${y.toFixed(2)}`));
         let v =
-          e.enableInferredEdges && e.enableContentOverlap !== !1
-            ? Wt(c.contentTokens, p.contentTokens, e.contentOverlapWeight)
+          t.enableInferredEdges && t.enableContentOverlap !== !1
+            ? Jt(c.contentTokens, p.contentTokens, t.contentOverlapWeight)
             : 0;
         if (
           (v > 0 && ((u += v), m.push(`content:${v.toFixed(2)}`)),
-          e.enableInferredEdges && e.enableSameFolderInference !== !1 && c.folder && c.folder === p.folder
-            ? ((u += e.sameFolderWeight), m.push("folder:same"))
-            : e.enableInferredEdges &&
-              e.enableSameTopFolderInference !== !1 &&
+          t.enableInferredEdges && t.enableSameFolderInference !== !1 && c.folder && c.folder === p.folder
+            ? ((u += t.sameFolderWeight), m.push("folder:same"))
+            : t.enableInferredEdges &&
+              t.enableSameTopFolderInference !== !1 &&
               c.topFolder &&
               c.topFolder === p.topFolder &&
-              ((u += e.sameTopFolderWeight), m.push("folder:top")),
-          !f && u < e.inferenceThreshold)
+              ((u += t.sameTopFolderWeight), m.push("folder:top")),
+          !f && u < t.inferenceThreshold)
         )
           return;
         let b = Math.max(0.1, Math.min(1, Number(u.toFixed(2))));
-        (t.push({
+        (e.push({
           nodes: [c.path, p.path],
           weight: b,
-          label: f && !e.enableInferredEdges ? "vault link" : "inferred relation",
+          label: f && !t.enableInferredEdges ? "vault link" : "inferred relation",
           inferred: !0,
           userDefined: !1,
           autoGenerated: !1,
           colorKey: "neutral",
           inferredSignals: m,
-          dominantSignal: di(m),
+          dominantSignal: Ii(m),
           confidence: b,
-          suggested: b >= e.suggestionThreshold,
+          suggested: b >= t.suggestionThreshold,
         }),
-          n.set(fe(c.path, p.path), { nodes: [c.path, p.path], weight: b, signals: [...m] }));
+          n.set(Se(c.path, p.path), { nodes: [c.path, p.path], weight: b, signals: [...m] }));
       });
     }),
-    e.enableInferredEdges)
+    t.enableInferredEdges)
   ) {
     let a = new Map();
     (n.forEach((d) => {
       let [g, c] = d.nodes;
-      d.weight >= Math.max(e.inferenceThreshold, 0.18) &&
+      d.weight >= Math.max(t.inferenceThreshold, 0.18) &&
         (a.has(g) || a.set(g, []),
         a.has(c) || a.set(c, []),
         a.get(g).push({ partner: c, weight: d.weight, signals: d.signals }),
@@ -2785,12 +2935,12 @@ function qe(s, e) {
               let u = g[c].partner,
                 m = g[p].partner;
               if ([d, u, m].sort()[0] !== d) continue;
-              let h = n.get(fe(d, u)),
-                y = n.get(fe(d, m)),
-                v = n.get(fe(u, m));
+              let h = n.get(Se(d, u)),
+                y = n.get(Se(d, m)),
+                v = n.get(Se(u, m));
               if (!h || !y || !v) continue;
               let b = new Set([...h.signals, ...y.signals, ...v.signals, "soft-cluster"]);
-              t.push({
+              e.push({
                 nodes: [d, u, m],
                 weight: Math.min(1, Number(((h.weight + y.weight + v.weight) / 3 + 0.05).toFixed(2))),
                 label: "soft cluster",
@@ -2808,29 +2958,29 @@ function qe(s, e) {
   }
   return (
     C.debug("inference", "Rebuilt inferred simplices (optimized)", {
-      fileCount: s.length,
-      inferredSimplexCount: t.length,
+      fileCount: r.length,
+      inferredSimplexCount: e.length,
     }),
-    t
+    e
   );
 }
-function zt(s, e) {
-  let t = e.inferenceMode ?? "taxonomic",
+function tn(r, t) {
+  let e = t.inferenceMode ?? "taxonomic",
     n = [];
   return (
-    (t === "taxonomic" || t === "hybrid") && n.push(...qe(s, e)),
-    (t === "emergent" || t === "hybrid") && n.push(...Ft(s, e)),
+    (e === "taxonomic" || e === "hybrid") && n.push(...rt(r, t)),
+    (e === "emergent" || e === "hybrid") && n.push(...Vt(r, t)),
     n
   );
 }
-var Xt = require("obsidian");
-var jt = /^(△+|simplex:)\s+(.+)$/gim,
-  Vt = /^(◇|hyperedge:|encounter:)\s+(.+)$/gim;
-function gi(s, e) {
-  let t = s.match(/^---\n([\s\S]*?)\n---/);
-  if (!t) return null;
+var an = require("obsidian");
+var nn = /^(△+|simplex:)\s+(.+)$/gim,
+  sn = /^(◇|hyperedge:|encounter:)\s+(.+)$/gim;
+function Hi(r, t) {
+  let e = r.match(/^---\n([\s\S]*?)\n---/);
+  if (!e) return null;
   try {
-    return e.parseYaml(t[1]);
+    return t.parseYaml(e[1]);
   } catch (n) {
     return (
       C.warn("parser", "Failed to parse frontmatter", { error: n instanceof Error ? n.message : String(n) }),
@@ -2838,120 +2988,120 @@ function gi(s, e) {
     );
   }
 }
-function Gt(s, e) {
-  let t = Array.isArray(s.nodes) ? s.nodes.map(String) : [];
-  return z(t.map((n) => e.canonicalize(n)));
+function rn(r, t) {
+  let e = Array.isArray(r.nodes) ? r.nodes.map(String) : [];
+  return V(e.map((n) => t.canonicalize(n)));
 }
-function mi(s, e, t) {
-  if (!s || typeof s != "object") return null;
-  let n = s,
-    i = Gt(n, t);
+function Li(r, t, e) {
+  if (!r || typeof r != "object") return null;
+  let n = r,
+    i = rn(n, e);
   return i.length < 2
     ? null
     : {
-        nodes: P(i),
+        nodes: D(i),
         label: typeof n.label == "string" ? n.label : void 0,
         weight: typeof n.weight == "number" ? n.weight : void 0,
         userDefined: !0,
         autoGenerated: !1,
-        sourcePath: e,
+        sourcePath: t,
       };
 }
-function fi(s, e, t) {
-  if (!s || typeof s != "object") return null;
-  let n = s,
-    i = Gt(n, t);
+function Ki(r, t, e) {
+  if (!r || typeof r != "object") return null;
+  let n = r,
+    i = rn(n, e);
   if (i.length < 2) return null;
-  let r = n.persistence === "recurring" ? "recurring" : "momentary";
+  let s = n.persistence === "recurring" ? "recurring" : "momentary";
   return {
-    nodes: P(i),
+    nodes: D(i),
     label: typeof n.label == "string" ? n.label : void 0,
     weight: typeof n.weight == "number" ? n.weight : void 0,
     mode: typeof n.mode == "string" ? n.mode : void 0,
     occurredAt: typeof n.occurredAt == "number" ? n.occurredAt : void 0,
-    persistence: r,
-    sourcePath: e,
+    persistence: s,
+    sourcePath: t,
   };
 }
-function yi(s, e, t) {
+function Oi(r, t, e) {
   let n = [];
-  jt.lastIndex = 0;
+  nn.lastIndex = 0;
   let i;
-  for (; (i = jt.exec(s)) !== null; ) {
-    let r = i[1],
+  for (; (i = nn.exec(r)) !== null; ) {
+    let s = i[1],
       o = i[2].split(/\s+/).filter(Boolean),
-      a = r === "\u25B3\u25B3" ? 4 : r === "\u25B3" ? 3 : o.length,
-      l = z(o.slice(0, a).map((d) => t.canonicalize(d)));
-    l.length < 2 || n.push({ nodes: P(l), sourcePath: e, userDefined: !0, autoGenerated: !1 });
+      a = s === "\u25B3\u25B3" ? 4 : s === "\u25B3" ? 3 : o.length,
+      l = V(o.slice(0, a).map((d) => e.canonicalize(d)));
+    l.length < 2 || n.push({ nodes: D(l), sourcePath: t, userDefined: !0, autoGenerated: !1 });
   }
   return n;
 }
-function vi(s, e, t) {
+function $i(r, t, e) {
   let n = [];
-  Vt.lastIndex = 0;
+  sn.lastIndex = 0;
   let i;
-  for (; (i = Vt.exec(s)) !== null; ) {
-    let r = i[2].split(/\s+/).filter(Boolean),
-      o = z(r.map((a) => t.canonicalize(a)));
-    o.length < 2 || n.push({ nodes: P(o), sourcePath: e, persistence: "momentary" });
+  for (; (i = sn.exec(r)) !== null; ) {
+    let s = i[2].split(/\s+/).filter(Boolean),
+      o = V(s.map((a) => e.canonicalize(a)));
+    o.length < 2 || n.push({ nodes: D(o), sourcePath: t, persistence: "momentary" });
   }
   return n;
 }
-function Yt(s, e, t) {
-  let n = gi(s, t),
+function on(r, t, e) {
+  let n = Hi(r, e),
     i = { nodeIds: new Set(), simplices: [], hyperedges: [] };
   if (Array.isArray(n?.simplices))
     for (let o of n.simplices) {
-      let a = mi(o, e, t);
+      let a = Li(o, t, e);
       a && i.simplices.push(a);
     }
   if (Array.isArray(n?.hyperedges))
     for (let o of n.hyperedges) {
-      let a = fi(o, e, t);
+      let a = Ki(o, t, e);
       a && i.hyperedges.push(a);
     }
-  (i.simplices.push(...yi(s, e, t)), i.hyperedges.push(...vi(s, e, t)));
-  let r = bi(i);
+  (i.simplices.push(...Oi(r, t, e)), i.hyperedges.push(...$i(r, t, e)));
+  let s = Wi(i);
   return (
-    r.simplices.forEach((o) => o.nodes.forEach((a) => r.nodeIds.add(a))),
-    r.hyperedges.forEach((o) => o.nodes.forEach((a) => r.nodeIds.add(a))),
+    s.simplices.forEach((o) => o.nodes.forEach((a) => s.nodeIds.add(a))),
+    s.hyperedges.forEach((o) => o.nodes.forEach((a) => s.nodeIds.add(a))),
     C.info("parser", "Parsed relations", {
-      sourcePath: e,
-      simplexCount: r.simplices.length,
-      hyperedgeCount: r.hyperedges.length,
-      nodeCount: r.nodeIds.size,
+      sourcePath: t,
+      simplexCount: s.simplices.length,
+      hyperedgeCount: s.hyperedges.length,
+      nodeCount: s.nodeIds.size,
     }),
-    r
-  );
-}
-function bi(s) {
-  let e = new Set();
-  s.simplices = s.simplices.filter((n) => {
-    let i = N(n.nodes);
-    return e.has(i) ? !1 : (e.add(i), !0);
-  });
-  let t = new Set();
-  return (
-    (s.hyperedges = s.hyperedges.filter((n) => {
-      let i = N(n.nodes);
-      return t.has(i) ? !1 : (t.add(i), !0);
-    })),
     s
   );
 }
-function Ut(s, e, t) {
-  return Yt(s, e, {
-    canonicalize: (i) => de(i, e, t)?.path ?? i.trim(),
-    parseYaml: (i) => (0, Xt.parseYaml)(i) ?? null,
+function Wi(r) {
+  let t = new Set();
+  r.simplices = r.simplices.filter((n) => {
+    let i = N(n.nodes);
+    return t.has(i) ? !1 : (t.add(i), !0);
+  });
+  let e = new Set();
+  return (
+    (r.hyperedges = r.hyperedges.filter((n) => {
+      let i = N(n.nodes);
+      return e.has(i) ? !1 : (e.add(i), !0);
+    })),
+    r
+  );
+}
+function ln(r, t, e) {
+  return on(r, t, {
+    canonicalize: (i) => ue(i, t, e)?.path ?? i.trim(),
+    parseYaml: (i) => (0, an.parseYaml)(i) ?? null,
   });
 }
-var ye = class {
-  constructor(e, t, n, i, r) {
-    this.app = e;
-    this.model = t;
+var xe = class {
+  constructor(t, e, n, i, s) {
+    this.app = t;
+    this.model = e;
     this.settings = n;
     this.onExternalChange = i;
-    this.onEncounterParsed = r;
+    this.onEncounterParsed = s;
     this.fullScanChunkSize = 24;
     this.inferenceRebuildDelayMs = 40;
     this.lastWrittenHash = new Map();
@@ -2961,7 +3111,7 @@ var ye = class {
     this.inferenceRebuildTimer = null;
     this.inferenceRebuildPromise = null;
     this.resolveInferenceRebuild = null;
-    ((this.debouncedChange = (0, V.debounce)(
+    ((this.debouncedChange = (0, Y.debounce)(
       (o) => {
         this.onFileChange(o);
       },
@@ -2969,87 +3119,87 @@ var ye = class {
       !0,
     )),
       this.app.vault.on("modify", (o) => {
-        (U(), o instanceof V.TFile && this.debouncedChange(o));
+        (X(), o instanceof Y.TFile && this.debouncedChange(o));
       }),
       this.app.vault.on("create", (o) => {
-        (U(), o instanceof V.TFile && this.debouncedChange(o));
+        (X(), o instanceof Y.TFile && this.debouncedChange(o));
       }),
       this.app.vault.on("delete", (o) => {
-        (U(), this.onFileDelete(o));
+        (X(), this.onFileDelete(o));
       }),
       this.app.vault.on("rename", (o, a) => {
-        (U(), o instanceof V.TFile && this.onFileRename(o, a));
+        (X(), o instanceof Y.TFile && this.onFileRename(o, a));
       }));
   }
   getInferenceContexts() {
     return [...this.inferenceContexts.values()];
   }
-  recordWrite(e, t) {
-    (this.lastWrittenHash.set(e, B(t)),
-      C.debug("vault-index", "Recorded plugin write hash", { path: e, hash: this.lastWrittenHash.get(e) }));
+  recordWrite(t, e) {
+    (this.lastWrittenHash.set(t, z(e)),
+      C.debug("vault-index", "Recorded plugin write hash", { path: t, hash: this.lastWrittenHash.get(t) }));
   }
-  updateSettings(e) {
-    ((this.settings = e), this.rebuildInferredSimplices());
+  updateSettings(t) {
+    ((this.settings = t), this.rebuildInferredSimplices());
   }
-  isPluginInternalFile(e) {
-    return e === this.settings.historyFile;
+  isPluginInternalFile(t) {
+    return t === this.settings.historyFile;
   }
   async fullScan() {
-    U();
-    let e = this.app.vault.getMarkdownFiles().filter((n) => !this.isPluginInternalFile(n.path));
-    C.info("vault-index", "Starting full vault scan", { fileCount: e.length });
-    let t = [];
-    for (let n of e) {
+    X();
+    let t = this.app.vault.getMarkdownFiles().filter((n) => !this.isPluginInternalFile(n.path));
+    C.info("vault-index", "Starting full vault scan", { fileCount: t.length });
+    let e = [];
+    for (let n of t) {
       let i = await this.app.vault.read(n);
-      (t.push({ file: n, content: i }),
-        t.length >= this.fullScanChunkSize && (this.flushFullScanChunk(t), (t = []), await this.yieldToBrowser()));
+      (e.push({ file: n, content: i }),
+        e.length >= this.fullScanChunkSize && (this.flushFullScanChunk(e), (e = []), await this.yieldToBrowser()));
     }
-    (t.length > 0 && this.flushFullScanChunk(t),
+    (e.length > 0 && this.flushFullScanChunk(e),
       await this.scheduleInferenceRebuild(0),
       C.info("vault-index", "Completed full vault scan", {
-        fileCount: e.length,
+        fileCount: t.length,
         indexedNodeCount: this.model.nodes.size,
         simplexCount: this.model.simplices.size,
       }));
   }
-  async onFileChange(e) {
-    if (e.extension !== "md" || this.isPluginInternalFile(e.path)) return;
-    let t = await this.app.vault.read(e),
-      n = B(t);
-    if (this.lastWrittenHash.get(e.path) === n) {
-      C.debug("vault-index", "Suppressed self-triggered modify event", { path: e.path, hash: n });
+  async onFileChange(t) {
+    if (t.extension !== "md" || this.isPluginInternalFile(t.path)) return;
+    let e = await this.app.vault.read(t),
+      n = z(e);
+    if (this.lastWrittenHash.get(t.path) === n) {
+      C.debug("vault-index", "Suppressed self-triggered modify event", { path: t.path, hash: n });
       return;
     }
-    (C.info("vault-index", "Processing changed file", { path: e.path, hash: n }),
-      this.processFile(e, t),
+    (C.info("vault-index", "Processing changed file", { path: t.path, hash: n }),
+      this.processFile(t, e),
       await this.scheduleInferenceRebuild(),
       this.onExternalChange?.());
   }
-  onFileDelete(e) {
-    e instanceof V.TFile &&
-      (C.info("vault-index", "File deleted", { path: e.path }),
-      this.inferenceContexts.delete(e.path),
-      this.model.removeNode(e.path),
-      this.model.replaceSourceRelations(e.path, [], []),
+  onFileDelete(t) {
+    t instanceof Y.TFile &&
+      (C.info("vault-index", "File deleted", { path: t.path }),
+      this.inferenceContexts.delete(t.path),
+      this.model.removeNode(t.path),
+      this.model.replaceSourceRelations(t.path, [], []),
       this.scheduleInferenceRebuild().then(() => this.onExternalChange?.()));
   }
-  onFileRename(e, t) {
-    (C.info("vault-index", "File renamed", { oldPath: t, newPath: e.path }), this.model.updateNodeId(t, e.path));
-    let n = this.fileSimplexKeys.get(t);
-    n && (this.fileSimplexKeys.set(e.path, n), this.fileSimplexKeys.delete(t));
-    let i = this.inferenceContexts.get(t);
-    (i && (this.inferenceContexts.set(e.path, { ...i, path: e.path }), this.inferenceContexts.delete(t)),
+  onFileRename(t, e) {
+    (C.info("vault-index", "File renamed", { oldPath: e, newPath: t.path }), this.model.updateNodeId(e, t.path));
+    let n = this.fileSimplexKeys.get(e);
+    n && (this.fileSimplexKeys.set(t.path, n), this.fileSimplexKeys.delete(e));
+    let i = this.inferenceContexts.get(e);
+    (i && (this.inferenceContexts.set(t.path, { ...i, path: t.path }), this.inferenceContexts.delete(e)),
       this.scheduleInferenceRebuild().then(() => this.onExternalChange?.()));
   }
-  processFile(e, t) {
-    this.model.setNode(e.path, { isVirtual: !1 });
-    let n = Ut(t, e.path, this.app);
-    (this.model.replaceSourceRelations(e.path, n.simplices, n.hyperedges),
-      this.fileSimplexKeys.set(e.path, new Set(n.simplices.map((i) => i.nodes.join("|")))),
-      this.inferenceContexts.set(e.path, _t(this.app, e, t)),
+  processFile(t, e) {
+    this.model.setNode(t.path, { isVirtual: !1 });
+    let n = ln(e, t.path, this.app);
+    (this.model.replaceSourceRelations(t.path, n.simplices, n.hyperedges),
+      this.fileSimplexKeys.set(t.path, new Set(n.simplices.map((i) => i.nodes.join("|")))),
+      this.inferenceContexts.set(t.path, en(this.app, t, e)),
       n.hyperedges.forEach((i) => this.onEncounterParsed?.(i)),
       C.info("vault-index", "Indexed file", {
-        path: e.path,
+        path: t.path,
         parsedSimplexCount: n.simplices.length,
         parsedHyperedgeCount: n.hyperedges.length,
         parsedNodeCount: n.nodeIds.size,
@@ -3058,21 +3208,21 @@ var ye = class {
         totalHyperedgeCount: this.model.hyperedges.size,
       }));
   }
-  flushFullScanChunk(e) {
+  flushFullScanChunk(t) {
     this.model.batch(() => {
-      e.forEach(({ file: t, content: n }) => {
-        this.processFile(t, n);
+      t.forEach(({ file: e, content: n }) => {
+        this.processFile(e, n);
       });
     });
   }
   async yieldToBrowser() {
-    await new Promise((e) => window.setTimeout(e, 0));
+    await new Promise((t) => window.setTimeout(t, 0));
   }
-  scheduleInferenceRebuild(e = this.inferenceRebuildDelayMs) {
+  scheduleInferenceRebuild(t = this.inferenceRebuildDelayMs) {
     return (
       this.inferenceRebuildPromise === null &&
-        (this.inferenceRebuildPromise = new Promise((t) => {
-          this.resolveInferenceRebuild = t;
+        (this.inferenceRebuildPromise = new Promise((e) => {
+          this.resolveInferenceRebuild = e;
         })),
       this.inferenceRebuildTimer !== null && window.clearTimeout(this.inferenceRebuildTimer),
       (this.inferenceRebuildTimer = window.setTimeout(() => {
@@ -3080,54 +3230,54 @@ var ye = class {
         try {
           this.rebuildInferredSimplices();
         } finally {
-          let t = this.resolveInferenceRebuild;
-          ((this.resolveInferenceRebuild = null), (this.inferenceRebuildPromise = null), t?.());
+          let e = this.resolveInferenceRebuild;
+          ((this.resolveInferenceRebuild = null), (this.inferenceRebuildPromise = null), e?.());
         }
-      }, e)),
+      }, t)),
       this.inferenceRebuildPromise
     );
   }
   rebuildInferredSimplices() {
-    let e;
+    let t;
     if (
       this.settings.enableBettiComputation &&
       (this.settings.inferenceMode === "emergent" || this.settings.inferenceMode === "hybrid")
     ) {
       let n = this.model.getCachedBetti().holes;
       if (
-        ((e = Ht([...this.inferenceContexts.values()], this.settings, n)), this.settings.inferenceMode === "hybrid")
+        ((t = Gt([...this.inferenceContexts.values()], this.settings, n)), this.settings.inferenceMode === "hybrid")
       ) {
-        let i = qe([...this.inferenceContexts.values()], this.settings),
-          r = new Set(e.map((a) => a.nodes.sort().join("|"))),
-          o = i.filter((a) => !r.has(a.nodes.sort().join("|")));
-        e.push(...o);
+        let i = rt([...this.inferenceContexts.values()], this.settings),
+          s = new Set(t.map((a) => a.nodes.sort().join("|"))),
+          o = i.filter((a) => !s.has(a.nodes.sort().join("|")));
+        t.push(...o);
       }
-    } else e = zt([...this.inferenceContexts.values()], this.settings);
-    this.model.replaceInferredSimplices(e);
-    let t = JSON.stringify({
-      inferredSimplexCount: e.length,
+    } else t = tn([...this.inferenceContexts.values()], this.settings);
+    this.model.replaceInferredSimplices(t);
+    let e = JSON.stringify({
+      inferredSimplexCount: t.length,
       totalSimplexCount: this.model.simplices.size,
       totalNodeCount: this.model.nodes.size,
       enabled: this.settings.enableInferredEdges,
     });
-    t !== this.lastInferredSnapshot &&
-      ((this.lastInferredSnapshot = t), C.debug("vault-index", "Updated inferred graph state", JSON.parse(t)));
+    e !== this.lastInferredSnapshot &&
+      ((this.lastInferredSnapshot = e), C.debug("vault-index", "Updated inferred graph state", JSON.parse(e)));
   }
   destroy() {
     this.inferenceRebuildTimer !== null &&
       (window.clearTimeout(this.inferenceRebuildTimer), (this.inferenceRebuildTimer = null));
   }
 };
-function Si(s, e, t) {
-  return s + (e - s) * t;
+function _i(r, t, e) {
+  return r + (t - r) * e;
 }
-var ve = class {
-  constructor(e, t, n, i, r, o) {
-    this.model = e;
-    this.onWake = t;
+var we = class {
+  constructor(t, e, n, i, s, o) {
+    this.model = t;
+    this.onWake = e;
     this.onSelection = n;
     this.onHoverIntent = i;
-    this.onPinnedStateChanged = r;
+    this.onPinnedStateChanged = s;
     this.onInteraction = o;
     this.hoveredNodeId = null;
     this.lockedNodeId = null;
@@ -3144,78 +3294,78 @@ var ve = class {
     this.pressX = 0;
     this.pressY = 0;
     this.movedDuringPointerDown = !1;
-    this.interactionTracker = _e();
+    this.interactionTracker = Ze();
   }
   getInteractionTracker() {
     return this.interactionTracker;
   }
-  setInteractionTracker(e) {
-    this.interactionTracker = e;
+  setInteractionTracker(t) {
+    this.interactionTracker = t;
   }
-  logConfirm(e, t) {
-    ($(this.interactionTracker, { type: "confirm", simplexKey: e, nodeIds: t, weight: 0.5 }),
+  logConfirm(t, e) {
+    (W(this.interactionTracker, { type: "confirm", simplexKey: t, nodeIds: e, weight: 0.5 }),
       this.onInteraction?.(this.interactionTracker));
   }
-  logReject(e, t) {
-    ($(this.interactionTracker, { type: "reject", simplexKey: e, nodeIds: t, weight: -0.3 }),
+  logReject(t, e) {
+    (W(this.interactionTracker, { type: "reject", simplexKey: t, nodeIds: e, weight: -0.3 }),
       this.onInteraction?.(this.interactionTracker));
   }
-  logPromote(e, t) {
-    ($(this.interactionTracker, { type: "promote", simplexKey: e, nodeIds: t, weight: 0.8 }),
+  logPromote(t, e) {
+    (W(this.interactionTracker, { type: "promote", simplexKey: t, nodeIds: e, weight: 0.8 }),
       this.onInteraction?.(this.interactionTracker));
   }
-  logDissolve(e, t) {
-    ($(this.interactionTracker, { type: "dissolve", simplexKey: e, nodeIds: t, weight: -0.5 }),
+  logDissolve(t, e) {
+    (W(this.interactionTracker, { type: "dissolve", simplexKey: t, nodeIds: e, weight: -0.5 }),
       this.onInteraction?.(this.interactionTracker));
   }
-  logCreate(e) {
-    ($(this.interactionTracker, { type: "create", nodeIds: e, weight: 0.6 }),
+  logCreate(t) {
+    (W(this.interactionTracker, { type: "create", nodeIds: t, weight: 0.6 }),
       this.onInteraction?.(this.interactionTracker));
   }
   getFocusState() {
-    let e = new Set(),
-      t = new Set(),
+    let t = new Set(),
+      e = new Set(),
       n = new Set(),
       i = this.lockedNodeId ?? this.hoveredNodeId;
     (i &&
-      (e.add(i),
+      (t.add(i),
       this.model.getSimplicesForNode(i).forEach((o) => {
-        (t.add(N(o.nodes)), o.nodes.forEach((a) => e.add(a)));
+        (e.add(N(o.nodes)), o.nodes.forEach((a) => t.add(a)));
       }),
       this.model.getHyperedgesForNode(i).forEach((o) => {
-        (n.add(k("hyperedge", o.nodes)), o.nodes.forEach((a) => e.add(a)));
+        (n.add(k("hyperedge", o.nodes)), o.nodes.forEach((a) => t.add(a)));
       })),
       this.hoveredSimplexKey &&
-        (t.add(this.hoveredSimplexKey), this.model.getSimplex(this.hoveredSimplexKey)?.nodes.forEach((o) => e.add(o))),
+        (e.add(this.hoveredSimplexKey), this.model.getSimplex(this.hoveredSimplexKey)?.nodes.forEach((o) => t.add(o))),
       this.hoveredHyperedgeKey &&
         (n.add(this.hoveredHyperedgeKey),
-        this.model.getHyperedge(this.hoveredHyperedgeKey)?.nodes.forEach((o) => e.add(o))));
-    let r = (o, a) => {
+        this.model.getHyperedge(this.hoveredHyperedgeKey)?.nodes.forEach((o) => t.add(o))));
+    let s = (o, a) => {
       if (o.kind === "hyperedge") {
         let d = a ?? k("hyperedge", o.nodes);
-        return n.has(d) || o.nodes.some((g) => e.has(g));
+        return n.has(d) || o.nodes.some((g) => t.has(g));
       }
       let l = a ?? N(o.nodes);
-      return t.has(l) || o.nodes.some((d) => e.has(d));
+      return e.has(l) || o.nodes.some((d) => t.has(d));
     };
     return {
-      isActive: e.size > 0 || t.size > 0 || n.size > 0,
+      isActive: t.size > 0 || e.size > 0 || n.size > 0,
       lockedNodeId: this.lockedNodeId,
       hoveredNodeId: this.hoveredNodeId,
       hoveredSimplexKey: this.hoveredSimplexKey,
       hoveredHyperedgeKey: this.hoveredHyperedgeKey,
-      activeNodeIds: e,
-      activeSimplexKeys: t,
+      activeNodeIds: t,
+      activeSimplexKeys: e,
       activeHyperedgeKeys: n,
-      involvesNode: (o) => e.has(o),
-      involvesSimplex: (o, a) => r({ kind: "simplex", ...o }, a),
-      involvesRelation: r,
+      involvesNode: (o) => t.has(o),
+      involvesSimplex: (o, a) => s({ kind: "simplex", ...o }, a),
+      involvesRelation: s,
     };
   }
-  updateHover(e, t, n, i = 1e3) {
+  updateHover(t, e, n, i = 1e3) {
     this.onWake?.();
-    let r = n.find((o) => (o.px - e) ** 2 + (o.py - t) ** 2 <= 400)?.id ?? null;
-    r !== this.hoveredNodeId && ((this.hoveredNodeId = r), this.scheduleHoverIntent(i));
+    let s = n.find((o) => (o.px - t) ** 2 + (o.py - e) ** 2 <= 400)?.id ?? null;
+    s !== this.hoveredNodeId && ((this.hoveredNodeId = s), this.scheduleHoverIntent(i));
   }
   clearFocus() {
     (this.clearHoverIntent(),
@@ -3228,24 +3378,24 @@ var ve = class {
   focusHoveredNode() {
     this.lockedNodeId = this.hoveredNodeId;
   }
-  onMousedown(e, t, n) {
-    let i = this.model.nodes.get(e);
+  onMousedown(t, e, n) {
+    let i = this.model.nodes.get(t);
     i &&
-      ((this.pressedNodeId = e),
+      ((this.pressedNodeId = t),
       (this.draggingNodeId = null),
       (this.draggedNodeWasPinned = i.isPinned),
-      (this.dragOffsetX = t - i.px),
+      (this.dragOffsetX = e - i.px),
       (this.dragOffsetY = n - i.py),
-      (this.pressX = t),
+      (this.pressX = e),
       (this.pressY = n),
       (this.movedDuringPointerDown = !1),
       (this.holdTimer = window.setTimeout(() => {
-        ((this.holdNode = e), this.onWake?.());
+        ((this.holdNode = t), this.onWake?.());
       }, 200)));
   }
-  onPointerMove(e, t) {
+  onPointerMove(t, e) {
     if (!this.pressedNodeId || !this.model.nodes.get(this.pressedNodeId)) return !1;
-    let i = (e - this.pressX) ** 2 + (t - this.pressY) ** 2;
+    let i = (t - this.pressX) ** 2 + (e - this.pressY) ** 2;
     if (
       (i > 1 && (this.clearHoldTimer(), (this.holdNode = null)),
       i > 1 && ((this.movedDuringPointerDown = !0), (this.draggingNodeId = this.pressedNodeId)),
@@ -3256,14 +3406,14 @@ var ve = class {
       this.model.setPinnedState(
         this.draggingNodeId,
         this.draggedNodeWasPinned,
-        e - this.dragOffsetX,
-        t - this.dragOffsetY,
+        t - this.dragOffsetX,
+        e - this.dragOffsetY,
       ));
     let o = this.model.nodes.get(this.draggingNodeId);
     return (o && ((o.vx = 0), (o.vy = 0)), this.onWake?.(), !0);
   }
   onMouseup() {
-    let e = this.movedDuringPointerDown && !!this.draggingNodeId;
+    let t = this.movedDuringPointerDown && !!this.draggingNodeId;
     return (
       this.clearHoldTimer(),
       (this.pressedNodeId = null),
@@ -3271,8 +3421,8 @@ var ve = class {
       (this.draggedNodeWasPinned = !1),
       (this.movedDuringPointerDown = !1),
       (this.holdNode = null),
-      e && this.onWake?.(),
-      e
+      t && this.onWake?.(),
+      t
     );
   }
   clearHoldTimer() {
@@ -3281,143 +3431,143 @@ var ve = class {
   cancelHoverSelection() {
     this.clearHoverIntent();
   }
-  togglePin(e) {
-    let t = this.model.nodes.get(e);
-    return t
-      ? (this.model.setPinnedState(e, !t.isPinned, t.px, t.py),
+  togglePin(t) {
+    let e = this.model.nodes.get(t);
+    return e
+      ? (this.model.setPinnedState(t, !e.isPinned, e.px, e.py),
         this.onWake?.(),
         this.onPinnedStateChanged?.(),
-        !t.isPinned)
+        !e.isPinned)
       : !1;
   }
-  selectSimplex(e) {
+  selectSimplex(t) {
     if (
       (this.clearHoverIntent(),
-      (this.hoveredSimplexKey = e),
+      (this.hoveredSimplexKey = t),
       (this.hoveredHyperedgeKey = null),
-      this.onSelection?.(e ? { kind: "simplex", key: e } : null),
-      e)
+      this.onSelection?.(t ? { kind: "simplex", key: t } : null),
+      t)
     ) {
-      let t = this.model.getSimplex(e);
-      t && $(this.interactionTracker, { type: "select", simplexKey: e, nodeIds: t.nodes, weight: 0.1 });
+      let e = this.model.getSimplex(t);
+      e && W(this.interactionTracker, { type: "select", simplexKey: t, nodeIds: e.nodes, weight: 0.1 });
     }
   }
-  selectHyperedge(e) {
+  selectHyperedge(t) {
     if (
       (this.clearHoverIntent(),
-      (this.hoveredHyperedgeKey = e),
+      (this.hoveredHyperedgeKey = t),
       (this.hoveredSimplexKey = null),
-      this.onSelection?.(e ? { kind: "hyperedge", key: e } : null),
-      e)
+      this.onSelection?.(t ? { kind: "hyperedge", key: t } : null),
+      t)
     ) {
-      let t = this.model.getHyperedge(e);
-      t && $(this.interactionTracker, { type: "select", simplexKey: e, nodeIds: t.nodes, weight: 0.1 });
+      let e = this.model.getHyperedge(t);
+      e && W(this.interactionTracker, { type: "select", simplexKey: t, nodeIds: e.nodes, weight: 0.1 });
     }
   }
-  selectRelation(e) {
-    if (!e) {
+  selectRelation(t) {
+    if (!t) {
       this.selectSimplex(null);
       return;
     }
-    e.kind === "hyperedge" ? this.selectHyperedge(e.key) : this.selectSimplex(e.key);
+    t.kind === "hyperedge" ? this.selectHyperedge(t.key) : this.selectSimplex(t.key);
   }
-  lerpAlpha(e, t) {
-    let n = !t.isActive || t.involvesNode(e.id) ? 1 : 0.2;
-    e.displayAlpha = Si(e.displayAlpha, n, 0.12);
+  lerpAlpha(t, e) {
+    let n = !e.isActive || e.involvesNode(t.id) ? 1 : 0.2;
+    t.displayAlpha = _i(t.displayAlpha, n, 0.12);
   }
-  scheduleHoverIntent(e) {
+  scheduleHoverIntent(t) {
     if ((this.clearHoverIntent(), !this.hoveredNodeId)) {
       this.onHoverIntent?.(null);
       return;
     }
     this.hoverIntentTimer = window.setTimeout(() => {
-      let t = this.model.getSimplicesForNode(this.hoveredNodeId).sort((i, r) => (r.weight ?? 1) - (i.weight ?? 1))[0],
-        n = t ? N(t.nodes) : null;
+      let e = this.model.getSimplicesForNode(this.hoveredNodeId).sort((i, s) => (s.weight ?? 1) - (i.weight ?? 1))[0],
+        n = e ? N(e.nodes) : null;
       ((this.hoveredSimplexKey = n), this.onHoverIntent?.(n ? { kind: "simplex", key: n } : null));
-    }, e);
+    }, t);
   }
   clearHoverIntent() {
     this.hoverIntentTimer !== null && (window.clearTimeout(this.hoverIntentTimer), (this.hoverIntentTimer = null));
   }
 };
-function Zt(s, e) {
-  return s < e ? `${s}|${e}` : `${e}|${s}`;
+function cn(r, t) {
+  return r < t ? `${r}|${t}` : `${t}|${r}`;
 }
-function xi(s) {
-  let e = 2166136261;
-  for (let t = 0; t < s.length; t++) ((e ^= s.charCodeAt(t)), (e = Math.imul(e, 16777619)));
-  return (e >>> 0) / 4294967295;
+function Bi(r) {
+  let t = 2166136261;
+  for (let e = 0; e < r.length; e++) ((t ^= r.charCodeAt(e)), (t = Math.imul(t, 16777619)));
+  return (t >>> 0) / 4294967295;
 }
-var Ze = class s {
-    constructor(e, t, n, i) {
+var ot = class r {
+    constructor(t, e, n, i) {
       this.mass = 0;
       this.cx = 0;
       this.cy = 0;
       this.children = [null, null, null, null];
       this.node = null;
-      ((this.x = e), (this.y = t), (this.width = n), (this.height = i));
+      ((this.x = t), (this.y = e), (this.width = n), (this.height = i));
     }
-    insert(e) {
+    insert(t) {
       if (this.node === null && this.children[0] === null) {
-        ((this.node = e), (this.mass = 1), (this.cx = e.px), (this.cy = e.py));
+        ((this.node = t), (this.mass = 1), (this.cx = t.px), (this.cy = t.py));
         return;
       }
       if (this.node !== null) {
         this.subdivide();
-        let t = this.node;
-        ((this.node = null), this.insertIntoChildren(t), this.insertIntoChildren(e));
-      } else this.insertIntoChildren(e);
+        let e = this.node;
+        ((this.node = null), this.insertIntoChildren(e), this.insertIntoChildren(t));
+      } else this.insertIntoChildren(t);
       this.updateCenterOfMass();
     }
     subdivide() {
-      let e = this.width / 2,
-        t = this.height / 2;
-      ((this.children[0] = new s(this.x, this.y, e, t)),
-        (this.children[1] = new s(this.x + e, this.y, e, t)),
-        (this.children[2] = new s(this.x, this.y + t, e, t)),
-        (this.children[3] = new s(this.x + e, this.y + t, e, t)));
-    }
-    insertIntoChildren(e) {
       let t = this.width / 2,
+        e = this.height / 2;
+      ((this.children[0] = new r(this.x, this.y, t, e)),
+        (this.children[1] = new r(this.x + t, this.y, t, e)),
+        (this.children[2] = new r(this.x, this.y + e, t, e)),
+        (this.children[3] = new r(this.x + t, this.y + e, t, e)));
+    }
+    insertIntoChildren(t) {
+      let e = this.width / 2,
         n = this.height / 2;
-      e.px < this.x + t
-        ? e.py < this.y + n
-          ? this.children[0].insert(e)
-          : this.children[2].insert(e)
-        : e.py < this.y + n
-          ? this.children[1].insert(e)
-          : this.children[3].insert(e);
+      t.px < this.x + e
+        ? t.py < this.y + n
+          ? this.children[0].insert(t)
+          : this.children[2].insert(t)
+        : t.py < this.y + n
+          ? this.children[1].insert(t)
+          : this.children[3].insert(t);
     }
     updateCenterOfMass() {
-      let e = 0,
-        t = 0,
+      let t = 0,
+        e = 0,
         n = 0;
-      for (let i of this.children) i && ((e += i.mass), (t += i.cx * i.mass), (n += i.cy * i.mass));
-      ((this.mass = e), e > 0 && ((this.cx = t / e), (this.cy = n / e)));
+      for (let i of this.children) i && ((t += i.mass), (e += i.cx * i.mass), (n += i.cy * i.mass));
+      ((this.mass = t), t > 0 && ((this.cx = e / t), (this.cy = n / t)));
     }
-    calculateForce(e, t, n) {
+    calculateForce(t, e, n) {
       if (this.mass === 0) return { fx: 0, fy: 0 };
-      let i = e.px - this.cx,
-        r = e.py - this.cy,
-        o = Math.hypot(i, r) || 1,
+      let i = t.px - this.cx,
+        s = t.py - this.cy,
+        o = Math.hypot(i, s) || 1,
         a = o * o + 1;
-      if (this.node === e && this.children[0] === null) return { fx: 0, fy: 0 };
-      if (this.width / o < t || this.node !== null) {
+      if (this.node === t && this.children[0] === null) return { fx: 0, fy: 0 };
+      if (this.width / o < e || this.node !== null) {
         let l = (n * this.mass) / a;
-        return { fx: (l * i) / o, fy: (l * r) / o };
+        return { fx: (l * i) / o, fy: (l * s) / o };
       } else {
         let l = 0,
           d = 0;
         for (let g of this.children)
           if (g) {
-            let c = g.calculateForce(e, t, n);
+            let c = g.calculateForce(t, e, n);
             ((l += c.fx), (d += c.fy));
           }
         return { fx: l, fy: d };
       }
     }
   },
-  be = class {
+  Ce = class {
     constructor() {
       this.MIN_NODE_SEPARATION = 72;
       this.REPULSION = 1800;
@@ -3438,24 +3588,24 @@ var Ze = class s {
       this.renderFn = null;
       this.getState = null;
     }
-    configure(e) {
-      (e.noiseAmount !== void 0 && (this.NOISE = e.noiseAmount),
-        e.sleepThreshold !== void 0 && (this.SLEEP_THRESHOLD = e.sleepThreshold),
-        e.repulsionStrength !== void 0 && (this.REPULSION = e.repulsionStrength),
-        e.cohesionStrength !== void 0 && (this.COHESION = e.cohesionStrength),
-        e.gravityStrength !== void 0 && (this.GRAVITY = e.gravityStrength),
-        e.dampingFactor !== void 0 && (this.DAMPING = e.dampingFactor),
-        e.boundaryPadding !== void 0 && (this.BOUNDARY_PADDING = e.boundaryPadding),
-        e.sparseEdgeLength !== void 0 && (this.SPARSE_EDGE_LENGTH = e.sparseEdgeLength),
-        e.sparseGravityBoost !== void 0 && (this.SPARSE_GRAVITY_BOOST = e.sparseGravityBoost));
+    configure(t) {
+      (t.noiseAmount !== void 0 && (this.NOISE = t.noiseAmount),
+        t.sleepThreshold !== void 0 && (this.SLEEP_THRESHOLD = t.sleepThreshold),
+        t.repulsionStrength !== void 0 && (this.REPULSION = t.repulsionStrength),
+        t.cohesionStrength !== void 0 && (this.COHESION = t.cohesionStrength),
+        t.gravityStrength !== void 0 && (this.GRAVITY = t.gravityStrength),
+        t.dampingFactor !== void 0 && (this.DAMPING = t.dampingFactor),
+        t.boundaryPadding !== void 0 && (this.BOUNDARY_PADDING = t.boundaryPadding),
+        t.sparseEdgeLength !== void 0 && (this.SPARSE_EDGE_LENGTH = t.sparseEdgeLength),
+        t.sparseGravityBoost !== void 0 && (this.SPARSE_GRAVITY_BOOST = t.sparseGravityBoost));
     }
-    start(e, t) {
-      ((this.renderFn = e),
-        (this.getState = t),
+    start(t, e) {
+      ((this.renderFn = t),
+        (this.getState = e),
         this.animFrame !== null && window.cancelAnimationFrame(this.animFrame));
       let n = () => {
-        let { nodes: i, simplices: r, hyperedges: o, bounds: a, holdNode: l } = t();
-        (this.tick(i, r, a, l, o), e(), this.isAsleep || (this.animFrame = window.requestAnimationFrame(n)));
+        let { nodes: i, simplices: s, hyperedges: o, bounds: a, holdNode: l } = e();
+        (this.tick(i, s, a, l, o), t(), this.isAsleep || (this.animFrame = window.requestAnimationFrame(n)));
       };
       ((this.isAsleep = !1), (this.animFrame = window.requestAnimationFrame(n)));
     }
@@ -3470,24 +3620,24 @@ var Ze = class s {
         !this.getState ||
         ((this.isAsleep = !1), this.start(this.renderFn, this.getState));
     }
-    setAnimationHold(e) {
-      ((this.animationHold = e), e && this.wake());
+    setAnimationHold(t) {
+      ((this.animationHold = t), t && this.wake());
     }
     get isAnimationHeld() {
       return this.animationHold;
     }
-    tick(e, t, n, i, r = []) {
+    tick(t, e, n, i, s = []) {
       let a =
-          t.filter((h) => h.nodes.length === 2).length > 0 &&
-          t.every((h) => h.nodes.length <= 2 || h.inferred) &&
-          !r.some((h) => h.nodes.length >= 3),
-        l = new Map(e.map((h) => [h.id, h])),
+          e.filter((h) => h.nodes.length === 2).length > 0 &&
+          e.every((h) => h.nodes.length <= 2 || h.inferred) &&
+          !s.some((h) => h.nodes.length >= 3),
+        l = new Map(t.map((h) => [h.id, h])),
         d = new Map(),
         g = new Map();
-      (e.forEach((h) => {
+      (t.forEach((h) => {
         g.set(h.id, { edgeCount: 0, clusterCount: 0, maxDim: 0 });
       }),
-        t.forEach((h) => {
+        e.forEach((h) => {
           let y = h.nodes.length - 1,
             v = h.weight ?? 1,
             b = h.nodes.length === 2 ? 1 : 1 + Math.min(1.2, (h.nodes.length - 2) * 0.4);
@@ -3500,46 +3650,46 @@ var Ze = class s {
           });
           for (let S = 0; S < h.nodes.length; S++)
             for (let w = S + 1; w < h.nodes.length; w++) {
-              let E = Zt(h.nodes[S], h.nodes[w]),
+              let E = cn(h.nodes[S], h.nodes[w]),
                 I = (d.get(E) ?? 0) + v * b;
               d.set(E, Math.min(3.5, I));
             }
         }));
-      let c = e.length > 0 ? this.calculateBounds(e) : { x: 0, y: 0, width: 1e3, height: 1e3 },
-        p = new Ze(c.x, c.y, c.width, c.height);
-      (e.forEach((h) => p.insert(h)),
-        e.forEach((h) => {
+      let c = t.length > 0 ? this.calculateBounds(t) : { x: 0, y: 0, width: 1e3, height: 1e3 },
+        p = new ot(c.x, c.y, c.width, c.height);
+      (t.forEach((h) => p.insert(h)),
+        t.forEach((h) => {
           if (h.isPinned) return;
           let y = p.calculateForce(h, this.BARNES_HUT_THETA, this.REPULSION);
           ((h.vx += y.fx), (h.vy += y.fy));
         }));
-      for (let h = 0; h < e.length; h++)
-        for (let y = h + 1; y < e.length; y++) {
-          let v = e[h],
-            b = e[y],
+      for (let h = 0; h < t.length; h++)
+        for (let y = h + 1; y < t.length; y++) {
+          let v = t[h],
+            b = t[y],
             S = b.px - v.px,
             w = b.py - v.py,
             E = Math.hypot(S, w) || 1,
-            I = d.get(Zt(v.id, b.id)) ?? 0,
+            I = d.get(cn(v.id, b.id)) ?? 0,
             A = S / E,
-            D = w / E,
-            te = Math.max(0, this.MIN_NODE_SEPARATION - E);
-          if (te > 0 && !this.USE_BARNES_HUT) {
-            let O = te * this.COHESION * 0.55;
-            (v.isPinned || ((v.vx -= O * A), (v.vy -= O * D)), b.isPinned || ((b.vx += O * A), (b.vy += O * D)));
+            L = w / E,
+            ne = Math.max(0, this.MIN_NODE_SEPARATION - E);
+          if (ne > 0 && !this.USE_BARNES_HUT) {
+            let K = ne * this.COHESION * 0.55;
+            (v.isPinned || ((v.vx -= K * A), (v.vy -= K * L)), b.isPinned || ((b.vx += K * A), (b.vy += K * L)));
           }
           if (I > 0) {
-            let O = Math.min(1.6, I),
-              G = Math.max(this.MIN_NODE_SEPARATION * 1.05, this.SPARSE_EDGE_LENGTH * (1.08 - O * 0.2)),
-              ne = (E - G) * this.COHESION * 0.16 * (1 + I * 0.9),
-              le = G * 0.68,
-              Y = Math.max(0, le - E) * this.COHESION * 0.28 * (1 + I * 1.1);
-            (v.isPinned || ((v.vx += ne * A - Y * A), (v.vy += ne * D - Y * D)),
-              b.isPinned || ((b.vx -= ne * A - Y * A), (b.vy -= ne * D - Y * D)));
+            let K = Math.min(1.6, I),
+              ie = Math.max(this.MIN_NODE_SEPARATION * 1.05, this.SPARSE_EDGE_LENGTH * (1.08 - K * 0.2)),
+              $ = (E - ie) * this.COHESION * 0.16 * (1 + I * 0.9),
+              se = ie * 0.68,
+              B = Math.max(0, se - E) * this.COHESION * 0.28 * (1 + I * 1.1);
+            (v.isPinned || ((v.vx += $ * A - B * A), (v.vy += $ * L - B * L)),
+              b.isPinned || ((b.vx -= $ * A - B * A), (b.vy -= $ * L - B * L)));
           }
         }
       if (
-        (t.forEach((h) => {
+        (e.forEach((h) => {
           if (h.nodes.length < 3) return;
           let y = h.nodes.map((w) => l.get(w)).filter(Boolean);
           if (!y.length) return;
@@ -3551,7 +3701,7 @@ var Ze = class s {
               ((w.vx += (v - w.px) * this.COHESION * S * 0.75), (w.vy += (b - w.py) * this.COHESION * S * 0.75));
           });
         }),
-        r.forEach((h) => {
+        s.forEach((h) => {
           let y = h.nodes.map((w) => l.get(w)).filter(Boolean);
           if (y.length < 2) return;
           let v = y.reduce((w, E) => w + E.px, 0) / y.length,
@@ -3566,7 +3716,7 @@ var Ze = class s {
       ) {
         let h = l.get(i);
         h &&
-          e.forEach((y) => {
+          t.forEach((y) => {
             if (y === h || y.isPinned) return;
             let v = y.px - h.px,
               b = y.py - h.py,
@@ -3575,10 +3725,10 @@ var Ze = class s {
           });
       }
       let u =
-        e.length > 0
-          ? { x: e.reduce((h, y) => h + y.px, 0) / e.length, y: e.reduce((h, y) => h + y.py, 0) / e.length }
+        t.length > 0
+          ? { x: t.reduce((h, y) => h + y.px, 0) / t.length, y: t.reduce((h, y) => h + y.py, 0) / t.length }
           : { x: 0, y: 0 };
-      e.forEach((h) => {
+      t.forEach((h) => {
         if (h.isPinned) return;
         let y = g.get(h.id) ?? { edgeCount: 0, clusterCount: 0, maxDim: 0 },
           v = a ? this.GRAVITY * this.SPARSE_GRAVITY_BOOST : this.GRAVITY,
@@ -3589,11 +3739,11 @@ var Ze = class s {
           (h.vy += (0 - h.py) * v * b + (u.y - h.py) * v * S + (Math.random() - 0.5) * this.NOISE),
           y.edgeCount === 0 && y.clusterCount === 0)
         ) {
-          let E = xi(h.id) * Math.PI * 2,
+          let E = Bi(h.id) * Math.PI * 2,
             I = Math.max(this.SPARSE_EDGE_LENGTH * 2.8, 320),
             A = Math.cos(E) * I,
-            D = Math.sin(E) * I;
-          ((h.vx += (A - h.px) * v * 0.22), (h.vy += (D - h.py) * v * 0.22));
+            L = Math.sin(E) * I;
+          ((h.vx += (A - h.px) * v * 0.22), (h.vy += (L - h.py) * v * 0.22));
         }
         ((h.vx *= this.DAMPING), (h.vy *= this.DAMPING));
         let w = Math.hypot(h.vx, h.vy);
@@ -3603,25 +3753,25 @@ var Ze = class s {
         }
         ((h.px += h.vx), (h.py += h.vy));
       });
-      let m = e.reduce((h, y) => h + y.vx * y.vx + y.vy * y.vy, 0);
-      (e.length > 0 ? m / e.length : 0) < this.SLEEP_THRESHOLD && !this.animationHold && (this.isAsleep = !0);
+      let m = t.reduce((h, y) => h + y.vx * y.vx + y.vy * y.vy, 0);
+      (t.length > 0 ? m / t.length : 0) < this.SLEEP_THRESHOLD && !this.animationHold && (this.isAsleep = !0);
     }
-    calculateBounds(e) {
-      if (e.length === 0) return { x: -500, y: -500, width: 1e3, height: 1e3 };
-      let t = 1 / 0,
+    calculateBounds(t) {
+      if (t.length === 0) return { x: -500, y: -500, width: 1e3, height: 1e3 };
+      let e = 1 / 0,
         n = 1 / 0,
         i = -1 / 0,
-        r = -1 / 0;
-      e.forEach((d) => {
-        ((t = Math.min(t, d.px)), (n = Math.min(n, d.py)), (i = Math.max(i, d.px)), (r = Math.max(r, d.py)));
+        s = -1 / 0;
+      t.forEach((d) => {
+        ((e = Math.min(e, d.px)), (n = Math.min(n, d.py)), (i = Math.max(i, d.px)), (s = Math.max(s, d.py)));
       });
       let o = 100,
-        a = Math.max(i - t + 2 * o, 1e3),
-        l = Math.max(r - n + 2 * o, 1e3);
-      return { x: t - o, y: n - o, width: a, height: l };
+        a = Math.max(i - e + 2 * o, 1e3),
+        l = Math.max(s - n + 2 * o, 1e3);
+      return { x: e - o, y: n - o, width: a, height: l };
     }
   };
-var F = {
+var R = {
   purple: [127, 119, 221],
   teal: [29, 158, 117],
   coral: [216, 90, 48],
@@ -3633,127 +3783,127 @@ var F = {
   "default-teal": [29, 158, 117],
   "default-coral": [216, 90, 48],
 };
-function wi(s) {
-  let e = s.inferredSignals ?? [];
-  return e.includes("soft-cluster")
-    ? F.teal
-    : e.some((t) => t.startsWith("tags:"))
-      ? F.amber
-      : e.some((t) => t === "folder:same" || t === "folder:top")
-        ? F.pink
-        : e.some((t) => t.startsWith("title:") || t.startsWith("content:"))
-          ? F.coral
-          : e.some((t) => t.startsWith("link:"))
-            ? F.blue
-            : F.neutral;
+function zi(r) {
+  let t = r.inferredSignals ?? [];
+  return t.includes("soft-cluster")
+    ? R.teal
+    : t.some((e) => e.startsWith("tags:"))
+      ? R.amber
+      : t.some((e) => e === "folder:same" || e === "folder:top")
+        ? R.pink
+        : t.some((e) => e.startsWith("title:") || e.startsWith("content:"))
+          ? R.coral
+          : t.some((e) => e.startsWith("link:"))
+            ? R.blue
+            : R.neutral;
 }
-function tn(s) {
-  return `${s.nodes.join("|")}|${s.label ?? ""}|${s.sourcePath ?? ""}`;
+function gn(r) {
+  return `${r.nodes.join("|")}|${r.label ?? ""}|${r.sourcePath ?? ""}`;
 }
-function nn(s, e) {
-  let n = 0.82 + (B(tn(e)) % 29) / 100;
-  return s.map((i) => Math.max(0, Math.min(255, Math.round(i * n))));
+function mn(r, t) {
+  let n = 0.82 + (z(gn(t)) % 29) / 100;
+  return r.map((i) => Math.max(0, Math.min(255, Math.round(i * n))));
 }
-function Jt(s) {
-  let e = Math.max(2, s.nodes.length),
-    t = [F.blue, F.teal, F.coral, F.pink, F.amber, F.purple],
-    n = B(tn(s)),
-    r = (((e - 2) % t.length) + (n % t.length)) % t.length;
-  return nn(t[r], s);
+function hn(r) {
+  let t = Math.max(2, r.nodes.length),
+    e = [R.blue, R.teal, R.coral, R.pink, R.amber, R.purple],
+    n = z(gn(r)),
+    s = (((t - 2) % e.length) + (n % e.length)) % e.length;
+  return mn(e[s], r);
 }
-function Qt(s, e) {
-  return s.every((t) => e.includes(t));
+function un(r, t) {
+  return r.every((e) => t.includes(e));
 }
-function en(s) {
-  if (s.inferred) {
-    let e = wi(s);
-    return s.nodes.length >= 3 ? Jt(s) : nn(e, s);
+function pn(r) {
+  if (r.inferred) {
+    let t = zi(r);
+    return r.nodes.length >= 3 ? hn(r) : mn(t, r);
   }
-  return Jt(s);
+  return hn(r);
 }
-function Ci(s, e) {
-  let t = [...s.simplices.values()].filter((r) => r.nodes.length > e.nodes.length && Qt(e.nodes, r.nodes));
-  if (!t.length) return null;
-  let n = t.sort((r, o) => o.nodes.length - r.nodes.length || r.nodes.join("|").localeCompare(o.nodes.join("|")))[0];
-  return t.some((r) => !Qt(r.nodes, n.nodes)) ? null : n;
+function ji(r, t) {
+  let e = [...r.simplices.values()].filter((s) => s.nodes.length > t.nodes.length && un(t.nodes, s.nodes));
+  if (!e.length) return null;
+  let n = e.sort((s, o) => o.nodes.length - s.nodes.length || s.nodes.join("|").localeCompare(o.nodes.join("|")))[0];
+  return e.some((s) => !un(s.nodes, n.nodes)) ? null : n;
 }
-function H(s, e) {
-  if (!s) return en(e);
-  let t = Ci(s, e);
-  return en(t ?? e);
+function F(r, t) {
+  if (!r) return pn(t);
+  let e = ji(r, t);
+  return pn(e ?? t);
 }
-var sn = new Map();
-function Qe(s, e) {
-  return s.nodes.map((t) => e.find((n) => n.id === t)).filter(Boolean);
+var fn = new Map();
+function lt(r, t) {
+  return r.nodes.map((e) => t.find((n) => n.id === e)).filter(Boolean);
 }
-function on(s) {
-  return { x: s.reduce((e, t) => e + t.x, 0) / s.length, y: s.reduce((e, t) => e + t.y, 0) / s.length };
+function vn(r) {
+  return { x: r.reduce((t, e) => t + e.x, 0) / r.length, y: r.reduce((t, e) => t + e.y, 0) / r.length };
 }
-function Ni(s) {
-  let e = on(s);
-  return [...s].sort((t, n) => Math.atan2(t.y - e.y, t.x - e.x) - Math.atan2(n.y - e.y, n.x - e.x));
+function Vi(r) {
+  let t = vn(r);
+  return [...r].sort((e, n) => Math.atan2(e.y - t.y, e.x - t.x) - Math.atan2(n.y - t.y, n.x - t.x));
 }
-function Mi(s, e) {
-  let t = on(s);
-  return s.map((n) => {
-    let i = n.x - t.x,
-      r = n.y - t.y,
-      o = Math.hypot(i, r) || 1;
-    return { x: n.x + (i / o) * e, y: n.y + (r / o) * e };
+function Gi(r, t) {
+  let e = vn(r);
+  return r.map((n) => {
+    let i = n.x - e.x,
+      s = n.y - e.y,
+      o = Math.hypot(i, s) || 1;
+    return { x: n.x + (i / o) * t, y: n.y + (s / o) * t };
   });
 }
-function Ei(s, e) {
-  let t = e.length;
-  s.beginPath();
-  for (let n = 0; n < t; n++) {
-    let i = e[(n - 1 + t) % t],
-      r = e[n],
-      o = e[(n + 1) % t],
-      a = e[(n + 2) % t],
+function Yi(r, t) {
+  let e = t.length;
+  r.beginPath();
+  for (let n = 0; n < e; n++) {
+    let i = t[(n - 1 + e) % e],
+      s = t[n],
+      o = t[(n + 1) % e],
+      a = t[(n + 2) % e],
       l = 0.45,
-      d = r.x + ((o.x - i.x) * l) / 2,
-      g = r.y + ((o.y - i.y) * l) / 2,
-      c = o.x - ((a.x - r.x) * l) / 2,
-      p = o.y - ((a.y - r.y) * l) / 2;
-    (n === 0 && s.moveTo(r.x, r.y), s.bezierCurveTo(d, g, c, p, o.x, o.y));
+      d = s.x + ((o.x - i.x) * l) / 2,
+      g = s.y + ((o.y - i.y) * l) / 2,
+      c = o.x - ((a.x - s.x) * l) / 2,
+      p = o.y - ((a.y - s.y) * l) / 2;
+    (n === 0 && r.moveTo(s.x, s.y), r.bezierCurveTo(d, g, c, p, o.x, o.y));
   }
-  s.closePath();
+  r.closePath();
 }
-function Je(s, e, t, n) {
-  let i = t.x - e.x,
-    r = t.y - e.y,
-    o = Math.hypot(i, r) || 1,
-    a = (-r / o) * n,
+function at(r, t, e, n) {
+  let i = e.x - t.x,
+    s = e.y - t.y,
+    o = Math.hypot(i, s) || 1,
+    a = (-s / o) * n,
     l = (i / o) * n,
-    d = Math.atan2(r, i);
-  (s.beginPath(),
-    s.moveTo(e.x + a, e.y + l),
-    s.lineTo(t.x + a, t.y + l),
-    s.arc(t.x, t.y, n, d - Math.PI / 2, d + Math.PI / 2),
-    s.lineTo(e.x - a, e.y - l),
-    s.arc(e.x, e.y, n, d + Math.PI / 2, d - Math.PI / 2),
-    s.closePath());
+    d = Math.atan2(s, i);
+  (r.beginPath(),
+    r.moveTo(t.x + a, t.y + l),
+    r.lineTo(e.x + a, e.y + l),
+    r.arc(e.x, e.y, n, d - Math.PI / 2, d + Math.PI / 2),
+    r.lineTo(t.x - a, t.y - l),
+    r.arc(t.x, t.y, n, d + Math.PI / 2, d - Math.PI / 2),
+    r.closePath());
 }
-function an(s) {
-  if (s.length < 3) return !0;
-  let [e, t] = s;
-  for (let n = 2; n < s.length; n++) {
-    let i = s[n],
-      r = (t.x - e.x) * (i.y - e.y) - (t.y - e.y) * (i.x - e.x);
-    if (Math.abs(r) > 0.001) return !1;
+function bn(r) {
+  if (r.length < 3) return !0;
+  let [t, e] = r;
+  for (let n = 2; n < r.length; n++) {
+    let i = r[n],
+      s = (e.x - t.x) * (i.y - t.y) - (e.y - t.y) * (i.x - t.x);
+    if (Math.abs(s) > 0.001) return !1;
   }
   return !0;
 }
-function Ti(s, e, t, n) {
-  let i = s,
-    r = Qe(e, t);
-  if (!r.length) return null;
-  let o = r.map((v) => ({ x: v.px, y: v.py })),
-    a = sn.get(i);
+function Ui(r, t, e, n) {
+  let i = r,
+    s = lt(t, e);
+  if (!s.length) return null;
+  let o = s.map((v) => ({ x: v.px, y: v.py })),
+    a = fn.get(i);
   if (a && o.every((v, b) => Math.hypot(v.x - a.positions[b].x, v.y - a.positions[b].y) <= 2)) return a;
   let l = n * 2.5,
-    d = r.map((v) => v.px),
-    g = r.map((v) => v.py),
+    d = s.map((v) => v.px),
+    g = s.map((v) => v.py),
     c = Math.min(...d) - l,
     p = Math.min(...g) - l,
     u = Math.max(...d) - c + l,
@@ -3762,122 +3912,122 @@ function Ti(s, e, t, n) {
   ((f.width = Math.max(1, Math.ceil(u))), (f.height = Math.max(1, Math.ceil(m))));
   let h = f.getContext("2d");
   if (!h) return null;
-  if ((h.translate(-c, -p), (h.fillStyle = "#ffffff"), r.length === 1))
-    (h.beginPath(), h.arc(r[0].px, r[0].py, n, 0, Math.PI * 2), h.fill());
-  else if (an(o)) (Je(h, o[0], o[o.length - 1], n), h.fill());
+  if ((h.translate(-c, -p), (h.fillStyle = "#ffffff"), s.length === 1))
+    (h.beginPath(), h.arc(s[0].px, s[0].py, n, 0, Math.PI * 2), h.fill());
+  else if (bn(o)) (at(h, o[0], o[o.length - 1], n), h.fill());
   else
-    for (let v = 0; v < r.length; v++) {
-      for (let b = v + 1; b < r.length; b++)
-        (Je(h, { x: r[v].px, y: r[v].py }, { x: r[b].px, y: r[b].py }, n), h.fill());
-      (h.beginPath(), h.arc(r[v].px, r[v].py, n, 0, Math.PI * 2), h.fill());
+    for (let v = 0; v < s.length; v++) {
+      for (let b = v + 1; b < s.length; b++)
+        (at(h, { x: s[v].px, y: s[v].py }, { x: s[b].px, y: s[b].py }, n), h.fill());
+      (h.beginPath(), h.arc(s[v].px, s[v].py, n, 0, Math.PI * 2), h.fill());
     }
   let y = { canvas: f, x: c, y: p, positions: o };
-  return (sn.set(i, y), y);
+  return (fn.set(i, y), y);
 }
-var Pi = 8;
-function rn(s, e, t) {
-  if (e.length === 2 || an(e)) {
-    Je(s, e[0], e[e.length - 1], t);
+var Xi = 8;
+function yn(r, t, e) {
+  if (t.length === 2 || bn(t)) {
+    at(r, t[0], t[t.length - 1], e);
     return;
   }
-  Ei(s, Mi(Ni(e), t));
+  Yi(r, Gi(Vi(t), e));
 }
-function ln(s, e, t, n, i) {
-  let r = Qe(e, t);
-  if (r.length < 2) return;
+function Sn(r, t, e, n, i) {
+  let s = lt(t, e);
+  if (s.length < 2) return;
   let [o, a, l] = n,
-    d = r.map((c) => ({ x: c.px, y: c.py })),
-    g = 30 + (e.weight ?? 1) * 14;
+    d = s.map((c) => ({ x: c.px, y: c.py })),
+    g = 30 + (t.weight ?? 1) * 14;
   if (
-    (s.save(),
-    (s.lineJoin = "round"),
-    s.setLineDash(i.dash),
-    (s.lineWidth = i.lineWidth),
-    (s.strokeStyle = `rgba(${o},${a},${l},${i.strokeAlpha})`),
-    (s.fillStyle = `rgba(${o},${a},${l},${i.fillAlpha})`),
-    r.length > Pi)
+    (r.save(),
+    (r.lineJoin = "round"),
+    r.setLineDash(i.dash),
+    (r.lineWidth = i.lineWidth),
+    (r.strokeStyle = `rgba(${o},${a},${l},${i.strokeAlpha})`),
+    (r.fillStyle = `rgba(${o},${a},${l},${i.fillAlpha})`),
+    s.length > Xi)
   ) {
     (d.forEach((c) => {
-      (s.beginPath(), s.arc(c.x, c.y, g * 0.42, 0, Math.PI * 2), s.stroke());
+      (r.beginPath(), r.arc(c.x, c.y, g * 0.42, 0, Math.PI * 2), r.stroke());
     }),
-      s.restore());
+      r.restore());
     return;
   }
-  (rn(s, d, g),
-    s.fill(),
-    s.stroke(),
+  (yn(r, d, g),
+    r.fill(),
+    r.stroke(),
     i.showEmergenceContour &&
-      (s.setLineDash([2, 5]),
-      (s.lineWidth = 1),
-      (s.strokeStyle = `rgba(${o},${a},${l},${Math.min(1, i.strokeAlpha * 0.8)})`),
-      rn(s, d, g * 0.62),
-      s.stroke()),
-    s.setLineDash([]),
-    (s.fillStyle = `rgba(${o},${a},${l},${Math.min(1, i.strokeAlpha * 0.8)})`),
+      (r.setLineDash([2, 5]),
+      (r.lineWidth = 1),
+      (r.strokeStyle = `rgba(${o},${a},${l},${Math.min(1, i.strokeAlpha * 0.8)})`),
+      yn(r, d, g * 0.62),
+      r.stroke()),
+    r.setLineDash([]),
+    (r.fillStyle = `rgba(${o},${a},${l},${Math.min(1, i.strokeAlpha * 0.8)})`),
     d.forEach((c) => {
-      (s.beginPath(), s.arc(c.x, c.y, i.memberRadius, 0, Math.PI * 2), s.fill());
+      (r.beginPath(), r.arc(c.x, c.y, i.memberRadius, 0, Math.PI * 2), r.fill());
     }),
-    s.restore());
+    r.restore());
 }
-function dn(s, e, t, n, i, r, o) {
-  if (!Qe(t, i).length) return;
-  let [l, d, g] = H(n, t),
-    c = 36 + (t.weight ?? 1) * 24 + (t.nodes.length - 1 === 3 ? 20 : 0),
-    p = o.isActive ? (o.involvesSimplex(t, e) ? r : r * 0.18) : r,
-    u = Ti(`s:${e}`, t, i, c);
+function xn(r, t, e, n, i, s, o) {
+  if (!lt(e, i).length) return;
+  let [l, d, g] = F(n, e),
+    c = 36 + (e.weight ?? 1) * 24 + (e.nodes.length - 1 === 3 ? 20 : 0),
+    p = o.isActive ? (o.involvesSimplex(e, t) ? s : s * 0.18) : s,
+    u = Ui(`s:${t}`, e, i, c);
   if (!u) return;
   [
     { alpha: p * 0.15, blur: 18 },
     { alpha: p * 0.42, blur: 12 },
     { alpha: p, blur: 8 },
   ].forEach((f) => {
-    (s.save(),
-      (s.globalAlpha = f.alpha),
-      (s.filter = `blur(${f.blur}px)`),
-      s.drawImage(u.canvas, u.x, u.y),
-      (s.filter = "none"),
-      (s.globalCompositeOperation = "source-atop"),
-      (s.fillStyle = `rgb(${l},${d},${g})`),
-      s.fillRect(u.x, u.y, u.canvas.width, u.canvas.height),
-      (s.globalCompositeOperation = "source-over"),
-      s.restore());
+    (r.save(),
+      (r.globalAlpha = f.alpha),
+      (r.filter = `blur(${f.blur}px)`),
+      r.drawImage(u.canvas, u.x, u.y),
+      (r.filter = "none"),
+      (r.globalCompositeOperation = "source-atop"),
+      (r.fillStyle = `rgb(${l},${d},${g})`),
+      r.fillRect(u.x, u.y, u.canvas.width, u.canvas.height),
+      (r.globalCompositeOperation = "source-over"),
+      r.restore());
   });
 }
-function ee(s) {
-  return Math.max(0, Math.min(1, s));
+function ee(r) {
+  return Math.max(0, Math.min(1, r));
 }
-function cn(s, e = 2600) {
-  return (1 - Math.cos((s / e) * Math.PI * 2)) / 2;
+function wn(r, t = 2600) {
+  return (1 - Math.cos((r / t) * Math.PI * 2)) / 2;
 }
-function hn(s) {
-  let e = ee(s.opacity) * (s.focused ? 1 : 0.35),
-    t = s.deficit === null ? 0.5 : 1 - ee(s.deficit),
-    n = ee(s.pulse);
+function Cn(r) {
+  let t = ee(r.opacity) * (r.focused ? 1 : 0.35),
+    e = r.deficit === null ? 0.5 : 1 - ee(r.deficit),
+    n = ee(r.pulse);
   return {
-    dash: [9, 4 + 11 * (1 - t)],
-    strokeAlpha: ee(e * 1.5 * (0.85 + 0.3 * n)),
-    fillAlpha: ee(e * (0.05 + 0.14 * t)),
-    lineWidth: (s.focused ? 2 : 1.4) * (1 + 0.25 * n),
-    memberRadius: (s.focused ? 3.4 : 2.6) * (1 + 0.35 * n),
-    showEmergenceContour: s.emergent,
+    dash: [9, 4 + 11 * (1 - e)],
+    strokeAlpha: ee(t * 1.5 * (0.85 + 0.3 * n)),
+    fillAlpha: ee(t * (0.05 + 0.14 * e)),
+    lineWidth: (r.focused ? 2 : 1.4) * (1 + 0.25 * n),
+    memberRadius: (r.focused ? 3.4 : 2.6) * (1 + 0.35 * n),
+    showEmergenceContour: r.emergent,
   };
 }
-function un(s, e) {
-  return s * (1 + 0.45 * ee(e));
+function Nn(r, t) {
+  return r * (1 + 0.45 * ee(t));
 }
-var Se = 10;
-function pn(s) {
-  let e = s.readCrossLayerCache();
-  if (e) return e;
-  let t = new Map(),
+var Ne = 10;
+function Mn(r) {
+  let t = r.readCrossLayerCache();
+  if (t) return t;
+  let e = new Map(),
     n = new Map();
   return (
-    s.hyperedges.forEach((i, r) => {
+    r.hyperedges.forEach((i, s) => {
       let o = i.nodes,
         a = o.length,
-        l = a <= Se ? 2 ** a - a - 1 : Number.POSITIVE_INFINITY;
-      if (a > Se) {
-        t.set(r, { key: r, nodes: o, presentFaces: [], missingFaces: [], impliedFaceCount: l, unbounded: !0 });
+        l = a <= Ne ? 2 ** a - a - 1 : Number.POSITIVE_INFINITY;
+      if (a > Ne) {
+        e.set(s, { key: s, nodes: o, presentFaces: [], missingFaces: [], impliedFaceCount: l, unbounded: !0 });
         return;
       }
       let d = [],
@@ -3885,115 +4035,115 @@ function pn(s) {
       for (let c = 2; c <= a; c++)
         for (let p of Z(o, c)) {
           let u = N(p);
-          if (s.simplices.has(u)) {
+          if (r.simplices.has(u)) {
             d.push(u);
             let m = n.get(u) ?? [];
-            (m.push(r), n.set(u, m));
+            (m.push(s), n.set(u, m));
           } else g.push(p);
         }
-      t.set(r, { key: r, nodes: o, presentFaces: d, missingFaces: g, impliedFaceCount: l, unbounded: !1 });
+      e.set(s, { key: s, nodes: o, presentFaces: d, missingFaces: g, impliedFaceCount: l, unbounded: !1 });
     }),
-    s.writeCrossLayerCache({ hyperedges: t, simplexCoveredBy: n })
+    r.writeCrossLayerCache({ hyperedges: e, simplexCoveredBy: n })
   );
 }
-var ki = 1e3 * 60 * 60 * 24;
-function oe(s) {
-  return Number.isNaN(s) ? 0 : Math.max(0, Math.min(1, s));
+var qi = 1e3 * 60 * 60 * 24;
+function de(r) {
+  return Number.isNaN(r) ? 0 : Math.max(0, Math.min(1, r));
 }
-function xe(s, e) {
-  let t = pn(s).hyperedges.get(e);
-  if (!t) return null;
-  if (t.unbounded)
+function Me(r, t) {
+  let e = Mn(r).hyperedges.get(t);
+  if (!e) return null;
+  if (e.unbounded)
     return {
-      key: e,
-      nodes: t.nodes,
+      key: t,
+      nodes: e.nodes,
       missingFaces: [],
       missingCount: 0,
-      impliedFaceCount: t.impliedFaceCount,
+      impliedFaceCount: e.impliedFaceCount,
       deficit: null,
       unbounded: !0,
     };
-  let n = t.missingFaces.length;
+  let n = e.missingFaces.length;
   return {
-    key: e,
-    nodes: t.nodes,
-    missingFaces: t.missingFaces,
+    key: t,
+    nodes: e.nodes,
+    missingFaces: e.missingFaces,
     missingCount: n,
-    impliedFaceCount: t.impliedFaceCount,
-    deficit: t.impliedFaceCount > 0 ? oe(n / t.impliedFaceCount) : 0,
+    impliedFaceCount: e.impliedFaceCount,
+    deficit: e.impliedFaceCount > 0 ? de(n / e.impliedFaceCount) : 0,
     unbounded: !1,
   };
 }
-function gn(s) {
-  let e = new Map(),
-    t = 0;
-  s.hyperedges.forEach((r, o) => {
-    let a = xe(s, o);
+function En(r) {
+  let t = new Map(),
+    e = 0;
+  r.hyperedges.forEach((s, o) => {
+    let a = Me(r, o);
     if (!a || a.unbounded) {
-      (t++, e.set(o, null));
+      (e++, t.set(o, null));
       return;
     }
-    e.set(o, a.deficit);
+    t.set(o, a.deficit);
   });
-  let n = [...e.values()].filter((r) => r !== null),
-    i = Ii(s).map((r) => {
-      let o = r.encounters.map((a) => e.get(a)).filter((a) => a != null);
-      return { ...r, simpliciality: o.length > 0 ? 1 - o.reduce((a, l) => a + l, 0) / o.length : null };
+  let n = [...t.values()].filter((s) => s !== null),
+    i = Zi(r).map((s) => {
+      let o = s.encounters.map((a) => t.get(a)).filter((a) => a != null);
+      return { ...s, simpliciality: o.length > 0 ? 1 - o.reduce((a, l) => a + l, 0) / o.length : null };
     });
   return {
-    value: n.length > 0 ? 1 - n.reduce((r, o) => r + o, 0) / n.length : null,
+    value: n.length > 0 ? 1 - n.reduce((s, o) => s + o, 0) / n.length : null,
     measuredEncounters: n.length,
-    unboundedEncounters: t,
+    unboundedEncounters: e,
     components: i,
   };
 }
-function Ii(s) {
-  let e = new Map(),
-    t = (i) => {
-      let r = i;
-      for (; e.get(r) !== r; ) r = e.get(r);
+function Zi(r) {
+  let t = new Map(),
+    e = (i) => {
+      let s = i;
+      for (; t.get(s) !== s; ) s = t.get(s);
       let o = i;
-      for (; e.get(o) !== r; ) {
-        let a = e.get(o);
-        (e.set(o, r), (o = a));
+      for (; t.get(o) !== s; ) {
+        let a = t.get(o);
+        (t.set(o, s), (o = a));
       }
-      return r;
+      return s;
     };
-  (s.hyperedges.forEach((i) => {
-    i.nodes.forEach((r) => {
-      e.has(r) || e.set(r, r);
+  (r.hyperedges.forEach((i) => {
+    i.nodes.forEach((s) => {
+      t.has(s) || t.set(s, s);
     });
   }),
-    s.hyperedges.forEach((i) => {
-      let [r, ...o] = i.nodes;
-      r !== void 0 &&
+    r.hyperedges.forEach((i) => {
+      let [s, ...o] = i.nodes;
+      s !== void 0 &&
         o.forEach((a) => {
-          let l = t(r),
-            d = t(a);
-          l !== d && e.set(d, l);
+          let l = e(s),
+            d = e(a);
+          l !== d && t.set(d, l);
         });
     }));
   let n = new Map();
   return (
-    e.forEach((i, r) => {
-      let o = t(r),
+    t.forEach((i, s) => {
+      let o = e(s),
         a = n.get(o) ?? { nodes: [], encounters: [] };
-      (a.nodes.push(r), n.set(o, a));
+      (a.nodes.push(s), n.set(o, a));
     }),
-    s.hyperedges.forEach((i, r) => {
+    r.hyperedges.forEach((i, s) => {
       let o = i.nodes[0];
-      o !== void 0 && n.get(t(o))?.encounters.push(r);
+      o !== void 0 && n.get(e(o))?.encounters.push(s);
     }),
     [...n.values()].map((i) => ({ nodes: i.nodes.sort(), encounters: i.encounters.sort() }))
   );
 }
-function Di(s, e, t) {
-  let n = s.getHyperedge(e);
+function Ji(r, t, e) {
+  let n = r.getHyperedge(t);
   if (!n) return null;
   let i = n.nodes;
-  if (i.length > Se)
+  if (i.length > Ne)
     return {
-      key: e,
+      key: t,
       independence: null,
       fullSetScore: 0,
       maxSubsetScore: 0,
@@ -4002,20 +4152,20 @@ function Di(s, e, t) {
       evaluatedSubsets: 0,
       unbounded: !0,
     };
-  let r = oe(t(i)),
+  let s = de(e(i)),
     o = 0,
     a = 0,
     l = 0,
     d = null;
   for (let g = 2; g < i.length; g++)
     for (let c of Z(i, g)) {
-      let p = oe(t(c));
+      let p = de(e(c));
       ((a += p), l++, p > o && ((o = p), (d = c)));
     }
   return {
-    key: e,
-    independence: l > 0 ? oe(1 - o) : null,
-    fullSetScore: r,
+    key: t,
+    independence: l > 0 ? de(1 - o) : null,
+    fullSetScore: s,
     maxSubsetScore: o,
     meanSubsetScore: l > 0 ? a / l : 0,
     strongestSubset: d,
@@ -4023,121 +4173,121 @@ function Di(s, e, t) {
     unbounded: !1,
   };
 }
-function Ri(s, e, t = Date.now()) {
-  return s.length === 0 || e <= 0
+function Qi(r, t, e = Date.now()) {
+  return r.length === 0 || t <= 0
     ? 0
-    : s.reduce((n, i) => {
-        let r = Math.max(0, (t - i) / ki);
-        return n + Math.pow(0.5, r / e);
+    : r.reduce((n, i) => {
+        let s = Math.max(0, (e - i) / qi);
+        return n + Math.pow(0.5, s / t);
       }, 0);
 }
-function Fi(s, e) {
-  let t = s.getHyperedgesForNode(e),
-    n = t.length;
-  if (n < 2) return { nodeId: e, incidentEncounters: n, meanJaccard: n === 1 ? 1 : 0, pressure: 0 };
+function es(r, t) {
+  let e = r.getHyperedgesForNode(t),
+    n = e.length;
+  if (n < 2) return { nodeId: t, incidentEncounters: n, meanJaccard: n === 1 ? 1 : 0, pressure: 0 };
   let i = 0,
-    r = 0;
+    s = 0;
   for (let a = 0; a < n; a++)
     for (let l = a + 1; l < n; l++) {
-      let d = new Set(t[a].nodes),
-        g = new Set(t[l].nodes),
+      let d = new Set(e[a].nodes),
+        g = new Set(e[l].nodes),
         c = 0;
       g.forEach((u) => {
         d.has(u) && c++;
       });
       let p = d.size + g.size - c;
-      ((i += p > 0 ? c / p : 0), r++);
+      ((i += p > 0 ? c / p : 0), s++);
     }
-  let o = r > 0 ? i / r : 0;
-  return { nodeId: e, incidentEncounters: n, meanJaccard: o, pressure: oe((1 - o) * (1 - 1 / n)) };
+  let o = s > 0 ? i / s : 0;
+  return { nodeId: t, incidentEncounters: n, meanJaccard: o, pressure: de((1 - o) * (1 - 1 / n)) };
 }
-function mn(s, e, t = {}) {
-  let n = s.getHyperedge(e);
+function Tn(r, t, e = {}) {
+  let n = r.getHyperedge(t);
   if (!n) return null;
-  let i = t.occurrences ?? n.occurrences ?? [],
-    o = n.nodes.map((a) => Fi(s, a)).reduce((a, l) => (a === null || l.pressure > a.pressure ? l : a), null);
+  let i = e.occurrences ?? n.occurrences ?? [],
+    o = n.nodes.map((a) => es(r, a)).reduce((a, l) => (a === null || l.pressure > a.pressure ? l : a), null);
   return {
-    key: e,
+    key: t,
     nodes: n.nodes,
-    closure: xe(s, e),
-    independence: t.score ? Di(s, e, t.score) : null,
+    closure: Me(r, t),
+    independence: e.score ? Ji(r, t, e.score) : null,
     peakOverlap: o,
     occurrences: i,
-    vitality: Ri(i, t.halfLifeDays ?? 90, t.now),
+    vitality: Qi(i, e.halfLifeDays ?? 90, e.now),
     persistence: n.persistence === "recurring" ? "recurring" : "momentary",
   };
 }
-function fn(s, e, t, n, i, r) {
+function Dn(r, t, e, n, i, s) {
   if (!i) return;
   let o = new Set();
-  e.forEach((a) => {
+  t.forEach((a) => {
     let l = a.nodes.map((u) => n.get(u)).filter(Boolean),
-      d = !r.isActive || r.involvesSimplex(a),
-      [g, c, p] = H(t, a);
+      d = !s.isActive || s.involvesSimplex(a),
+      [g, c, p] = F(e, a);
     for (let u = 0; u < l.length; u++)
       for (let m = u + 1; m < l.length; m++) {
         let f = [l[u].id, l[m].id].sort().join("|");
         o.has(f) ||
           (o.add(f),
-          (s.strokeStyle = `rgba(${g},${c},${p},${d ? 0.22 : 0.06})`),
-          (s.lineWidth = d ? 1 : 0.5),
-          s.beginPath(),
-          s.moveTo(l[u].px, l[u].py),
-          s.lineTo(l[m].px, l[m].py),
-          s.stroke());
+          (r.strokeStyle = `rgba(${g},${c},${p},${d ? 0.22 : 0.06})`),
+          (r.lineWidth = d ? 1 : 0.5),
+          r.beginPath(),
+          r.moveTo(l[u].px, l[u].py),
+          r.lineTo(l[m].px, l[m].py),
+          r.stroke());
       }
   });
 }
-function yn(s, e, t, n, i, r = null) {
-  let a = s.measureText(e).width + 20,
+function kn(r, t, e, n, i, s = null) {
+  let a = r.measureText(t).width + 20,
     l = 26;
   return (
-    (s.fillStyle = i ? "rgba(20, 24, 32, 0.85)" : "rgba(255, 255, 255, 0.85)"),
-    s.beginPath(),
-    s.roundRect(t, n, a, l, 8),
-    s.fill(),
-    (s.strokeStyle = r ?? (i ? "rgba(255, 255, 255, 0.15)" : "rgba(0, 0, 0, 0.1)")),
-    (s.lineWidth = 1),
-    s.stroke(),
-    (s.fillStyle = i ? "rgba(235, 240, 248, 0.9)" : "rgba(24, 28, 34, 0.85)"),
-    (s.textAlign = "left"),
-    (s.textBaseline = "middle"),
-    s.fillText(e, t + 10, n + l / 2),
+    (r.fillStyle = i ? "rgba(20, 24, 32, 0.85)" : "rgba(255, 255, 255, 0.85)"),
+    r.beginPath(),
+    r.roundRect(e, n, a, l, 8),
+    r.fill(),
+    (r.strokeStyle = s ?? (i ? "rgba(255, 255, 255, 0.15)" : "rgba(0, 0, 0, 0.1)")),
+    (r.lineWidth = 1),
+    r.stroke(),
+    (r.fillStyle = i ? "rgba(235, 240, 248, 0.9)" : "rgba(24, 28, 34, 0.85)"),
+    (r.textAlign = "left"),
+    (r.textBaseline = "middle"),
+    r.fillText(t, e + 10, n + l / 2),
     l
   );
 }
-function vn(s, e, t) {
-  let n = e.getAnalysisSummary();
+function In(r, t, e) {
+  let n = t.getAnalysisSummary();
   if (!n.betti) return;
-  let { b0: i, b1: r, b2: o } = n.betti,
-    a = `\u03B2\u2080 ${i}   \u03B2\u2081 ${r}${o !== void 0 ? `   \u03B2\u2082 ${o}` : ""}`;
-  (s.save(), (s.font = "500 14px ui-monospace, SFMono-Regular, Menlo, monospace"));
-  let l = yn(s, a, 14, 14, t);
-  s.restore();
+  let { b0: i, b1: s, b2: o } = n.betti,
+    a = `\u03B2\u2080 ${i}   \u03B2\u2081 ${s}${o !== void 0 ? `   \u03B2\u2082 ${o}` : ""}`;
+  (r.save(), (r.font = "500 14px ui-monospace, SFMono-Regular, Menlo, monospace"));
+  let l = kn(r, a, 14, 14, e);
+  r.restore();
 }
-function bn(s, e, t, n = 14) {
-  let i = e.hyperedges.size;
+function Pn(r, t, e, n = 14) {
+  let i = t.hyperedges.size;
   if (i === 0) return;
-  let r = gn(e),
-    o = r.value === null ? "\u2013" : r.value.toFixed(2),
-    a = e.getAnalysisSummary().recurringEncounterCount,
+  let s = En(t),
+    o = s.value === null ? "\u2013" : s.value.toFixed(2),
+    a = t.getAnalysisSummary().recurringEncounterCount,
     l = `\u25C7 ${i}${a > 0 ? ` \xB7 ${a} recurring` : ""}   simpliciality ${o}`;
-  (s.save(),
-    (s.font = "500 14px ui-monospace, SFMono-Regular, Menlo, monospace"),
-    yn(s, l, 14, n, t, "rgba(127, 119, 221, 0.35)"),
-    s.restore());
+  (r.save(),
+    (r.font = "500 14px ui-monospace, SFMono-Regular, Menlo, monospace"),
+    kn(r, l, 14, n, e, "rgba(127, 119, 221, 0.35)"),
+    r.restore());
 }
-function Sn(s, e, t, n, i) {
-  let r = e.getAnalysisSummary();
-  if (!r.betti?.holes?.length) return;
-  let o = e.getAllNodes(),
+function Rn(r, t, e, n, i) {
+  let s = t.getAnalysisSummary();
+  if (!s.betti?.holes?.length) return;
+  let o = t.getAllNodes(),
     a = new Map(o.map((l) => [l.id, l]));
-  (s.save(), s.setLineDash([8, 4]), (s.lineWidth = 1.5));
-  for (let l of r.betti.holes) Hi(s, l, a, t, n, i);
-  s.restore();
+  (r.save(), r.setLineDash([8, 4]), (r.lineWidth = 1.5));
+  for (let l of s.betti.holes) ts(r, l, a, e, n, i);
+  r.restore();
 }
-function Hi(s, e, t, n, i, r) {
-  let o = e.boundaryNodes.map((S) => t.get(S)).filter(Boolean);
+function ts(r, t, e, n, i, s) {
+  let o = t.boundaryNodes.map((S) => e.get(S)).filter(Boolean);
   if (o.length < 3) return;
   let a = 200,
     l = o.filter((S) => Math.hypot(S.px, S.py) > a);
@@ -4151,110 +4301,110 @@ function Hi(s, e, t, n, i, r) {
     f = Math.min(...l.map((S) => S.py)),
     h = Math.max(...l.map((S) => S.py));
   if (m < i.minX - p || u > i.maxX + p || h < i.minY - p || f > i.maxY + p) return;
-  let y = e.boundaryNodes.sort().join("|"),
-    v = r === y;
-  ((s.strokeStyle = v ? "rgba(255, 165, 0, 0.9)" : n ? "rgba(255, 165, 0, 0.5)" : "rgba(255, 140, 0, 0.6)"),
-    s.beginPath(),
-    s.moveTo(l[0].px, l[0].py));
-  for (let S = 1; S < l.length; S++) s.lineTo(l[S].px, l[S].py);
-  (s.closePath(), s.stroke(), (s.fillStyle = v ? "rgba(255, 165, 0, 0.15)" : "rgba(255, 165, 0, 0.05)"), s.fill());
+  let y = t.boundaryNodes.sort().join("|"),
+    v = s === y;
+  ((r.strokeStyle = v ? "rgba(255, 165, 0, 0.9)" : n ? "rgba(255, 165, 0, 0.5)" : "rgba(255, 140, 0, 0.6)"),
+    r.beginPath(),
+    r.moveTo(l[0].px, l[0].py));
+  for (let S = 1; S < l.length; S++) r.lineTo(l[S].px, l[S].py);
+  (r.closePath(), r.stroke(), (r.fillStyle = v ? "rgba(255, 165, 0, 0.15)" : "rgba(255, 165, 0, 0.05)"), r.fill());
   let b = Math.sqrt(l.reduce((S, w) => S + (w.px - d.x) ** 2 + (w.py - d.y) ** 2, 0) / l.length);
   if (v || b < 200) {
-    ((s.fillStyle = v ? "rgba(255, 165, 0, 0.9)" : "rgba(255, 165, 0, 0.6)"),
-      s.beginPath(),
-      s.arc(d.x, d.y, v ? 8 : 5, 0, Math.PI * 2),
-      s.fill(),
-      (s.font = "500 12px system-ui, sans-serif"),
-      (s.fillStyle = n ? "rgba(255, 255, 255, 0.8)" : "rgba(0, 0, 0, 0.7)"),
-      (s.textAlign = "center"),
-      (s.textBaseline = "middle"));
-    let S = e.dimension === 1 ? "Missing \u0394" : "Missing \u25A1";
-    (s.fillText(S, d.x, d.y - 14),
-      (s.font = "400 10px system-ui, sans-serif"),
-      (s.fillStyle = n ? "rgba(255, 255, 255, 0.5)" : "rgba(0, 0, 0, 0.5)"),
-      s.fillText(`${l.length} nodes`, d.x, d.y + 14));
+    ((r.fillStyle = v ? "rgba(255, 165, 0, 0.9)" : "rgba(255, 165, 0, 0.6)"),
+      r.beginPath(),
+      r.arc(d.x, d.y, v ? 8 : 5, 0, Math.PI * 2),
+      r.fill(),
+      (r.font = "500 12px system-ui, sans-serif"),
+      (r.fillStyle = n ? "rgba(255, 255, 255, 0.8)" : "rgba(0, 0, 0, 0.7)"),
+      (r.textAlign = "center"),
+      (r.textBaseline = "middle"));
+    let S = t.dimension === 1 ? "Missing \u0394" : "Missing \u25A1";
+    (r.fillText(S, d.x, d.y - 14),
+      (r.font = "400 10px system-ui, sans-serif"),
+      (r.fillStyle = n ? "rgba(255, 255, 255, 0.5)" : "rgba(0, 0, 0, 0.5)"),
+      r.fillText(`${l.length} nodes`, d.x, d.y + 14));
   }
 }
-function xn(s) {
-  return s.split("/").pop()?.replace(/\.md$/, "") ?? s;
+function Fn(r) {
+  return r.split("/").pop()?.replace(/\.md$/, "") ?? r;
 }
-function Ai(s) {
-  let e = s.closure;
-  if (!e) return null;
-  if (e.unbounded) return "Too large to enumerate what it implies. The closure deficit here is unmeasured, not zero.";
-  if (e.missingCount === 0)
+function ns(r) {
+  let t = r.closure;
+  if (!t) return null;
+  if (t.unbounded) return "Too large to enumerate what it implies. The closure deficit here is unmeasured, not zero.";
+  if (t.missingCount === 0)
     return "Every relation this encounter implies already exists in the complex. Promoting it would assert nothing new.";
-  let t = s.nodes.length,
-    n = e.deficit ?? 0;
+  let e = r.nodes.length,
+    n = t.deficit ?? 0;
   return n >= 0.8
-    ? `This cluster looks visually coherent, but its meaning exists only at order ${t} \u2014 ${e.missingCount} of the ${e.impliedFaceCount} relations it implies are absent.`
+    ? `This cluster looks visually coherent, but its meaning exists only at order ${e} \u2014 ${t.missingCount} of the ${t.impliedFaceCount} relations it implies are absent.`
     : n >= 0.4
-      ? `${e.missingCount} of the ${e.impliedFaceCount} implied relations are absent. Part of this group is already understood; part of it is not.`
-      : `Most of what this encounter implies already exists \u2014 ${e.missingCount} implied relation${e.missingCount === 1 ? " is" : "s are"} still absent.`;
+      ? `${t.missingCount} of the ${t.impliedFaceCount} implied relations are absent. Part of this group is already understood; part of it is not.`
+      : `Most of what this encounter implies already exists \u2014 ${t.missingCount} implied relation${t.missingCount === 1 ? " is" : "s are"} still absent.`;
 }
-function Li(s) {
-  let e = s.independence;
-  if (!e) return null;
-  if (e.unbounded) return "Too large to test its subgroups against the vault.";
-  if (e.independence === null)
+function is(r) {
+  let t = r.independence;
+  if (!t) return null;
+  if (t.unbounded) return "Too large to test its subgroups against the vault.";
+  if (t.independence === null)
     return "A two-note encounter has no proper subgroup, so there is nothing for it to be irreducible to.";
-  let t = e.strongestSubset?.map(xn).join(" \xB7 ");
-  return e.independence >= 0.75
-    ? e.fullSetScore >= 0.3
+  let e = t.strongestSubset?.map(Fn).join(" \xB7 ");
+  return t.independence >= 0.75
+    ? t.fullSetScore >= 0.3
       ? "The group is evidenced by the vault; no subgroup inside it is. That is what irreducible looks like."
       : "Neither the group nor any subgroup inside it is evidenced by the vault. This encounter rests on your assertion alone \u2014 which is a reason to keep it, not to promote it."
-    : e.independence >= 0.4
-      ? `Some of this group stands on its own${t ? ` \u2014 ${t} most of all` : ""}, but not all of it.`
-      : `${t ?? "A subgroup"} is already well evidenced without the rest. This may be a simplex you have not asserted yet.`;
+    : t.independence >= 0.4
+      ? `Some of this group stands on its own${e ? ` \u2014 ${e} most of all` : ""}, but not all of it.`
+      : `${e ?? "A subgroup"} is already well evidenced without the rest. This may be a simplex you have not asserted yet.`;
 }
-function Oi(s, e) {
-  let t = Math.max(1, s.occurrences.length),
-    n = `${t}\xD7`;
-  return s.persistence !== "recurring"
-    ? `Encountered ${n}. Recurring at ${e} \u2014 repetition is evidence, never proof.`
-    : s.vitality >= t * 0.7
+function ss(r, t) {
+  let e = Math.max(1, r.occurrences.length),
+    n = `${e}\xD7`;
+  return r.persistence !== "recurring"
+    ? `Encountered ${n}. Recurring at ${t} \u2014 repetition is evidence, never proof.`
+    : r.vitality >= e * 0.7
       ? `Recurring and still warm: ${n}, most of it recent.`
-      : s.vitality < 1
+      : r.vitality < 1
         ? `Recurring, but cooled: ${n}, none of it lately.`
         : `Recurring: ${n}, some of it a while ago.`;
 }
-function Ki(s) {
-  let e = s.peakOverlap;
-  return !e || e.pressure < 0.4
+function rs(r) {
+  let t = r.peakOverlap;
+  return !t || t.pressure < 0.4
     ? null
-    : `${xn(e.nodeId)} sits in ${e.incidentEncounters} encounters that barely overlap each other. It may be carrying contexts that do not belong together.`;
+    : `${Fn(t.nodeId)} sits in ${t.incidentEncounters} encounters that barely overlap each other. It may be carrying contexts that do not belong together.`;
 }
-function wn(s, e) {
+function An(r, t) {
   return {
     headline:
       "These notes came together as one irreducible whole. No pair among them is asserted to be meaningful on its own.",
-    closure: Ai(s),
-    independence: Li(s),
-    persistence: Oi(s, e),
-    overlap: Ki(s),
+    closure: ns(r),
+    independence: is(r),
+    persistence: ss(r, t),
+    overlap: rs(r),
   };
 }
-function Cn(s, e, t, n) {
-  let i = s.nodes,
-    r = i.map((a) => e.find((l) => l.id === a)).filter(Boolean),
+function Hn(r, t, e, n) {
+  let i = r.nodes,
+    s = i.map((a) => t.find((l) => l.id === a)).filter(Boolean),
     o = n.find((a) => a.missingSimplex.length === i.length && a.missingSimplex.every((l) => i.includes(l)));
-  return s.inferred ? $i(s, r, t, o) : s.autoGenerated ? Wi(s) : Bi(s, r);
+  return r.inferred ? os(r, s, e, o) : r.autoGenerated ? as(r) : ls(r, s);
 }
-function $i(s, e, t, n) {
-  let i = s.nodes.length - 1,
-    r = e.map((l) => l.id.replace(/\.md$/, "")),
-    o = s.inferredSignals ?? [];
+function os(r, t, e, n) {
+  let i = r.nodes.length - 1,
+    s = t.map((l) => l.id.replace(/\.md$/, "")),
+    o = r.inferredSignals ?? [];
   if (n)
     return {
       headline: `This ${i === 1 ? "edge" : i === 2 ? "triangle" : "tetrahedron"} fills a topological hole in your complex.`,
-      tension: `Notes ${r.join(" \xB7 ")} formed an unfilled cycle. This structure now binds them together.`,
+      tension: `Notes ${s.join(" \xB7 ")} formed an unfilled cycle. This structure now binds them together.`,
       prompt: "Does this new connection reveal a synthesis you hadn't consciously noticed?",
       signals: [`Fills \u03B2${n.dimension} hole`, ...o],
     };
-  if (i === 2 && e.length === 3) {
-    let l = _i(e, t);
+  if (i === 2 && t.length === 3) {
+    let l = ds(t, e);
     if (l) {
-      let d = r.filter((g) => g !== l.replace(/\.md$/, ""));
+      let d = s.filter((g) => g !== l.replace(/\.md$/, ""));
       return {
         headline: "Three notes form a structural bridge through a common connection.",
         tension: `${d[0]} and ${d[1]} both connect to ${l.replace(/\.md$/, "")}, but have no direct link between them.`,
@@ -4263,7 +4413,7 @@ function $i(s, e, t, n) {
       };
     }
   }
-  let a = new Set(e.map((l) => l.domain));
+  let a = new Set(t.map((l) => l.domain));
   return a.size > 1
     ? {
         headline: `Cross-domain ${i === 1 ? "relation" : i === 2 ? "triangle" : "synthesis"} spanning ${a.size} conceptual areas.`,
@@ -4272,56 +4422,56 @@ function $i(s, e, t, n) {
         signals: [`Cross-domain: ${[...a].join(" + ")}`, ...o],
       }
     : {
-        headline: `${i === 1 ? "An inferred relation" : i === 2 ? "An inferred triangle" : "An inferred higher-order structure"} among ${e.length} notes.`,
+        headline: `${i === 1 ? "An inferred relation" : i === 2 ? "An inferred triangle" : "An inferred higher-order structure"} among ${t.length} notes.`,
         tension: `Based on ${o.length > 0 ? o.join(" \xB7 ") : "vault structure analysis"}.`,
         prompt: "Is this a meaningful connection worth confirming?",
         signals: o.length > 0 ? o : ["Pattern-based inference"],
       };
 }
-function Wi(s) {
-  let e = s.nodes.length - 1;
+function as(r) {
+  let t = r.nodes.length - 1;
   return {
-    headline: `Auto-generated face of a ${e + 1}-simplex.`,
-    tension: `This ${e === 1 ? "edge" : e === 2 ? "triangle" : "tetrahedron"} is the boundary of a higher-dimensional simplex you defined.`,
+    headline: `Auto-generated face of a ${t + 1}-simplex.`,
+    tension: `This ${t === 1 ? "edge" : t === 2 ? "triangle" : "tetrahedron"} is the boundary of a higher-dimensional simplex you defined.`,
     prompt: "Faces help visualize the structure but cannot be edited independently.",
-    signals: [`Face of ${s.parentKey || "parent simplex"}`],
+    signals: [`Face of ${r.parentKey || "parent simplex"}`],
   };
 }
-function Bi(s, e) {
-  let t = s.nodes.length - 1,
-    n = e.map((i) => i.id.replace(/\.md$/, ""));
+function ls(r, t) {
+  let e = r.nodes.length - 1,
+    n = t.map((i) => i.id.replace(/\.md$/, ""));
   return {
-    headline: `Confirmed ${t === 1 ? "relation" : t === 2 ? "triangle" : t === 3 ? "tetrahedron" : "simplex"} you defined.`,
+    headline: `Confirmed ${e === 1 ? "relation" : e === 2 ? "triangle" : e === 3 ? "tetrahedron" : "simplex"} you defined.`,
     tension: `You explicitly marked ${n.join(" \xB7 ")} as forming a meaningful structure.`,
-    prompt: s.label
-      ? `Labeled as "${s.label}". Does this label still capture the relationship?`
+    prompt: r.label
+      ? `Labeled as "${r.label}". Does this label still capture the relationship?`
       : "Consider adding a label to capture what binds these notes together.",
-    signals: s.label ? [`Label: ${s.label}`] : ["User-defined"],
+    signals: r.label ? [`Label: ${r.label}`] : ["User-defined"],
   };
 }
-function _i(s, e) {
-  if (s.length !== 3) return null;
-  for (let t of s) {
-    let n = e.get(t.id);
+function ds(r, t) {
+  if (r.length !== 3) return null;
+  for (let e of r) {
+    let n = t.get(e.id);
     if (!n) continue;
-    let i = s.filter((o) => o.id !== t.id);
-    if (i.every((o) => n.outgoingLinks.has(o.id) || e.get(o.id)?.outgoingLinks.has(t.id))) {
+    let i = r.filter((o) => o.id !== e.id);
+    if (i.every((o) => n.outgoingLinks.has(o.id) || t.get(o.id)?.outgoingLinks.has(e.id))) {
       let [o, a] = i,
-        l = e.get(o.id),
-        d = e.get(a.id),
+        l = t.get(o.id),
+        d = t.get(a.id),
         g = l?.outgoingLinks.has(a.id) ?? !1,
         c = d?.outgoingLinks.has(o.id) ?? !1;
-      if (!g && !c) return t.id;
+      if (!g && !c) return e.id;
     }
   }
   return null;
 }
-function et(s, e) {
-  let t = s.boundaryNodes.map((n) => n.replace(/\.md$/, ""));
-  return s.dimension === 1
+function dt(r, t) {
+  let e = r.boundaryNodes.map((n) => n.replace(/\.md$/, ""));
+  return r.dimension === 1
     ? {
         headline: "A 1-dimensional hole in your complex \u2014 an unfilled triangle.",
-        tension: `Notes ${t.join(" \xB7 ")} connect pairwise, but no synthesizing structure exists at the center.`,
+        tension: `Notes ${e.join(" \xB7 ")} connect pairwise, but no synthesizing structure exists at the center.`,
         prompt: "What's at the center of this triangle? Writing a note that connects all three would close this hole.",
         signals: ["\u03B2\u2081 hole: three notes, no triangle"],
       }
@@ -4332,33 +4482,33 @@ function et(s, e) {
         signals: ["\u03B2\u2082 void: four notes, no tetrahedron"],
       };
 }
-function we(s, e) {
-  let t = !1;
-  for (let n = 0, i = e.length - 1; n < e.length; i = n++) {
-    let r = e[n].x,
-      o = e[n].y,
-      a = e[i].x,
-      l = e[i].y;
-    o > s.y != l > s.y && s.x < ((a - r) * (s.y - o)) / (l - o || 1e-6) + r && (t = !t);
+function Ee(r, t) {
+  let e = !1;
+  for (let n = 0, i = t.length - 1; n < t.length; i = n++) {
+    let s = t[n].x,
+      o = t[n].y,
+      a = t[i].x,
+      l = t[i].y;
+    o > r.y != l > r.y && r.x < ((a - s) * (r.y - o)) / (l - o || 1e-6) + s && (e = !e);
   }
-  return t;
+  return e;
 }
-function Ce(s, e) {
-  let t = s.nodes
-    .map((i) => e.find((r) => r.id === i))
+function Te(r, t) {
+  let e = r.nodes
+    .map((i) => t.find((s) => s.id === i))
     .filter(Boolean)
     .map((i) => ({ x: i.px, y: i.py }));
-  if (t.length <= 2) return t;
-  let n = { x: t.reduce((i, r) => i + r.x, 0) / t.length, y: t.reduce((i, r) => i + r.y, 0) / t.length };
-  return [...t].sort((i, r) => Math.atan2(i.y - n.y, i.x - n.x) - Math.atan2(r.y - n.y, r.x - n.x));
+  if (e.length <= 2) return e;
+  let n = { x: e.reduce((i, s) => i + s.x, 0) / e.length, y: e.reduce((i, s) => i + s.y, 0) / e.length };
+  return [...e].sort((i, s) => Math.atan2(i.y - n.y, i.x - n.x) - Math.atan2(s.y - n.y, s.x - n.x));
 }
-var Ne = class {
-  constructor(e, t, n, i, r = {}) {
-    this.model = e;
-    this.engine = t;
+var De = class {
+  constructor(t, e, n, i, s = {}) {
+    this.model = t;
+    this.engine = e;
     this.controller = n;
     this.settings = i;
-    this.callbacks = r;
+    this.callbacks = s;
     this.canvas = null;
     this.ctx = null;
     this.dpr = activeWindow.devicePixelRatio || 1;
@@ -4399,69 +4549,73 @@ var Ne = class {
     this.progressiveSimplexBudget = 0;
     this.progressiveNodeStep = 140;
     this.progressiveSimplexStep = 220;
+    this.activation = new Map();
   }
-  measureTextWidth(e, t) {
-    if (this.textWidthCache.has(t)) return this.textWidthCache.get(t);
-    let n = e.measureText(t).width;
-    return (this.textWidthCache.size > 1e3 && this.textWidthCache.clear(), this.textWidthCache.set(t, n), n);
+  setActivation(t) {
+    this.activation = t;
   }
-  getVisibleNodes(e) {
-    let t = -this.viewOffsetX / this.viewZoom - this.viewportPadding,
+  measureTextWidth(t, e) {
+    if (this.textWidthCache.has(e)) return this.textWidthCache.get(e);
+    let n = t.measureText(e).width;
+    return (this.textWidthCache.size > 1e3 && this.textWidthCache.clear(), this.textWidthCache.set(e, n), n);
+  }
+  getVisibleNodes(t) {
+    let e = -this.viewOffsetX / this.viewZoom - this.viewportPadding,
       n = -this.viewOffsetY / this.viewZoom - this.viewportPadding,
       i = (-this.viewOffsetX + this.W) / this.viewZoom + this.viewportPadding,
-      r = (-this.viewOffsetY + this.H) / this.viewZoom + this.viewportPadding;
-    return e.filter((o) => o.px >= t && o.px <= i && o.py >= n && o.py <= r);
+      s = (-this.viewOffsetY + this.H) / this.viewZoom + this.viewportPadding;
+    return t.filter((o) => o.px >= e && o.px <= i && o.py >= n && o.py <= s);
   }
-  simplexStrength(e, t) {
-    return t === "confidence"
-      ? (e.confidence ?? e.weight ?? 0)
-      : t === "decayed-weight"
-        ? (e.decayedWeight ?? e.weight ?? e.confidence ?? 0)
-        : (e.weight ?? e.decayedWeight ?? e.confidence ?? 0);
+  simplexStrength(t, e) {
+    return e === "confidence"
+      ? (t.confidence ?? t.weight ?? 0)
+      : e === "decayed-weight"
+        ? (t.decayedWeight ?? t.weight ?? t.confidence ?? 0)
+        : (t.weight ?? t.decayedWeight ?? t.confidence ?? 0);
   }
-  passesRenderFilter(e) {
-    return this.simplexStrength(e, this.settings.renderFilterMetric) >= this.settings.renderFilterThreshold;
+  passesRenderFilter(t) {
+    return this.simplexStrength(t, this.settings.renderFilterMetric) >= this.settings.renderFilterThreshold;
   }
-  nodeVisualPriority(e) {
-    let t = this.model.getSimplicesForNode(e.id),
-      n = t.some((o) => o.nodes.length >= 3),
-      i = t.some((o) => o.nodes.length === 2);
-    return { bucket: n ? 3 : i ? 2 : t.length > 0 ? 1 : 0, simplexCount: t.length };
+  nodeVisualPriority(t) {
+    let e = this.model.getSimplicesForNode(t.id),
+      n = e.some((o) => o.nodes.length >= 3),
+      i = e.some((o) => o.nodes.length === 2);
+    return { bucket: n ? 3 : i ? 2 : e.length > 0 ? 1 : 0, simplexCount: e.length };
   }
-  progressiveNodeKey(e) {
-    let t = this.controller.hoveredNodeId ?? "",
+  progressiveNodeKey(t) {
+    let e = this.controller.hoveredNodeId ?? "",
       n = this.controller.lockedNodeId ?? "";
     return [
       this.viewZoom.toFixed(3),
       this.viewOffsetX.toFixed(1),
       this.viewOffsetY.toFixed(1),
-      t,
+      e,
       n,
-      e.length,
+      t.length,
       this.settings.renderFilterMetric,
       (this.settings.renderFilterThreshold ?? 0).toFixed(2),
     ].join("|");
   }
-  rankVisibleNodes(e, t) {
+  rankVisibleNodes(t, e) {
     let n = (this.W / 2 - this.viewOffsetX) / this.viewZoom,
       i = (this.H / 2 - this.viewOffsetY) / this.viewZoom,
-      r = this.controller.hoveredNodeId,
+      s = this.controller.hoveredNodeId,
       o = this.controller.lockedNodeId;
-    return [...e].sort((a, l) => {
+    return [...t].sort((a, l) => {
       let d = this.nodeVisualPriority(a),
         g = this.nodeVisualPriority(l),
         c = d.bucket * 10 + Math.min(4, d.simplexCount),
         p = g.bucket * 10 + Math.min(4, g.simplexCount),
-        u = (a.id === r ? 6 : 0) + (a.id === o ? 5 : 0) + (t.has(a.id) ? 4 : 0) + (a.isPinned ? 2 : 0) + c,
-        m = (l.id === r ? 6 : 0) + (l.id === o ? 5 : 0) + (t.has(l.id) ? 4 : 0) + (l.isPinned ? 2 : 0) + p;
+        u = (a.id === s ? 6 : 0) + (a.id === o ? 5 : 0) + (e.has(a.id) ? 4 : 0) + (a.isPinned ? 2 : 0) + c,
+        m = (l.id === s ? 6 : 0) + (l.id === o ? 5 : 0) + (e.has(l.id) ? 4 : 0) + (l.isPinned ? 2 : 0) + p;
       if (u !== m) return m - u;
       let f = (a.px - n) ** 2 + (a.py - i) ** 2,
         h = (l.px - n) ** 2 + (l.py - i) ** 2;
       return f - h;
     });
   }
-  getProgressiveRenderableNodes(e, t) {
-    let n = this.rankVisibleNodes(e, t),
+  getProgressiveRenderableNodes(t, e) {
+    let n = this.rankVisibleNodes(t, e),
       i = this.progressiveNodeKey(n);
     return (
       i !== this.progressiveSceneKey
@@ -4473,12 +4627,12 @@ var Ne = class {
       n.slice(0, this.progressiveNodeBudget)
     );
   }
-  getRenderableSimplices(e, t, n) {
-    return e
-      .filter(([, r]) => this.passesRenderFilter(r))
-      .filter(([, r]) => r.nodes.every((o) => t.has(o)))
-      .sort((r, o) => {
-        let [a, l] = r,
+  getRenderableSimplices(t, e, n) {
+    return t
+      .filter(([, s]) => this.passesRenderFilter(s))
+      .filter(([, s]) => s.nodes.every((o) => e.has(o)))
+      .sort((s, o) => {
+        let [a, l] = s,
           [d, g] = o,
           c = l.nodes.length >= 3 ? 20 : l.nodes.length === 2 ? 10 : 0,
           p = g.nodes.length >= 3 ? 20 : g.nodes.length === 2 ? 10 : 0,
@@ -4499,23 +4653,23 @@ var Ne = class {
       })
       .slice(0, this.progressiveSimplexBudget);
   }
-  getRenderableHyperedges(e) {
+  getRenderableHyperedges(t) {
     return this.settings.showHyperedges
-      ? [...this.model.hyperedges.entries()].filter(([, t]) => t.nodes.some((n) => e.has(n)))
+      ? [...this.model.hyperedges.entries()].filter(([, e]) => e.nodes.some((n) => t.has(n)))
       : [];
   }
-  canPlaceLabelFast(e, t, n, i) {
+  canPlaceLabelFast(t, e, n, i) {
     if (!this.ctx) return !1;
-    let r = this.measureTextWidth(this.ctx, t) + 12,
-      o = n - r / 2,
+    let s = this.measureTextWidth(this.ctx, e) + 12,
+      o = n - s / 2,
       a = i - 14,
-      l = { left: o, top: a, right: o + r, bottom: a + 18 };
-    return !e.some((d) => l.left < d.right && l.right > d.left && l.top < d.bottom && l.bottom > d.top);
+      l = { left: o, top: a, right: o + s, bottom: a + 18 };
+    return !t.some((d) => l.left < d.right && l.right > d.left && l.top < d.bottom && l.bottom > d.top);
   }
-  init(e) {
+  init(t) {
     (this.canvas && !this.canvas.isConnected && this.destroy(),
       !this.canvas &&
-        ((this.canvas = e.createEl("canvas", { cls: "simplicial-canvas" })),
+        ((this.canvas = t.createEl("canvas", { cls: "simplicial-canvas" })),
         (this.ctx = this.canvas.getContext("2d")),
         (this.isDark = this.detectDarkMode()),
         this.resize(),
@@ -4537,36 +4691,36 @@ var Ne = class {
     this.canvas &&
       (this.canvas.addEventListener(
         "wheel",
-        (e) => {
-          e.preventDefault();
-          let t = this.canvas.getBoundingClientRect(),
-            n = { x: ((e.clientX - t.left) * this.W) / t.width, y: ((e.clientY - t.top) * this.H) / t.height };
-          (this.zoomAt(n, e.deltaY), this.render());
+        (t) => {
+          t.preventDefault();
+          let e = this.canvas.getBoundingClientRect(),
+            n = { x: ((t.clientX - e.left) * this.W) / e.width, y: ((t.clientY - e.top) * this.H) / e.height };
+          (this.zoomAt(n, t.deltaY), this.render());
         },
         { passive: !1 },
       ),
-      this.canvas.addEventListener("mousemove", (e) => {
-        let t = this.canvas.getBoundingClientRect(),
-          n = { x: ((e.clientX - t.left) * this.W) / t.width, y: ((e.clientY - t.top) * this.H) / t.height };
+      this.canvas.addEventListener("mousemove", (t) => {
+        let e = this.canvas.getBoundingClientRect(),
+          n = { x: ((t.clientX - e.left) * this.W) / e.width, y: ((t.clientY - e.top) * this.H) / e.height };
         if (this.isPanning) {
-          let r = n.x - this.panStartScreenX,
+          let s = n.x - this.panStartScreenX,
             o = n.y - this.panStartScreenY;
-          (r * r + o * o > 1 && (this.panMoved = !0),
-            (this.userPanX += r),
+          (s * s + o * o > 1 && (this.panMoved = !0),
+            (this.userPanX += s),
             (this.userPanY += o),
             (this.panStartScreenX = n.x),
             (this.panStartScreenY = n.y),
             this.render());
           return;
         }
-        let i = this.eventToCanvasPoint(e);
+        let i = this.eventToCanvasPoint(t);
         if (((this.pointer = i), this.settings.enableBettiComputation)) {
-          let r = this.findHoleAtPoint(i),
+          let s = this.findHoleAtPoint(i),
             o = this.hoveredHoleKey;
-          if (r) {
-            if (((this.hoveredHoleKey = r.boundaryNodes.sort().join("|")), this.hoveredHoleKey !== o)) {
-              let a = et(r, new Map());
-              this.callbacks.onHoleHover?.(r, a);
+          if (s) {
+            if (((this.hoveredHoleKey = s.boundaryNodes.sort().join("|")), this.hoveredHoleKey !== o)) {
+              let a = dt(s, new Map());
+              this.callbacks.onHoleHover?.(s, a);
             }
           } else ((this.hoveredHoleKey = null), o !== null && this.callbacks.onHoleHover?.(null, null));
         }
@@ -4586,23 +4740,23 @@ var Ne = class {
           this.cancelLasso(),
           this.render());
       }),
-      this.canvas.addEventListener("mousedown", (e) => {
-        if (e.shiftKey) {
-          let r = this.eventToCanvasPoint(e);
-          ((this.isLassoActive = !0), (this.lassoPath = [r]), this.controller.cancelHoverSelection(), this.render());
+      this.canvas.addEventListener("mousedown", (t) => {
+        if (t.shiftKey) {
+          let s = this.eventToCanvasPoint(t);
+          ((this.isLassoActive = !0), (this.lassoPath = [s]), this.controller.cancelHoverSelection(), this.render());
           return;
         }
-        let t = this.eventToCanvasPoint(e),
-          n = this.findNodeNearPoint(t);
+        let e = this.eventToCanvasPoint(t),
+          n = this.findNodeNearPoint(e);
         if (n) {
-          ((this.controller.hoveredNodeId = n.id), this.controller.onMousedown(n.id, t.x, t.y));
+          ((this.controller.hoveredNodeId = n.id), this.controller.onMousedown(n.id, e.x, e.y));
           return;
         }
         let i = this.canvas.getBoundingClientRect();
         ((this.isPanning = !0),
           (this.panMoved = !1),
-          (this.panStartScreenX = ((e.clientX - i.left) * this.W) / i.width),
-          (this.panStartScreenY = ((e.clientY - i.top) * this.H) / i.height));
+          (this.panStartScreenX = ((t.clientX - i.left) * this.W) / i.width),
+          (this.panStartScreenY = ((t.clientY - i.top) * this.H) / i.height));
       }),
       this.canvas.addEventListener("mouseup", () => {
         (this.controller.onMouseup() && (this.suppressNextClick = !0),
@@ -4614,124 +4768,124 @@ var Ne = class {
       this.canvas.addEventListener("dblclick", () => {
         (this.controller.hoveredNodeId && this.callbacks.onNodeOpen?.(this.controller.hoveredNodeId), this.render());
       }),
-      this.canvas.addEventListener("click", (e) => {
+      this.canvas.addEventListener("click", (t) => {
         if (this.isLassoActive || this.suppressNextClick) {
           this.suppressNextClick = !1;
           return;
         }
-        let t = this.eventToCanvasPoint(e),
-          n = this.settings.enableBettiComputation ? this.findHoleAtPoint(t) : null;
+        let e = this.eventToCanvasPoint(t),
+          n = this.settings.enableBettiComputation ? this.findHoleAtPoint(e) : null;
         if (n) {
-          let r = et(n, new Map());
-          this.callbacks.onHoleClick?.(n, r);
+          let s = dt(n, new Map());
+          this.callbacks.onHoleClick?.(n, s);
           return;
         }
-        let i = this.findSimplexAtPoint(t);
+        let i = this.findSimplexAtPoint(e);
         if (i) this.controller.selectSimplex(N(i.nodes));
         else {
-          let r = this.findHyperedgeAtPoint(t);
-          this.controller.selectRelation(r ? { kind: "hyperedge", key: r } : null);
+          let s = this.findHyperedgeAtPoint(e);
+          this.controller.selectRelation(s ? { kind: "hyperedge", key: s } : null);
         }
         this.render();
       }),
-      this.canvas.addEventListener("contextmenu", (e) => {
-        e.preventDefault();
-        let t = this.eventToCanvasPoint(e),
-          n = this.findNodeNearPoint(t),
-          i = this.findSimplexAtPoint(t),
-          r = this.findHyperedgeAtPoint(t);
-        (!n && !i && !r) ||
+      this.canvas.addEventListener("contextmenu", (t) => {
+        t.preventDefault();
+        let e = this.eventToCanvasPoint(t),
+          n = this.findNodeNearPoint(e),
+          i = this.findSimplexAtPoint(e),
+          s = this.findHyperedgeAtPoint(e);
+        (!n && !i && !s) ||
           this.callbacks.onContextMenu?.(
             {
               ...(n ? { nodeId: n.id } : {}),
               ...(i ? { simplexKey: N(i.nodes) } : {}),
-              ...(r ? { hyperedgeKey: r } : {}),
+              ...(s ? { hyperedgeKey: s } : {}),
             },
-            e,
+            t,
           );
       }));
   }
-  eventToCanvasPoint(e) {
-    let t = this.canvas.getBoundingClientRect(),
-      n = { x: ((e.clientX - t.left) * this.W) / t.width, y: ((e.clientY - t.top) * this.H) / t.height };
+  eventToCanvasPoint(t) {
+    let e = this.canvas.getBoundingClientRect(),
+      n = { x: ((t.clientX - e.left) * this.W) / e.width, y: ((t.clientY - e.top) * this.H) / e.height };
     return this.screenToWorld(n);
   }
-  screenToWorld(e) {
-    return { x: (e.x - this.viewOffsetX) / this.viewZoom, y: (e.y - this.viewOffsetY) / this.viewZoom };
+  screenToWorld(t) {
+    return { x: (t.x - this.viewOffsetX) / this.viewZoom, y: (t.y - this.viewOffsetY) / this.viewZoom };
   }
-  worldToScreen(e) {
-    return { x: e.x * this.viewZoom + this.viewOffsetX, y: e.y * this.viewZoom + this.viewOffsetY };
+  worldToScreen(t) {
+    return { x: t.x * this.viewZoom + this.viewOffsetX, y: t.y * this.viewZoom + this.viewOffsetY };
   }
-  worldRadius(e) {
-    return e / this.viewZoom;
+  worldRadius(t) {
+    return t / this.viewZoom;
   }
-  findNodeNearPoint(e) {
-    let t = this.worldRadius(20);
-    return this.model.getAllNodes().find((n) => (n.px - e.x) ** 2 + (n.py - e.y) ** 2 <= t * t) ?? null;
+  findNodeNearPoint(t) {
+    let e = this.worldRadius(20);
+    return this.model.getAllNodes().find((n) => (n.px - t.x) ** 2 + (n.py - t.y) ** 2 <= e * e) ?? null;
   }
-  findSimplexAtPoint(e) {
-    let t = [...this.model.simplices.values()]
+  findSimplexAtPoint(t) {
+    let e = [...this.model.simplices.values()]
       .filter((i) => i.nodes.length >= 2)
-      .sort((i, r) => r.nodes.length - i.nodes.length);
-    for (let i of t) {
-      let r = Ce(i, this.model.getAllNodes());
-      if (r.length === 2) {
-        let [o, a] = r,
+      .sort((i, s) => s.nodes.length - i.nodes.length);
+    for (let i of e) {
+      let s = Te(i, this.model.getAllNodes());
+      if (s.length === 2) {
+        let [o, a] = s,
           l = a.x - o.x,
           d = a.y - o.y,
-          g = Math.abs(d * e.x - l * e.y + a.x * o.y - a.y * o.x) / (Math.hypot(l, d) || 1),
+          g = Math.abs(d * t.x - l * t.y + a.x * o.y - a.y * o.x) / (Math.hypot(l, d) || 1),
           c = this.worldRadius(8);
         if (
-          e.x >= Math.min(o.x, a.x) - c &&
-          e.x <= Math.max(o.x, a.x) + c &&
-          e.y >= Math.min(o.y, a.y) - c &&
-          e.y <= Math.max(o.y, a.y) + c &&
+          t.x >= Math.min(o.x, a.x) - c &&
+          t.x <= Math.max(o.x, a.x) + c &&
+          t.y >= Math.min(o.y, a.y) - c &&
+          t.y <= Math.max(o.y, a.y) + c &&
           g <= this.worldRadius(10)
         )
           return i;
         continue;
       }
-      if (r.length >= 3 && we(e, r)) return i;
+      if (s.length >= 3 && Ee(t, s)) return i;
     }
-    let n = this.findNodeNearPoint(e);
-    return n ? (this.model.getSimplicesForNode(n.id).sort((i, r) => r.nodes.length - i.nodes.length)[0] ?? null) : null;
+    let n = this.findNodeNearPoint(t);
+    return n ? (this.model.getSimplicesForNode(n.id).sort((i, s) => s.nodes.length - i.nodes.length)[0] ?? null) : null;
   }
-  findHyperedgeAtPoint(e) {
+  findHyperedgeAtPoint(t) {
     if (!this.settings.showHyperedges) return null;
-    let t = this.model.getAllNodes(),
-      n = [...this.model.hyperedges.entries()].sort((i, r) => i[1].nodes.length - r[1].nodes.length);
-    for (let [i, r] of n) {
-      let o = Ce(r, t);
+    let e = this.model.getAllNodes(),
+      n = [...this.model.hyperedges.entries()].sort((i, s) => i[1].nodes.length - s[1].nodes.length);
+    for (let [i, s] of n) {
+      let o = Te(s, e);
       if (!(o.length < 2)) {
         if (o.length === 2) {
           let [a, l] = o,
             d = l.x - a.x,
             g = l.y - a.y,
-            c = Math.abs(g * e.x - d * e.y + l.x * a.y - l.y * a.x) / (Math.hypot(d, g) || 1),
+            c = Math.abs(g * t.x - d * t.y + l.x * a.y - l.y * a.x) / (Math.hypot(d, g) || 1),
             p = this.worldRadius(8);
           if (
-            e.x >= Math.min(a.x, l.x) - p &&
-            e.x <= Math.max(a.x, l.x) + p &&
-            e.y >= Math.min(a.y, l.y) - p &&
-            e.y <= Math.max(a.y, l.y) + p &&
+            t.x >= Math.min(a.x, l.x) - p &&
+            t.x <= Math.max(a.x, l.x) + p &&
+            t.y >= Math.min(a.y, l.y) - p &&
+            t.y <= Math.max(a.y, l.y) + p &&
             c <= this.worldRadius(10)
           )
             return i;
           continue;
         }
-        if (we(e, o)) return i;
+        if (Ee(t, o)) return i;
       }
     }
     return null;
   }
-  findHoleAtPoint(e) {
+  findHoleAtPoint(t) {
     if (!this.settings.enableBettiComputation) return null;
-    let t = this.model.getCachedBetti();
-    if (!t?.holes?.length) return null;
+    let e = this.model.getCachedBetti();
+    if (!e?.holes?.length) return null;
     let n = this.model.getAllNodes(),
       i = new Map(n.map((o) => [o.id, o])),
-      r = this.worldRadius(15);
-    for (let o of t.holes) {
+      s = this.worldRadius(15);
+    for (let o of e.holes) {
       let a = o.boundaryNodes.map((u) => i.get(u)).filter(Boolean);
       if (a.length < 3) continue;
       let l = a.filter((u) => Math.hypot(u.px, u.py) > 80);
@@ -4739,24 +4893,24 @@ var Ne = class {
       let d = l.reduce((u, m) => ({ x: u.x + m.px, y: u.y + m.py }), { x: 0, y: 0 });
       if (((d.x /= l.length), (d.y /= l.length), Math.max(...l.map((u) => Math.hypot(u.px - d.x, u.py - d.y))) < 40))
         continue;
-      if (Math.hypot(e.x - d.x, e.y - d.y) < r * 2) return o;
+      if (Math.hypot(t.x - d.x, t.y - d.y) < s * 2) return o;
       let p = l.map((u) => ({ x: u.px, y: u.py }));
-      if (we(e, p)) return o;
+      if (Ee(t, p)) return o;
     }
     return null;
   }
   finishLasso() {
-    let e = this.lassoPath.length >= 3 ? this.lassoPath : [],
-      t =
-        e.length >= 3
+    let t = this.lassoPath.length >= 3 ? this.lassoPath : [],
+      e =
+        t.length >= 3
           ? this.model
               .getAllNodes()
-              .filter((n) => we({ x: n.px, y: n.py }, e))
+              .filter((n) => Ee({ x: n.px, y: n.py }, t))
               .map((n) => n.id)
           : [];
     (this.cancelLasso(),
       (this.suppressNextClick = !0),
-      t.length >= 2 && this.callbacks.onLassoCreate?.(t),
+      e.length >= 2 && this.callbacks.onLassoCreate?.(e),
       this.render());
   }
   cancelLasso() {
@@ -4771,75 +4925,75 @@ var Ne = class {
   }
   resize() {
     if (!this.canvas || !this.ctx) return;
-    let e = this.canvas.parentElement?.getBoundingClientRect();
-    e &&
-      ((this.W = e.width),
-      (this.H = e.height),
+    let t = this.canvas.parentElement?.getBoundingClientRect();
+    t &&
+      ((this.W = t.width),
+      (this.H = t.height),
       (this.canvas.width = this.W * this.dpr),
       (this.canvas.height = this.H * this.dpr),
       (this.canvas.style.width = `${this.W}px`),
       (this.canvas.style.height = `${this.H}px`),
       this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0));
   }
-  zoomAt(e, t) {
-    let n = Math.exp(-t * 0.0015),
+  zoomAt(t, e) {
+    let n = Math.exp(-e * 0.0015),
       i = Math.max(this.MIN_ZOOM, Math.min(this.MAX_ZOOM, this.userZoom * n));
     Math.abs(i - this.userZoom) < 1e-4 || (this.userZoom = i);
   }
-  updateViewTransform(e) {
-    if (!e.length || this.W <= 0 || this.H <= 0) {
+  updateViewTransform(t) {
+    if (!t.length || this.W <= 0 || this.H <= 0) {
       ((this.viewZoom = this.userZoom), (this.viewOffsetX = this.W / 2), (this.viewOffsetY = this.H / 2));
       return;
     }
-    let t = e.filter((h) => this.nodeVisualPriority(h).bucket >= 2),
-      n = t.length > 0 ? t : e,
+    let e = t.filter((h) => this.nodeVisualPriority(h).bucket >= 2),
+      n = e.length > 0 ? e : t,
       i = this.MIN_NODE_RADIUS,
-      r = Math.min(...n.map((h) => h.px)) - i,
+      s = Math.min(...n.map((h) => h.px)) - i,
       o = Math.max(...n.map((h) => h.px)) + i,
       a = Math.min(...n.map((h) => h.py)) - i,
       l = Math.max(...n.map((h) => h.py)) + i,
-      d = Math.max(1, o - r),
+      d = Math.max(1, o - s),
       g = Math.max(1, l - a),
       c = Math.max(1, this.W - this.FIT_PADDING * 2),
       p = Math.max(1, this.H - this.FIT_PADDING * 2),
       u = Math.min(c / d, p / g),
-      m = (r + o) / 2,
+      m = (s + o) / 2,
       f = (a + l) / 2;
     ((this.viewZoom = u * this.userZoom),
       (this.viewOffsetX = this.W / 2 - m * this.viewZoom + this.userPanX),
       (this.viewOffsetY = this.H / 2 - f * this.viewZoom + this.userPanY));
   }
-  hyperedgeColor(e) {
-    return H(null, { nodes: e.nodes, label: e.label, colorKey: e.colorKey, sourcePath: e.sourcePath });
+  hyperedgeColor(t) {
+    return F(null, { nodes: t.nodes, label: t.label, colorKey: t.colorKey, sourcePath: t.sourcePath });
   }
-  encounterPulse(e) {
-    return !this.settings.enableHyperedgePulse || this.reducedMotionQuery.matches || !e.hoveredHyperedgeKey
+  encounterPulse(t) {
+    return !this.settings.enableHyperedgePulse || this.reducedMotionQuery.matches || !t.hoveredHyperedgeKey
       ? 0
-      : cn(Date.now());
+      : wn(Date.now());
   }
-  encounterDeficit(e) {
-    return xe(this.model, e)?.deficit ?? null;
+  encounterDeficit(t) {
+    return Me(this.model, t)?.deficit ?? null;
   }
-  alphaForDimension(e, t) {
-    return e === 1 ? (t ? 0.18 : 0.1) : e === 2 ? (t ? 0.18 : 0.13) : e === 3 ? (t ? 0.11 : 0.07) : 0.05;
+  alphaForDimension(t, e) {
+    return t === 1 ? (e ? 0.18 : 0.1) : t === 2 ? (e ? 0.18 : 0.13) : t === 3 ? (e ? 0.11 : 0.07) : 0.05;
   }
-  formatNodeLabel(e) {
-    return e.split("/").pop()?.replace(/\.md$/, "") ?? e;
+  formatNodeLabel(t) {
+    return t.split("/").pop()?.replace(/\.md$/, "") ?? t;
   }
-  simplexPathText(e, t) {
-    return [e, ...t.nodes.filter((i) => i !== e)].map((i) => this.formatNodeLabel(i)).join(" -> ");
+  simplexPathText(t, e) {
+    return [t, ...e.nodes.filter((i) => i !== t)].map((i) => this.formatNodeLabel(i)).join(" -> ");
   }
-  simplexDescriptor(e) {
-    let t = e.label?.trim();
-    if (t && t.toLowerCase() !== "soft cluster") return t;
-    let n = (e.inferredSignals ?? []).filter((i) => i !== "soft-cluster");
+  simplexDescriptor(t) {
+    let e = t.label?.trim();
+    if (e && e.toLowerCase() !== "soft cluster") return e;
+    let n = (t.inferredSignals ?? []).filter((i) => i !== "soft-cluster");
     if (n.length > 0) {
       let i = [],
-        r = n
+        s = n
           .filter((u) => u.startsWith("tags:"))
           .map((u) => Number(u.slice(5)))
           .filter((u) => Number.isFinite(u) && u > 0),
-        o = r.length ? Math.max(...r) : 0,
+        o = s.length ? Math.max(...s) : 0,
         a = n.includes("folder:same"),
         l = n.includes("folder:top"),
         d = n.includes("link:a->b"),
@@ -4855,147 +5009,147 @@ var Ne = class {
         i.join(" \xB7 ")
       );
     }
-    return e.dominantSignal === "tags"
+    return t.dominantSignal === "tags"
       ? "tag relation"
-      : e.dominantSignal === "folder"
+      : t.dominantSignal === "folder"
         ? "folder relation"
-        : e.dominantSignal === "link"
+        : t.dominantSignal === "link"
           ? "link relation"
-          : e.dominantSignal === "semantic"
+          : t.dominantSignal === "semantic"
             ? "semantic relation"
-            : e.dominantSignal === "soft-cluster"
+            : t.dominantSignal === "soft-cluster"
               ? "soft cluster"
-              : e.sourcePath
-                ? this.formatNodeLabel(e.sourcePath)
-                : `dim ${e.nodes.length - 1} simplex`;
+              : t.sourcePath
+                ? this.formatNodeLabel(t.sourcePath)
+                : `dim ${t.nodes.length - 1} simplex`;
   }
-  largestNodeContext(e) {
-    let t = this.model
-      .getSimplicesForNode(e)
+  largestNodeContext(t) {
+    let e = this.model
+      .getSimplicesForNode(t)
       .sort((n, i) => i.nodes.length - n.nodes.length || (i.weight ?? 1) - (n.weight ?? 1));
-    return t.length > 0 ? this.simplexDescriptor(t[0]) : null;
+    return e.length > 0 ? this.simplexDescriptor(e[0]) : null;
   }
-  drawWrappedText(e, t, n, i, r, o) {
-    let a = t.split(/\s+/).filter(Boolean);
+  drawWrappedText(t, e, n, i, s, o) {
+    let a = e.split(/\s+/).filter(Boolean);
     if (!a.length) return i;
     let l = "",
       d = i;
     return (
       a.forEach((g) => {
         let c = l ? `${l} ${g}` : g;
-        if (e.measureText(c).width <= r || !l) {
+        if (t.measureText(c).width <= s || !l) {
           l = c;
           return;
         }
-        (e.fillText(l, n, d), (d += o), (l = g));
+        (t.fillText(l, n, d), (d += o), (l = g));
       }),
-      l && e.fillText(l, n, d),
+      l && t.fillText(l, n, d),
       d + o
     );
   }
-  drawHoveredNodeOverlay(e) {
-    let t = this.controller.hoveredNodeId ?? this.controller.lockedNodeId;
-    if (!t) return;
-    let n = this.model.nodes.get(t);
+  drawHoveredNodeOverlay(t) {
+    let e = this.controller.hoveredNodeId ?? this.controller.lockedNodeId;
+    if (!e) return;
+    let n = this.model.nodes.get(e);
     if (!n) return;
-    let i = this.formatNodeLabel(t),
-      r = this.largestNodeContext(t),
-      o = this.model.getSimplicesForNode(t)[0],
-      [a, l, d] = o ? H(this.model, o) : [136, 135, 128],
+    let i = this.formatNodeLabel(e),
+      s = this.largestNodeContext(e),
+      o = this.model.getSimplicesForNode(e)[0],
+      [a, l, d] = o ? F(this.model, o) : [136, 135, 128],
       g = this.worldToScreen({ x: n.px, y: n.py });
-    (e.save(), (e.font = "700 18px system-ui, sans-serif"));
-    let c = e.measureText(i).width;
-    e.font = "500 12px system-ui, sans-serif";
-    let p = r ? Math.min(320, e.measureText(r).width) : 0,
+    (t.save(), (t.font = "700 18px system-ui, sans-serif"));
+    let c = t.measureText(i).width;
+    t.font = "500 12px system-ui, sans-serif";
+    let p = s ? Math.min(320, t.measureText(s).width) : 0,
       u = Math.min(Math.max(c + 28, p + 28, 180), 360),
-      m = r ? 48 : 26,
+      m = s ? 48 : 26,
       f = Math.min(Math.max(12, g.x + 14), this.W - u - 12),
       h = Math.min(Math.max(24, g.y - m - 18), this.H - m - 12);
-    ((e.fillStyle = `rgb(${a},${l},${d})`),
-      (e.shadowColor = this.isDark ? "rgba(10, 14, 22, 0.9)" : "rgba(255, 255, 255, 0.92)"),
-      (e.shadowBlur = 10),
-      (e.font = "700 18px system-ui, sans-serif"),
-      e.fillText(i, f, h + 18),
-      r &&
-        ((e.fillStyle = this.isDark ? "rgba(235,240,248,0.88)" : "rgba(24,28,34,0.84)"),
-        (e.shadowBlur = 8),
-        (e.font = "500 12px system-ui, sans-serif"),
-        this.drawWrappedText(e, r, f, h + 36, u, 16)),
-      e.restore());
+    ((t.fillStyle = `rgb(${a},${l},${d})`),
+      (t.shadowColor = this.isDark ? "rgba(10, 14, 22, 0.9)" : "rgba(255, 255, 255, 0.92)"),
+      (t.shadowBlur = 10),
+      (t.font = "700 18px system-ui, sans-serif"),
+      t.fillText(i, f, h + 18),
+      s &&
+        ((t.fillStyle = this.isDark ? "rgba(235,240,248,0.88)" : "rgba(24,28,34,0.84)"),
+        (t.shadowBlur = 8),
+        (t.font = "500 12px system-ui, sans-serif"),
+        this.drawWrappedText(t, s, f, h + 36, u, 16)),
+      t.restore());
   }
-  drawFormalSimplex(e, t, n) {
-    let i = Ce(t, this.model.getAllNodes());
+  drawFormalSimplex(t, e, n) {
+    let i = Te(e, this.model.getAllNodes());
     if (i.length < 2) return;
-    let [r, o, a] = H(this.model, t),
+    let [s, o, a] = F(this.model, e),
       l = n ? 0.8 : 0.28;
     if (
-      (e.save(),
-      (e.strokeStyle = `rgba(${r},${o},${a},${l})`),
-      (e.lineWidth = t.nodes.length >= 3 ? 1.6 : 1.1),
+      (t.save(),
+      (t.strokeStyle = `rgba(${s},${o},${a},${l})`),
+      (t.lineWidth = e.nodes.length >= 3 ? 1.6 : 1.1),
       i.length === 2)
     ) {
-      (e.beginPath(), e.moveTo(i[0].x, i[0].y), e.lineTo(i[1].x, i[1].y), e.stroke(), e.restore());
+      (t.beginPath(), t.moveTo(i[0].x, i[0].y), t.lineTo(i[1].x, i[1].y), t.stroke(), t.restore());
       return;
     }
-    (e.beginPath(),
-      e.moveTo(i[0].x, i[0].y),
-      i.slice(1).forEach((d) => e.lineTo(d.x, d.y)),
-      e.closePath(),
-      e.stroke(),
-      (e.fillStyle = `rgba(${r},${o},${a},${t.inferred ? 0.03 : 0.06})`),
-      e.fill(),
-      e.restore());
+    (t.beginPath(),
+      t.moveTo(i[0].x, i[0].y),
+      i.slice(1).forEach((d) => t.lineTo(d.x, d.y)),
+      t.closePath(),
+      t.stroke(),
+      (t.fillStyle = `rgba(${s},${o},${a},${e.inferred ? 0.03 : 0.06})`),
+      t.fill(),
+      t.restore());
   }
-  drawSuggestionOverlay(e, t, n) {
+  drawSuggestionOverlay(t, e, n) {
     if (!this.settings.showSuggestions || !n.suggested || !n.inferred) return;
-    let i = Ce(n, this.model.getAllNodes());
+    let i = Te(n, this.model.getAllNodes());
     if (i.length < 2) return;
-    let [r, o, a] = H(this.model, n);
-    (e.save(),
-      e.setLineDash([5, 5]),
-      (e.strokeStyle = `rgba(${r},${o},${a},0.7)`),
-      (e.lineWidth = 1),
+    let [s, o, a] = F(this.model, n);
+    (t.save(),
+      t.setLineDash([5, 5]),
+      (t.strokeStyle = `rgba(${s},${o},${a},0.7)`),
+      (t.lineWidth = 1),
       i.length === 2
-        ? (e.beginPath(), e.moveTo(i[0].x, i[0].y), e.lineTo(i[1].x, i[1].y), e.stroke())
-        : (e.beginPath(),
-          e.moveTo(i[0].x, i[0].y),
-          i.slice(1).forEach((p) => e.lineTo(p.x, p.y)),
-          e.closePath(),
-          e.stroke()),
-      e.setLineDash([]));
+        ? (t.beginPath(), t.moveTo(i[0].x, i[0].y), t.lineTo(i[1].x, i[1].y), t.stroke())
+        : (t.beginPath(),
+          t.moveTo(i[0].x, i[0].y),
+          i.slice(1).forEach((p) => t.lineTo(p.x, p.y)),
+          t.closePath(),
+          t.stroke()),
+      t.setLineDash([]));
     let l = i.reduce((p, u) => ({ x: p.x + u.x, y: p.y + u.y }), { x: 0, y: 0 });
     ((l.x /= i.length), (l.y /= i.length));
     let d = Math.round((n.confidence ?? n.weight ?? 0) * 100),
       g = n.nodes.length > 2 ? `Form? ${d}%` : `${d}%`;
-    e.font = "11px system-ui, sans-serif";
-    let c = e.measureText(g).width + 10;
-    ((e.fillStyle = this.isDark ? "rgba(10,14,22,0.85)" : "rgba(255,255,255,0.88)"),
-      e.beginPath(),
-      e.roundRect(l.x - c / 2, l.y - 10, c, 18, 9),
-      e.fill(),
-      (e.fillStyle = `rgb(${r},${o},${a})`),
-      (e.textAlign = "center"),
-      e.fillText(g, l.x, l.y + 3),
-      e.restore());
+    t.font = "11px system-ui, sans-serif";
+    let c = t.measureText(g).width + 10;
+    ((t.fillStyle = this.isDark ? "rgba(10,14,22,0.85)" : "rgba(255,255,255,0.88)"),
+      t.beginPath(),
+      t.roundRect(l.x - c / 2, l.y - 10, c, 18, 9),
+      t.fill(),
+      (t.fillStyle = `rgb(${s},${o},${a})`),
+      (t.textAlign = "center"),
+      t.fillText(g, l.x, l.y + 3),
+      t.restore());
   }
   render() {
     if (!this.ctx) return;
-    let e = this.ctx,
-      t = this.model.getAllNodes(),
+    let t = this.ctx,
+      e = this.model.getAllNodes(),
       n = [...this.model.simplices.entries()]
         .filter(([, h]) => h.nodes.length - 1 <= this.settings.maxRenderedDim)
         .sort((h, y) => y[1].nodes.length - h[1].nodes.length),
       i = this.controller.getFocusState();
-    this.updateViewTransform(t);
-    let r = this.getVisibleNodes(t),
-      o = this.getProgressiveRenderableNodes(r, i.activeNodeIds),
+    this.updateViewTransform(e);
+    let s = this.getVisibleNodes(e),
+      o = this.getProgressiveRenderableNodes(s, i.activeNodeIds),
       a = new Set(o.map((h) => h.id)),
       l = this.getRenderableSimplices(n, a, i.activeSimplexKeys),
       d = this.getRenderableHyperedges(a);
-    (e.setTransform(this.dpr, 0, 0, this.dpr, 0, 0),
-      e.clearRect(0, 0, this.W, this.H),
-      e.translate(this.viewOffsetX, this.viewOffsetY),
-      e.scale(this.viewZoom, this.viewZoom),
+    (t.setTransform(this.dpr, 0, 0, this.dpr, 0, 0),
+      t.clearRect(0, 0, this.W, this.H),
+      t.translate(this.viewOffsetX, this.viewOffsetY),
+      t.scale(this.viewZoom, this.viewZoom),
       this.lastRenderedNodes.clear(),
       o.forEach((h) => this.lastRenderedNodes.add(h.id)));
     let g = [],
@@ -5007,18 +5161,18 @@ var Ne = class {
           (v === 1 && !this.settings.showEdges) ||
             (v === 2 && !this.settings.showClusters) ||
             (v >= 3 && !this.settings.showCores) ||
-            (this.drawFormalSimplex(e, y, !i.isActive || i.involvesSimplex(y, h)), this.drawSuggestionOverlay(e, h, y));
+            (this.drawFormalSimplex(t, y, !i.isActive || i.involvesSimplex(y, h)), this.drawSuggestionOverlay(t, h, y));
         })
       : l.forEach(([h, y]) => {
           let v = y.nodes.length - 1;
           (v === 1 && !this.settings.showEdges) ||
             (v === 2 && !this.settings.showClusters) ||
             (v >= 3 && !this.settings.showCores) ||
-            (dn(e, h, y, this.model, t, this.alphaForDimension(v, i.isActive), i), this.drawSuggestionOverlay(e, h, y));
+            (xn(t, h, y, this.model, e, this.alphaForDimension(v, i.isActive), i), this.drawSuggestionOverlay(t, h, y));
         }),
       this.settings.formalMode ||
-        fn(
-          e,
+        Dn(
+          t,
           l.map(([, h]) => h),
           this.model,
           this.model.nodes,
@@ -5032,12 +5186,12 @@ var Ne = class {
       let v = !i.isActive || i.involvesRelation({ kind: "hyperedge", ...y }, h),
         b = u > 0 && h === i.hoveredHyperedgeKey;
       (b && y.nodes.forEach((S) => m.add(S)),
-        ln(
-          e,
-          y,
+        Sn(
           t,
+          y,
+          e,
           this.hyperedgeColor(y),
-          hn({
+          Cn({
             opacity: this.settings.hyperedgeOpacity,
             focused: v,
             deficit: this.encounterDeficit(h),
@@ -5051,90 +5205,90 @@ var Ne = class {
         let y = h.id === i.hoveredNodeId,
           v = !i.isActive || i.involvesNode(h.id),
           b = this.model.getSimplicesForNode(h.id)[0] ?? null,
-          [S, w, E] = b ? H(this.model, b) : [136, 135, 128];
+          [S, w, E] = b ? F(this.model, b) : [136, 135, 128];
         y &&
-          (e.beginPath(), e.arc(h.px, h.py, 15, 0, Math.PI * 2), (e.fillStyle = `rgba(${S},${w},${E},0.10)`), e.fill());
+          (t.beginPath(), t.arc(h.px, h.py, 15, 0, Math.PI * 2), (t.fillStyle = `rgba(${S},${w},${E},0.10)`), t.fill());
         let I = this.settings.formalMode ? 4.5 : y ? 7 : 5,
-          A = m.has(h.id) ? un(I, u) : I;
-        (e.beginPath(),
+          A = m.has(h.id) ? Nn(I, u) : I,
+          L = this.activation.get(h.id) ?? 0,
+          ne = Math.min(1, (v ? h.displayAlpha : 0.2) + L * 0.5);
+        (t.beginPath(),
           h.isVirtual
-            ? (e.arc(h.px, h.py, A, 0, Math.PI * 2),
-              (e.strokeStyle = `rgba(${S},${w},${E},${h.displayAlpha})`),
-              (e.lineWidth = 1.5),
-              e.stroke())
-            : (e.arc(h.px, h.py, A, 0, Math.PI * 2),
-              (e.fillStyle = `rgba(${S},${w},${E},${v ? h.displayAlpha : 0.2})`),
-              e.fill()),
+            ? (t.arc(h.px, h.py, A, 0, Math.PI * 2),
+              (t.strokeStyle = `rgba(${S},${w},${E},${ne})`),
+              (t.lineWidth = 1.5),
+              t.stroke())
+            : (t.arc(h.px, h.py, A, 0, Math.PI * 2), (t.fillStyle = `rgba(${S},${w},${E},${ne})`), t.fill()),
           h.isPinned &&
-            (e.beginPath(),
-            e.moveTo(h.px, h.py - 18),
-            e.lineTo(h.px + 5, h.py - 13),
-            e.lineTo(h.px, h.py - 8),
-            e.lineTo(h.px - 5, h.py - 13),
-            e.closePath(),
-            (e.fillStyle = `rgba(${S},${w},${E},0.8)`),
-            e.fill()),
-          (e.font = `${y ? "500" : "400"} 12px system-ui, sans-serif`));
-        let D = this.formatNodeLabel(h.id),
-          te = c < p,
-          O = this.canPlaceLabelFast(g, D, h.px, h.py - 13),
-          G = this.measureTextWidth(e, D) + 12,
-          ae = this.nodeVisualPriority(h),
-          le = y || i.lockedNodeId === h.id || h.isPinned,
-          nt = ae.bucket >= 3,
-          Y = ae.bucket === 2,
-          Pn = ae.bucket === 0;
+            (t.beginPath(),
+            t.moveTo(h.px, h.py - 18),
+            t.lineTo(h.px + 5, h.py - 13),
+            t.lineTo(h.px, h.py - 8),
+            t.lineTo(h.px - 5, h.py - 13),
+            t.closePath(),
+            (t.fillStyle = `rgba(${S},${w},${E},0.8)`),
+            t.fill()),
+          (t.font = `${y ? "500" : "400"} 12px system-ui, sans-serif`));
+        let K = this.formatNodeLabel(h.id),
+          ie = c < p,
+          he = this.canPlaceLabelFast(g, K, h.px, h.py - 13),
+          $ = this.measureTextWidth(t, K) + 12,
+          se = this.nodeVisualPriority(h),
+          B = y || i.lockedNodeId === h.id || h.isPinned,
+          Bn = se.bucket >= 3,
+          zn = se.bucket === 2,
+          jn = se.bucket === 0;
         if (
           !(
-            le ||
-            (nt && te && O) ||
-            (Y && c < Math.max(2, Math.floor(p * 0.45)) && O) ||
-            (!Pn && i.isActive && te && O)
+            B ||
+            (Bn && ie && he) ||
+            (zn && c < Math.max(2, Math.floor(p * 0.45)) && he) ||
+            (!jn && i.isActive && ie && he)
           )
         )
           return;
-        le || c++;
-        let it = 18,
-          Re = h.px - G / 2,
-          Fe = h.py - 27;
-        (g.push({ left: Re, top: Fe, right: Re + G, bottom: Fe + it }),
-          (e.fillStyle = this.isDark ? "rgba(7,10,18,0.28)" : "rgba(255,255,255,0.42)"),
-          e.beginPath(),
-          e.roundRect(Re, Fe, G, it, 9),
-          e.fill(),
-          (e.fillStyle = this.isDark ? `rgba(255,255,255,${v ? 0.88 : 0.32})` : `rgba(0,0,0,${v ? 0.72 : 0.28})`),
-          (e.textAlign = "center"),
-          e.fillText(D, h.px, h.py - 13));
+        B || c++;
+        let ht = 18,
+          Ke = h.px - $ / 2,
+          Oe = h.py - 27;
+        (g.push({ left: Ke, top: Oe, right: Ke + $, bottom: Oe + ht }),
+          (t.fillStyle = this.isDark ? "rgba(7,10,18,0.28)" : "rgba(255,255,255,0.42)"),
+          t.beginPath(),
+          t.roundRect(Ke, Oe, $, ht, 9),
+          t.fill(),
+          (t.fillStyle = this.isDark ? `rgba(255,255,255,${v ? 0.88 : 0.32})` : `rgba(0,0,0,${v ? 0.72 : 0.28})`),
+          (t.textAlign = "center"),
+          t.fillText(K, h.px, h.py - 13));
       }),
       this.isLassoActive &&
         this.lassoPath.length > 1 &&
-        (e.save(),
-        (e.strokeStyle = this.isDark ? "rgba(255,255,255,0.45)" : "rgba(0,0,0,0.45)"),
-        (e.fillStyle = this.isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)"),
-        e.setLineDash([6, 6]),
-        e.beginPath(),
-        e.moveTo(this.lassoPath[0].x, this.lassoPath[0].y),
-        this.lassoPath.slice(1).forEach((h) => e.lineTo(h.x, h.y)),
-        e.stroke(),
-        e.lineTo(this.pointer.x, this.pointer.y),
-        e.closePath(),
-        e.fill(),
-        e.restore()),
-      e.setTransform(this.dpr, 0, 0, this.dpr, 0, 0),
-      this.drawHoveredNodeOverlay(e));
+        (t.save(),
+        (t.strokeStyle = this.isDark ? "rgba(255,255,255,0.45)" : "rgba(0,0,0,0.45)"),
+        (t.fillStyle = this.isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)"),
+        t.setLineDash([6, 6]),
+        t.beginPath(),
+        t.moveTo(this.lassoPath[0].x, this.lassoPath[0].y),
+        this.lassoPath.slice(1).forEach((h) => t.lineTo(h.x, h.y)),
+        t.stroke(),
+        t.lineTo(this.pointer.x, this.pointer.y),
+        t.closePath(),
+        t.fill(),
+        t.restore()),
+      t.setTransform(this.dpr, 0, 0, this.dpr, 0, 0),
+      this.drawHoveredNodeOverlay(t));
     let f = this.settings.bettiDisplayOnCanvas && this.settings.enableBettiComputation;
-    (f && vn(e, this.model, this.isDark),
-      this.settings.showHyperedges && bn(e, this.model, this.isDark, f ? 46 : 14),
+    (f && In(t, this.model, this.isDark),
+      this.settings.showHyperedges && Pn(t, this.model, this.isDark, f ? 46 : 14),
       this.settings.enableBettiComputation &&
-        Sn(e, this.model, this.isDark, this.getVisibleWorldBounds(), this.hoveredHoleKey));
+        Rn(t, this.model, this.isDark, this.getVisibleWorldBounds(), this.hoveredHoleKey));
   }
   getVisibleWorldBounds() {
-    let e = this.screenToWorld({ x: 0, y: 0 }),
-      t = this.screenToWorld({ x: this.W, y: this.H });
-    return { minX: Math.min(e.x, t.x), maxX: Math.max(e.x, t.x), minY: Math.min(e.y, t.y), maxY: Math.max(e.y, t.y) };
+    let t = this.screenToWorld({ x: 0, y: 0 }),
+      e = this.screenToWorld({ x: this.W, y: this.H });
+    return { minX: Math.min(t.x, e.x), maxX: Math.max(t.x, e.x), minY: Math.min(t.y, e.y), maxY: Math.max(t.y, e.y) };
   }
-  canPlaceLabel(e, t, n, i, r) {
-    return this.canPlaceLabelFast(t, n, i, r);
+  canPlaceLabel(t, e, n, i, s) {
+    return this.canPlaceLabelFast(e, n, i, s);
   }
   getBounds() {
     return { width: this.W, height: this.H };
@@ -5147,8 +5301,8 @@ var Ne = class {
       (this.ctx = null));
   }
 };
-var L = require("obsidian"),
-  zi = {
+var H = require("obsidian"),
+  cs = {
     simplex: {
       title: "Create simplex",
       blurb: "A simplex claims the group and every sub-relation within it is coherent. Its faces will be generated.",
@@ -5161,12 +5315,12 @@ var L = require("obsidian"),
       cta: "Create encounter",
     },
   },
-  Me = class extends L.Modal {
-    constructor(t, n, i, r, o = "simplex") {
-      super(t);
+  ke = class extends H.Modal {
+    constructor(e, n, i, s, o = "simplex") {
+      super(e);
       this.initialNodes = n;
       this.persistenceLabel = i;
-      this.onSubmit = r;
+      this.onSubmit = s;
       this.nodesInput = "";
       this.labelInput = "";
       this.modeInput = "";
@@ -5176,78 +5330,78 @@ var L = require("obsidian"),
     onOpen() {
       (this.render(),
         window.setTimeout(() => {
-          let t = this.contentEl.querySelector("textarea");
-          t instanceof HTMLTextAreaElement && t.focus();
+          let e = this.contentEl.querySelector("textarea");
+          e instanceof HTMLTextAreaElement && e.focus();
         }, 0));
     }
     render() {
-      let { contentEl: t } = this;
-      t.empty();
-      let n = zi[this.kind];
-      (t.createEl("h3", { text: n.title }),
-        t.createEl("p", { text: n.blurb }),
-        t.createEl("p", {
+      let { contentEl: e } = this;
+      e.empty();
+      let n = cs[this.kind];
+      (e.createEl("h3", { text: n.title }),
+        e.createEl("p", { text: n.blurb }),
+        e.createEl("p", {
           text: `Saves to ${this.persistenceLabel}. Use commas, spaces, or new lines to separate nodes.`,
         }),
-        new L.Setting(t)
+        new H.Setting(e)
           .setName("Kind")
           .setDesc("Simplex: coherence inherited across subrelations. Encounter: irreducible group emergence.")
-          .addDropdown((r) => {
-            (r.addOption("simplex", "Simplex (\u25B3)"),
-              r.addOption("hyperedge", "Encounter (\u25C7)"),
-              r.setValue(this.kind),
-              r.onChange((o) => {
+          .addDropdown((s) => {
+            (s.addOption("simplex", "Simplex (\u25B3)"),
+              s.addOption("hyperedge", "Encounter (\u25C7)"),
+              s.setValue(this.kind),
+              s.onChange((o) => {
                 ((this.kind = o === "hyperedge" ? "hyperedge" : "simplex"), this.render());
               }));
           }));
       let i = null;
-      (new L.Setting(t)
+      (new H.Setting(e)
         .setName("Nodes")
         .setDesc("These will be resolved as notes when possible; unknown values become virtual nodes.")
-        .addTextArea((r) => {
-          ((i = r),
-            r.setValue(this.nodesInput),
-            (r.inputEl.rows = 6),
-            r.onChange((o) => {
+        .addTextArea((s) => {
+          ((i = s),
+            s.setValue(this.nodesInput),
+            (s.inputEl.rows = 6),
+            s.onChange((o) => {
               this.nodesInput = o;
             }));
         }),
-        new L.Setting(t).setName("Label").addText((r) => {
-          (r.setPlaceholder("Unnamed"),
-            r.setValue(this.labelInput),
-            r.onChange((o) => {
+        new H.Setting(e).setName("Label").addText((s) => {
+          (s.setPlaceholder("Unnamed"),
+            s.setValue(this.labelInput),
+            s.onChange((o) => {
               this.labelInput = o;
             }));
         }),
         this.kind === "hyperedge" &&
-          new L.Setting(t)
+          new H.Setting(e)
             .setName("Mode")
             .setDesc("What kind of encounter this was \u2014 free text, e.g. 'encounter', 'reading', 'argument'.")
-            .addText((r) => {
-              (r.setPlaceholder("encounter"),
-                r.setValue(this.modeInput),
-                r.onChange((o) => {
+            .addText((s) => {
+              (s.setPlaceholder("encounter"),
+                s.setValue(this.modeInput),
+                s.onChange((o) => {
                   this.modeInput = o;
                 }));
             }),
-        new L.Setting(t)
+        new H.Setting(e)
           .setName("Weight")
           .setDesc("0.1 to 1.0")
-          .addSlider((r) => {
-            (r.setLimits(0.1, 1, 0.1),
-              r.setValue(this.weightInput),
-              r.onChange((o) => {
+          .addSlider((s) => {
+            (s.setLimits(0.1, 1, 0.1),
+              s.setValue(this.weightInput),
+              s.onChange((o) => {
                 this.weightInput = o;
               }));
           }),
-        new L.Setting(t)
-          .addButton((r) => {
-            (r.setButtonText(n.cta),
-              r.setCta(),
-              r.onClick(async () => {
+        new H.Setting(e)
+          .addButton((s) => {
+            (s.setButtonText(n.cta),
+              s.setCta(),
+              s.onClick(async () => {
                 let o = this.parseNodes(this.nodesInput);
                 if (o.length < 2) {
-                  (new L.Notice(
+                  (new H.Notice(
                     this.kind === "hyperedge"
                       ? "An encounter needs at least two participants."
                       : "A simplex needs at least two nodes.",
@@ -5265,54 +5419,54 @@ var L = require("obsidian"),
                   this.close());
               }));
           })
-          .addExtraButton((r) => {
-            (r.setIcon("cross"), r.setTooltip("Cancel"), r.onClick(() => this.close()));
+          .addExtraButton((s) => {
+            (s.setIcon("cross"), s.setTooltip("Cancel"), s.onClick(() => this.close()));
           }));
     }
-    parseNodes(t) {
-      return t
+    parseNodes(e) {
+      return e
         .split(/[\n,\s]+/g)
         .map((n) => n.trim())
         .filter(Boolean)
-        .filter((n, i, r) => r.indexOf(n) === i);
+        .filter((n, i, s) => s.indexOf(n) === i);
     }
   };
-var Te = require("obsidian");
-function Nn(s) {
-  return s.split("/").pop()?.replace(/\.md$/, "") ?? s;
+var Pe = require("obsidian");
+function Ln(r) {
+  return r.split("/").pop()?.replace(/\.md$/, "") ?? r;
 }
-var Ee = class extends Te.Modal {
-  constructor(t, n, i, r) {
-    super(t);
+var Ie = class extends Pe.Modal {
+  constructor(e, n, i, s) {
+    super(e);
     this.nodes = n;
     this.faces = i;
-    this.onConfirm = r;
+    this.onConfirm = s;
   }
   onOpen() {
-    let { contentEl: t } = this;
+    let { contentEl: e } = this;
     if (
-      (t.empty(),
-      t.createEl("h3", { text: "Promote encounter to simplex" }),
-      t.createEl("p", {
-        text: `You are asserting that ${this.nodes.map(Nn).join(" \xB7 ")} is not only meaningful as a whole, but that its sub-relations are meaningful too.`,
+      (e.empty(),
+      e.createEl("h3", { text: "Promote encounter to simplex" }),
+      e.createEl("p", {
+        text: `You are asserting that ${this.nodes.map(Ln).join(" \xB7 ")} is not only meaningful as a whole, but that its sub-relations are meaningful too.`,
       }),
       this.faces.length === 0)
     )
-      t.createEl("p", { text: "Every implied face already exists in the complex, so nothing new will be asserted." });
+      e.createEl("p", { text: "Every implied face already exists in the complex, so nothing new will be asserted." });
     else {
-      t.createEl("p", {
+      e.createEl("p", {
         text: `${this.faces.length} new ${this.faces.length === 1 ? "relation" : "relations"} will be created:`,
       });
-      let n = t.createEl("ul", { cls: "simplicial-promote-faces" });
+      let n = e.createEl("ul", { cls: "simplicial-promote-faces" });
       this.faces.forEach((i) => {
-        n.createEl("li", { text: i.map(Nn).join(" \u2014 ") });
+        n.createEl("li", { text: i.map(Ln).join(" \u2014 ") });
       });
     }
-    (t.createEl("p", {
+    (e.createEl("p", {
       cls: "simplicial-promote-note",
       text: "The encounter is kept as provenance, so this can be undone with 'relax to encounter'.",
     }),
-      new Te.Setting(t)
+      new Pe.Setting(e)
         .addButton((n) => {
           (n.setButtonText("Promote"),
             n.setCta(),
@@ -5326,9 +5480,9 @@ var Ee = class extends Te.Modal {
   }
 };
 var T = require("obsidian");
-var Pe = class extends T.ItemView {
-  constructor(t, n) {
-    super(t);
+var Re = class extends T.ItemView {
+  constructor(e, n) {
+    super(e);
     this.model = n;
     this.simplexKey = null;
     this.selection = null;
@@ -5338,14 +5492,14 @@ var Pe = class extends T.ItemView {
     this.nodeProfiles = [];
     this.subsetScorer = null;
   }
-  setSettings(t) {
-    this.settings = t;
+  setSettings(e) {
+    this.settings = e;
   }
-  setNodeProfiles(t) {
-    this.nodeProfiles = t;
+  setNodeProfiles(e) {
+    this.nodeProfiles = e;
   }
-  setSubsetScorer(t) {
-    this.subsetScorer = t;
+  setSubsetScorer(e) {
+    this.subsetScorer = e;
   }
   getViewType() {
     return q;
@@ -5353,48 +5507,48 @@ var Pe = class extends T.ItemView {
   getDisplayText() {
     return "Simplicial metadata";
   }
-  setActions(t) {
-    ((this.actions = t),
-      (this.saveMetadata = t.saveMetadata),
-      (this.promoteSimplex = t.promoteSimplex),
-      (this.dissolveSimplex = t.dissolveSimplex));
+  setActions(e) {
+    ((this.actions = e),
+      (this.saveMetadata = e.saveMetadata),
+      (this.promoteSimplex = e.promoteSimplex),
+      (this.dissolveSimplex = e.dissolveSimplex));
   }
-  setHistory(t) {
-    this.history = t;
+  setHistory(e) {
+    this.history = e;
   }
-  setSelection(t) {
-    let n = typeof t == "string" ? { kind: "simplex", key: t } : t;
+  setSelection(e) {
+    let n = typeof e == "string" ? { kind: "simplex", key: e } : e;
     ((this.selection = n), (this.simplexKey = n?.kind === "simplex" ? n.key : null), this.renderPanel());
   }
   async onOpen() {
     (await Promise.resolve(), this.renderPanel());
   }
   renderPanel() {
-    let { contentEl: t } = this;
-    if ((t.empty(), this.selection?.kind === "hyperedge")) {
-      this.renderHyperedgePanel(t, this.selection.key);
+    let { contentEl: e } = this;
+    if ((e.empty(), this.selection?.kind === "hyperedge")) {
+      this.renderHyperedgePanel(e, this.selection.key);
       return;
     }
     let n = this.simplexKey ? this.model.getSimplex(this.simplexKey) : null;
-    if ((t.createEl("div", { cls: "simplicial-panel-title", text: "Simplex" }), !n)) {
-      t.createEl("div", { text: "Select a simplex or an encounter." });
+    if ((e.createEl("div", { cls: "simplicial-panel-title", text: "Simplex" }), !n)) {
+      e.createEl("div", { text: "Select a simplex or an encounter." });
       return;
     }
-    (this.settings?.enableExplanationPanel && this.renderExplanationCard(t, n),
-      t.createEl("div", { cls: "simplicial-panel-section-label", text: "Nodes" }),
-      t.createEl("div", { cls: "simplicial-panel-value", text: n.nodes.join(" \xB7 ") }));
+    (this.settings?.enableExplanationPanel && this.renderExplanationCard(e, n),
+      e.createEl("div", { cls: "simplicial-panel-section-label", text: "Nodes" }),
+      e.createEl("div", { cls: "simplicial-panel-value", text: n.nodes.join(" \xB7 ") }));
     let i = this.model.getAnalysisSummary(),
-      [r, o, a] = H(this.model, n),
-      l = t.createDiv({ cls: "simplicial-panel-badges" });
-    (this.renderBadge(l, n.autoGenerated ? "Auto face" : n.inferred ? "Inferred" : "Confirmed", [r, o, a]),
-      this.renderBadge(l, `dim ${n.nodes.length - 1}`, [r, o, a]),
-      n.sourcePath && this.renderBadge(l, n.sourcePath.replace(/\.md$/, ""), [r, o, a], !0),
+      [s, o, a] = F(this.model, n),
+      l = e.createDiv({ cls: "simplicial-panel-badges" });
+    (this.renderBadge(l, n.autoGenerated ? "Auto face" : n.inferred ? "Inferred" : "Confirmed", [s, o, a]),
+      this.renderBadge(l, `dim ${n.nodes.length - 1}`, [s, o, a]),
+      n.sourcePath && this.renderBadge(l, n.sourcePath.replace(/\.md$/, ""), [s, o, a], !0),
       n.inferred &&
-        (t.createEl("div", {
+        (e.createEl("div", {
           cls: "simplicial-panel-value",
           text: `Inferred from: ${(n.inferredSignals ?? []).join(" \xB7 ") || "weighted vault signals"}`,
         }),
-        t.createEl("div", {
+        e.createEl("div", {
           cls: "simplicial-panel-value",
           text: `Confidence: ${Math.round((n.confidence ?? n.weight ?? 0) * 100)}%${n.suggested ? " \xB7 suggested" : ""}${n.decayedWeight !== void 0 ? ` \xB7 decayed ${Math.round(n.decayedWeight * 100)}%` : ""}`,
         })));
@@ -5404,24 +5558,24 @@ var Pe = class extends T.ItemView {
       .map(({ nodeId: c, centrality: p }) => `${c.replace(/\.md$/, "")} (${p})`)
       .join(" \xB7 ");
     if (
-      (t.createEl("div", { cls: "simplicial-panel-value", text: `Simplex centrality: ${g || "n/a"}` }),
+      (e.createEl("div", { cls: "simplicial-panel-value", text: `Simplex centrality: ${g || "n/a"}` }),
       i.maxSimplexCentralityNodeId &&
-        t.createEl("div", {
+        e.createEl("div", {
           cls: "simplicial-panel-value",
           text: `Global hub: ${i.maxSimplexCentralityNodeId.replace(/\.md$/, "")} (${i.maxSimplexCentrality}) \xB7 avg ${i.averageSimplexCentrality}`,
         }),
       n.inferred ||
-        t.createEl("div", {
+        e.createEl("div", {
           cls: "simplicial-panel-value",
           text: `Persistence: ${n.sourcePath?.replace(/\.md$/, "") ?? "in memory"}`,
         }),
       n.autoGenerated)
     ) {
-      (t.createEl("div", { cls: "simplicial-panel-value", text: "Auto-generated face. Metadata editing is disabled." }),
-        t.createEl("div", { cls: "simplicial-panel-footer", text: `dim: ${n.nodes.length - 1} \xB7 auto: yes` }));
+      (e.createEl("div", { cls: "simplicial-panel-value", text: "Auto-generated face. Metadata editing is disabled." }),
+        e.createEl("div", { cls: "simplicial-panel-footer", text: `dim: ${n.nodes.length - 1} \xB7 auto: yes` }));
       return;
     }
-    (new T.Setting(t).setName("Label").addText((c) => {
+    (new T.Setting(e).setName("Label").addText((c) => {
       (c.setPlaceholder("Unnamed"),
         c.setValue(n.label ?? ""),
         c.onChange((p) => {
@@ -5431,7 +5585,7 @@ var Pe = class extends T.ItemView {
             }, 500)));
         }));
     }),
-      new T.Setting(t)
+      new T.Setting(e)
         .setName("Weight")
         .setDesc(String(n.weight ?? 1))
         .addSlider((c) => {
@@ -5445,7 +5599,7 @@ var Pe = class extends T.ItemView {
               this.saveMetadata?.(this.simplexKey, { weight: p });
             }));
         }),
-      new T.Setting(t)
+      new T.Setting(e)
         .setName("Relax to encounter")
         .setDesc(
           "Withdraw the claim that this group's sub-relations are meaningful, while keeping the group relation itself.",
@@ -5456,7 +5610,7 @@ var Pe = class extends T.ItemView {
               this.simplexKey && (await this.actions?.relaxSimplex(this.simplexKey));
             }));
         }),
-      new T.Setting(t)
+      new T.Setting(e)
         .addButton((c) => {
           (c.setButtonText("Promote to note"),
             c.onClick(async () => {
@@ -5471,32 +5625,32 @@ var Pe = class extends T.ItemView {
               this.simplexKey && (await this.dissolveSimplex?.(this.simplexKey), new T.Notice("Simplex dissolved."));
             }));
         }),
-      t.createEl("div", {
+      e.createEl("div", {
         cls: "simplicial-panel-footer",
         text: `dim: ${n.nodes.length - 1} \xB7 auto: ${n.autoGenerated ? "yes" : "no"} \xB7 inferred: ${n.inferred ? "yes" : "no"}`,
       }));
   }
-  renderHyperedgePanel(t, n) {
-    t.createEl("div", { cls: "simplicial-panel-title", text: "Encounter" });
+  renderHyperedgePanel(e, n) {
+    e.createEl("div", { cls: "simplicial-panel-title", text: "Encounter" });
     let i = this.model.getHyperedge(n);
     if (!i) {
-      t.createEl("div", { text: "This encounter is no longer in the graph." });
+      e.createEl("div", { text: "This encounter is no longer in the graph." });
       return;
     }
-    let r = this.settings?.encounterRecurrenceThreshold ?? 3,
+    let s = this.settings?.encounterRecurrenceThreshold ?? 3,
       o = this.history?.occurrencesOf(i.nodes) ?? [],
-      a = mn(this.model, n, {
+      a = Tn(this.model, n, {
         ...(this.subsetScorer ? { score: this.subsetScorer } : {}),
         occurrences: o,
         halfLifeDays: this.settings?.decayHalfLifeDays ?? 90,
       });
-    (t.createEl("div", {
+    (e.createEl("div", {
       cls: "simplicial-explanation-tension",
       text: "These notes came together as one irreducible whole. No pair among them is asserted to be meaningful on its own.",
     }),
-      t.createEl("div", { cls: "simplicial-panel-section-label", text: "Participants" }),
-      t.createEl("div", { cls: "simplicial-panel-value", text: i.nodes.join(" \xB7 ") }));
-    let l = t.createDiv({ cls: "simplicial-panel-badges" }),
+      e.createEl("div", { cls: "simplicial-panel-section-label", text: "Participants" }),
+      e.createEl("div", { cls: "simplicial-panel-value", text: i.nodes.join(" \xB7 ") }));
+    let l = e.createDiv({ cls: "simplicial-panel-badges" }),
       d = [127, 119, 221];
     (this.renderBadge(l, `order ${i.nodes.length}`, d),
       this.renderBadge(l, i.persistence === "recurring" ? "Recurring" : "Momentary", d),
@@ -5504,17 +5658,17 @@ var Pe = class extends T.ItemView {
       i.promotedTo && this.renderBadge(l, "promoted", d, !0),
       i.sourcePath && this.renderBadge(l, i.sourcePath.replace(/\.md$/, ""), d, !0),
       o.length > 0 &&
-        t.createEl("div", {
+        e.createEl("div", {
           cls: "simplicial-panel-value",
           text: `First encountered ${new Date(o[0]).toLocaleDateString()}`,
         }),
-      a && this.renderEncounterDiagnostics(t, a, r),
+      a && this.renderEncounterDiagnostics(e, a, s),
       i.crystallizedInto &&
-        t.createEl("div", {
+        e.createEl("div", {
           cls: "simplicial-panel-value",
           text: `Crystallized into ${i.crystallizedInto.replace(/\.md$/, "")}`,
         }),
-      new T.Setting(t).setName("Label").addText((c) => {
+      new T.Setting(e).setName("Label").addText((c) => {
         (c.setPlaceholder("Unnamed"),
           c.setValue(i.label ?? ""),
           c.onChange((p) => {
@@ -5524,7 +5678,7 @@ var Pe = class extends T.ItemView {
               }, 500)));
           }));
       }),
-      new T.Setting(t)
+      new T.Setting(e)
         .setName("Weight")
         .setDesc(String(i.weight ?? 1))
         .addSlider((c) => {
@@ -5538,7 +5692,7 @@ var Pe = class extends T.ItemView {
               this.actions?.saveHyperedgeMetadata(n, { weight: p });
             }));
         }),
-      new T.Setting(t)
+      new T.Setting(e)
         .setName("Promote to simplex")
         .setDesc(
           "Assert that the sub-relations within this group are meaningful too. You will see the exact list first.",
@@ -5549,12 +5703,12 @@ var Pe = class extends T.ItemView {
             c.onClick(() => this.actions?.promoteEncounter(n)));
         }));
     let g = i.persistence === "recurring";
-    (new T.Setting(t)
+    (new T.Setting(e)
       .setName("Crystallize concept")
       .setDesc(
         g
           ? "Precipitate a new note naming what keeps emerging here. The encounter stays unpromoted."
-          : `Available once this configuration has recurred ${r} times.`,
+          : `Available once this configuration has recurred ${s} times.`,
       )
       .addButton((c) => {
         (c.setButtonText("Crystallize"),
@@ -5563,28 +5717,28 @@ var Pe = class extends T.ItemView {
             await this.actions?.crystallizeEncounter(n);
           }));
       }),
-      new T.Setting(t).addExtraButton((c) => {
+      new T.Setting(e).addExtraButton((c) => {
         (c.setIcon("trash"),
           c.setTooltip("Dissolve encounter"),
           c.onClick(async () => {
             await this.actions?.dissolveHyperedge(n);
           }));
       }),
-      t.createEl("div", {
+      e.createEl("div", {
         cls: "simplicial-panel-footer",
         text: `order: ${i.nodes.length} \xB7 faces: none \xB7 kind: encounter`,
       }));
   }
-  renderEncounterDiagnostics(t, n, i) {
-    let r = wn(n, i),
-      o = t.createDiv({ cls: "simplicial-diagnostics" });
+  renderEncounterDiagnostics(e, n, i) {
+    let s = An(n, i),
+      o = e.createDiv({ cls: "simplicial-diagnostics" });
     o.createEl("div", { cls: "simplicial-panel-section-label", text: "Diagnostics" });
     let a = n.closure;
     this.renderMeasure(
       o,
       "Closure deficit",
       a === null || a.deficit === null ? "unbounded" : a.deficit.toFixed(2),
-      r.closure,
+      s.closure,
       a?.deficit ?? null,
     );
     let l = n.independence;
@@ -5596,21 +5750,21 @@ var Pe = class extends T.ItemView {
         : l.independence === null
           ? "n/a"
           : `${l.independence.toFixed(2)} \xB7 group evidence ${l.fullSetScore.toFixed(2)}`,
-      r.independence,
+      s.independence,
       l?.independence ?? null,
     ),
       this.renderMeasure(
         o,
         "Persistence",
         `${n.occurrences.length || 1}\xD7 \xB7 vitality ${n.vitality.toFixed(1)}`,
-        r.persistence,
+        s.persistence,
         null,
       ));
     let d = n.peakOverlap;
-    this.renderMeasure(o, "Overlap pressure", d ? d.pressure.toFixed(2) : "0.00", r.overlap, d?.pressure ?? null);
+    this.renderMeasure(o, "Overlap pressure", d ? d.pressure.toFixed(2) : "0.00", s.overlap, d?.pressure ?? null);
   }
-  renderMeasure(t, n, i, r, o) {
-    let a = t.createDiv({ cls: "simplicial-measure" }),
+  renderMeasure(e, n, i, s, o) {
+    let a = e.createDiv({ cls: "simplicial-measure" }),
       l = a.createDiv({ cls: "simplicial-measure-head" });
     (l.createEl("span", { cls: "simplicial-measure-name", text: n }),
       l.createEl("span", { cls: "simplicial-measure-figure", text: i }),
@@ -5619,12 +5773,12 @@ var Pe = class extends T.ItemView {
           cls: "simplicial-measure-bar",
           attr: { style: `width: ${Math.round(Math.max(0, Math.min(1, o)) * 100)}%;` },
         }),
-      r && a.createEl("div", { cls: "simplicial-measure-reading", text: r }));
+      s && a.createEl("div", { cls: "simplicial-measure-reading", text: s }));
   }
-  renderExplanationCard(t, n) {
-    let r = this.model.getAnalysisSummary().betti?.holes ?? [],
-      o = Cn(n, this.nodeProfiles, new Map(), r),
-      a = t.createDiv({ cls: "simplicial-explanation-card" });
+  renderExplanationCard(e, n) {
+    let s = this.model.getAnalysisSummary().betti?.holes ?? [],
+      o = Hn(n, this.nodeProfiles, new Map(), s),
+      a = e.createDiv({ cls: "simplicial-explanation-card" });
     if (
       (a.createEl("div", { cls: "simplicial-explanation-headline", text: o.headline }),
       a.createEl("div", { cls: "simplicial-explanation-tension", text: o.tension }),
@@ -5638,35 +5792,175 @@ var Pe = class extends T.ItemView {
         }));
     }
   }
-  renderBadge(t, n, i, r = !1) {
-    t.createEl("span", {
+  renderBadge(e, n, i, s = !1) {
+    e.createEl("span", {
       cls: "simplicial-panel-badge",
       text: n,
       attr: {
-        style: r
+        style: s
           ? `border-color: rgba(${i[0]},${i[1]},${i[2]},0.18); color: rgba(${i[0]},${i[1]},${i[2]},0.78);`
           : `background: rgba(${i[0]},${i[1]},${i[2]},0.12); border-color: rgba(${i[0]},${i[1]},${i[2]},0.28); color: rgb(${i[0]},${i[1]},${i[2]});`,
       },
     });
   }
 };
-async function tt(s, e, t) {
-  let n = e.replace(/[\\/:*?"<>|]/g, "-").trim() || "simplex",
+async function ct(r, t, e) {
+  let n = t.replace(/[\\/:*?"<>|]/g, "-").trim() || "simplex",
     i = 0;
   for (;;) {
-    let r = `${n}${i === 0 ? "" : `-${i}`}.md`;
-    if (!(s.vault.getAbstractFileByPath(r) instanceof T.TFile)) return s.vault.create(r, t);
+    let s = `${n}${i === 0 ? "" : `-${i}`}.md`;
+    if (!(r.vault.getAbstractFileByPath(s) instanceof T.TFile)) return r.vault.create(s, e);
     i++;
   }
 }
-var Tn = require("obsidian");
-function Mn(s, e) {
-  let t = [],
-    n = [...s.simplices.entries()]
-      .map(([a, l]) => ({ key: a, simplex: l, weight: ji(l, e) }))
+var te = require("obsidian");
+var ce = {
+    pairwise: { title: "Pairwise", claim: "Attention flows along links, one note to one note." },
+    simplicial: { title: "Simplicial", claim: "Attention flows through coherent groups and every face they imply." },
+    hypergraph: { title: "Hypergraph", claim: "Attention flows through whole encounters, which are never decomposed." },
+  },
+  Fe = class extends te.ItemView {
+    constructor(e, n) {
+      super(e);
+      this.model = n;
+      this.runs = [];
+      this.isRunning = !1;
+      this.lastRunAt = null;
+    }
+    getViewType() {
+      return oe;
+    }
+    getDisplayText() {
+      return "Dynamics lab";
+    }
+    getIcon() {
+      return "activity";
+    }
+    async onOpen() {
+      (await Promise.resolve(), this.render());
+    }
+    async run() {
+      if (this.isRunning) return;
+      let e = [...this.model.hyperedges.keys()];
+      if (e.length === 0) {
+        new te.Notice("No encounters to run. Record one with \u25C7 first.");
+        return;
+      }
+      ((this.isRunning = !0), (this.runs = []), this.render());
+      for (let n of e) {
+        let i = this.model.getHyperedge(n);
+        if (!i) continue;
+        let s = Ge.map((o) => xt(this.model, n, o)).filter((o) => o !== null);
+        (this.runs.push({ key: n, label: i.label?.trim() || i.nodes.map((o) => Kn(o)).join(" \xB7 "), results: s }),
+          await hs());
+      }
+      ((this.isRunning = !1), (this.lastRunAt = Date.now()), this.render());
+    }
+    render() {
+      let { contentEl: e } = this;
+      (e.empty(),
+        e.createEl("div", { cls: "simplicial-panel-title", text: "Dynamics lab" }),
+        e.createEl("div", {
+          cls: "simplicial-explanation-tension",
+          text: "Three models of how attention spreads, run over the same vault. Where they disagree is where the shape of your notes is doing something a graph cannot describe.",
+        }),
+        new te.Setting(e)
+          .setName("Run simulation")
+          .setDesc(
+            this.lastRunAt
+              ? `Last run ${new Date(this.lastRunAt).toLocaleTimeString()} \xB7 ${this.runs.length} encounter${this.runs.length === 1 ? "" : "s"}.`
+              : "Seeded and deterministic: the same vault gives the same answer every time.",
+          )
+          .addButton((i) => {
+            (i.setButtonText(this.isRunning ? "Running\u2026" : "Run"),
+              i.setDisabled(this.isRunning),
+              i.onClick(() => {
+                this.run();
+              }));
+          }));
+      let n = e.createDiv({ cls: "simplicial-kernel-legend" });
+      if (
+        (Ge.forEach((i) => {
+          let s = n.createDiv({ cls: "simplicial-kernel-legend-row" });
+          (s.createEl("span", { cls: `simplicial-kernel-swatch is-${i}` }),
+            s.createEl("span", { cls: "simplicial-kernel-name", text: ce[i].title }),
+            s.createEl("span", { cls: "simplicial-kernel-claim", text: ce[i].claim }));
+        }),
+        this.runs.length === 0)
+      ) {
+        e.createEl("div", {
+          cls: "simplicial-panel-value",
+          text: this.isRunning ? "Running\u2026" : "Nothing run yet.",
+        });
+        return;
+      }
+      (this.runs.forEach((i) => this.renderRun(e, i)), this.renderCompetingRhythms(e));
+    }
+    renderRun(e, n) {
+      let i = e.createDiv({ cls: "simplicial-dynamics-card" });
+      (i.createEl("div", { cls: "simplicial-panel-section-label", text: n.label }),
+        n.results.forEach((o) => {
+          let a = i.createDiv({ cls: "simplicial-dynamics-row" }),
+            l = a.createDiv({ cls: "simplicial-measure-head" });
+          (l.createEl("span", { cls: `simplicial-kernel-name is-${o.kernel}`, text: ce[o.kernel].title }),
+            l.createEl("span", {
+              cls: "simplicial-measure-figure",
+              text: o.converged ? `${o.iterations} iterations` : "did not settle",
+            }),
+            this.renderTrace(a, o));
+        }));
+      let s = n.results.filter((o) => o.converged);
+      if (s.length > 1) {
+        let o = s.reduce((l, d) => (d.iterations < l.iterations ? d : l)),
+          a = s.reduce((l, d) => (d.iterations > l.iterations ? d : l));
+        o.kernel !== a.kernel &&
+          i.createEl("div", {
+            cls: "simplicial-measure-reading",
+            text: `Settles fastest as a ${ce[o.kernel].title.toLowerCase()} structure and slowest as a ${ce[a.kernel].title.toLowerCase()} one.`,
+          });
+      }
+    }
+    renderTrace(e, n) {
+      let i = e.createDiv({ cls: "simplicial-trace" }),
+        o = Math.max(1, Math.ceil(n.orderTrace.length / 48));
+      for (let a = 0; a < n.orderTrace.length; a += o) {
+        let l = Math.max(0, Math.min(1, n.orderTrace[a]));
+        i.createDiv({
+          cls: `simplicial-trace-bar is-${n.kernel}`,
+          attr: { style: `height: ${Math.max(2, Math.round(l * 100))}%;` },
+        });
+      }
+    }
+    renderCompetingRhythms(e) {
+      let n = this.runs.map((o) => o.results.find((a) => a.kernel === "hypergraph")).filter((o) => o !== void 0),
+        i = wt(n);
+      if (i.length === 0) return;
+      let s = e.createDiv({ cls: "simplicial-dynamics-card" });
+      (s.createEl("div", { cls: "simplicial-panel-section-label", text: "Competing rhythms" }),
+        i.slice(0, 5).forEach((o) => {
+          s.createEl("div", {
+            cls: "simplicial-measure-reading",
+            text: `${o.sharedNodes.map(Kn).join(" \xB7 ")} belongs to two encounters that settle ${o.separation} iterations apart. It is being asked to move at two speeds.`,
+          });
+        }));
+    }
+  };
+function Kn(r) {
+  return r.split("/").pop()?.replace(/\.md$/, "") ?? r;
+}
+function hs() {
+  return new Promise((r) => {
+    window.setTimeout(r, 0);
+  });
+}
+var Wn = require("obsidian");
+function On(r, t) {
+  let e = [],
+    n = [...r.simplices.entries()]
+      .map(([a, l]) => ({ key: a, simplex: l, weight: us(l, t) }))
       .sort((a, l) => l.weight - a.weight),
     i = new Set(),
-    r = new Map(),
+    s = new Map(),
     o = new Set();
   for (let { simplex: a, weight: l } of n) {
     let d = a.nodes.length - 1;
@@ -5674,16 +5968,16 @@ function Mn(s, e) {
       for (let g of a.nodes)
         i.has(g) ||
           (i.add(g),
-          r.set(g, new Set([g])),
-          t.push({ threshold: l, type: "edge-appear", nodes: [g], description: `Node ${g} appears` }));
+          s.set(g, new Set([g])),
+          e.push({ threshold: l, type: "edge-appear", nodes: [g], description: `Node ${g} appears` }));
     else if (d === 1) {
       let [g, c] = a.nodes,
-        p = r.get(g),
-        u = r.get(c);
+        p = s.get(g),
+        u = s.get(c);
       if (p && u && p !== u) {
         let m = new Set([...p, ...u]);
-        for (let f of m) r.set(f, m);
-        t.push({
+        for (let f of m) s.set(f, m);
+        e.push({
           threshold: l,
           type: "component-merge",
           nodes: [g, c],
@@ -5692,13 +5986,13 @@ function Mn(s, e) {
       }
     } else if (d === 2) {
       let g = a.nodes.sort().join("|");
-      Vi(a.nodes).every((u) => {
+      ps(a.nodes).every((u) => {
         let m = u.sort().join("|");
         return n.some((f) => f.simplex.nodes.length === 2 && f.simplex.nodes.sort().join("|") === m && f.weight > l);
       }) &&
         !o.has(g) &&
         (o.add(g),
-        t.push({
+        e.push({
           threshold: l,
           type: "triangle-close",
           nodes: a.nodes,
@@ -5706,29 +6000,29 @@ function Mn(s, e) {
         }));
     }
   }
-  return t.sort((a, l) => l.threshold - a.threshold);
+  return e.sort((a, l) => l.threshold - a.threshold);
 }
-function ji(s, e) {
-  return e === "confidence"
-    ? (s.confidence ?? s.weight ?? 0)
-    : e === "decayed-weight"
-      ? (s.decayedWeight ?? s.weight ?? s.confidence ?? 0)
-      : (s.weight ?? s.decayedWeight ?? s.confidence ?? 0);
+function us(r, t) {
+  return t === "confidence"
+    ? (r.confidence ?? r.weight ?? 0)
+    : t === "decayed-weight"
+      ? (r.decayedWeight ?? r.weight ?? r.confidence ?? 0)
+      : (r.weight ?? r.decayedWeight ?? r.confidence ?? 0);
 }
-function Vi(s) {
-  let e = [];
-  for (let t = 0; t < s.length; t++) for (let n = t + 1; n < s.length; n++) e.push([s[t], s[n]]);
-  return e;
+function ps(r) {
+  let t = [];
+  for (let e = 0; e < r.length; e++) for (let n = e + 1; n < r.length; n++) t.push([r[e], r[n]]);
+  return t;
 }
-function En(s) {
-  return [...new Set(s.map((t) => Math.round(t.threshold * 100) / 100))].sort((t, n) => t - n);
+function $n(r) {
+  return [...new Set(r.map((e) => Math.round(e.threshold * 100) / 100))].sort((e, n) => e - n);
 }
-var ke = class extends Tn.ItemView {
-  constructor(t, n, i, r, o, a) {
-    super(t);
+var Ae = class extends Wn.ItemView {
+  constructor(e, n, i, s, o, a) {
+    super(e);
     this.model = n;
     this.renderer = i;
-    this.settings = r;
+    this.settings = s;
     this.onSettingsChanged = o;
     this.filtrationEvents = [];
     this.eventMarkers = [];
@@ -5740,8 +6034,8 @@ var ke = class extends Tn.ItemView {
         this.computeFiltrationEvents();
       }));
   }
-  setRescanCallback(t) {
-    this.onRescan = t;
+  setRescanCallback(e) {
+    this.onRescan = e;
   }
   computeFiltrationEvents() {
     if (!this.settings.showFiltrationSlider) {
@@ -5749,27 +6043,27 @@ var ke = class extends Tn.ItemView {
       return;
     }
     (this.sliderWrap && this.sliderWrap.removeClass("simplicial-hidden"),
-      (this.filtrationEvents = Mn(this.model, this.settings.renderFilterMetric)),
+      (this.filtrationEvents = On(this.model, this.settings.renderFilterMetric)),
       this.updateEventMarkers());
   }
   refreshSettings() {
     this.computeFiltrationEvents();
   }
   getViewType() {
-    return ie;
+    return re;
   }
   getDisplayText() {
     return "Simplicial graph";
   }
   async onOpen() {
     await Promise.resolve();
-    let { contentEl: t } = this;
-    (t.empty(), t.addClass("simplicial-view"));
-    let n = t.createDiv({ cls: "simplicial-view-wrap" }),
-      i = t.createDiv({ cls: "simplicial-hud" }),
-      r = t.createDiv({ cls: "simplicial-legend" });
-    (this.renderFiltrationControls(i), this.renderLegend(r));
-    let o = t.createDiv({ cls: "simplicial-filters" });
+    let { contentEl: e } = this;
+    (e.empty(), e.addClass("simplicial-view"));
+    let n = e.createDiv({ cls: "simplicial-view-wrap" }),
+      i = e.createDiv({ cls: "simplicial-hud" }),
+      s = e.createDiv({ cls: "simplicial-legend" });
+    (this.renderFiltrationControls(i), this.renderLegend(s));
+    let o = e.createDiv({ cls: "simplicial-filters" });
     (this.addFilterToggle(
       o,
       "edges",
@@ -5788,31 +6082,31 @@ var ke = class extends Tn.ItemView {
         () => this.settings.showCores,
         (a) => (this.settings.showCores = a),
       ),
-      this.renderFloatingControls(t),
+      this.renderFloatingControls(e),
       this.renderer.init(n));
   }
   async onClose() {
     (await Promise.resolve(), this.renderer.destroy());
   }
-  addFilterToggle(t, n, i, r) {
-    let o = t.createEl("button", { cls: `simplicial-filter ${i() ? "is-on" : ""}`, text: n });
+  addFilterToggle(e, n, i, s) {
+    let o = e.createEl("button", { cls: `simplicial-filter ${i() ? "is-on" : ""}`, text: n });
     o.addEventListener("click", () => {
       let a = !i();
-      (r(a), o.toggleClass("is-on", a), this.onSettingsChanged(), this.renderer.render());
+      (s(a), o.toggleClass("is-on", a), this.onSettingsChanged(), this.renderer.render());
     });
   }
-  renderFiltrationControls(t) {
-    this.sliderWrap = t.createDiv({ cls: "simplicial-filtration" });
+  renderFiltrationControls(e) {
+    this.sliderWrap = e.createDiv({ cls: "simplicial-filtration" });
     let n = this.sliderWrap.createDiv({ cls: "simplicial-filtration-header" });
     n.createSpan({ text: "Filter" });
     let i = n.createSpan({ cls: "simplicial-filtration-value", text: this.settings.renderFilterThreshold.toFixed(3) }),
-      r = this.sliderWrap.createEl("select", { cls: "simplicial-filtration-metric" });
+      s = this.sliderWrap.createEl("select", { cls: "simplicial-filtration-metric" });
     [
       { value: "weight", label: "weight" },
       { value: "confidence", label: "confidence" },
       { value: "decayed-weight", label: "decayed" },
     ].forEach((f) => {
-      let h = r.createEl("option", { text: f.label });
+      let h = s.createEl("option", { text: f.label });
       ((h.value = f.value), (h.selected = this.settings.renderFilterMetric === f.value));
     });
     let a = this.sliderWrap.createDiv({ cls: "simplicial-filtration-sliders" }),
@@ -5851,22 +6145,22 @@ var ke = class extends Tn.ItemView {
         (f <= 0 || f >= 1) &&
           ((p = Math.max(0, Math.min(1, f))), (d.value = String(Math.round(p * 10) / 10)), (u = 0), (c.value = "0"));
       }),
-      r.addEventListener("change", () => {
-        ((this.settings.renderFilterMetric = r.value),
+      s.addEventListener("change", () => {
+        ((this.settings.renderFilterMetric = s.value),
           this.onSettingsChanged(),
           this.renderer.render(),
           this.computeFiltrationEvents());
       }),
       this.updateEventMarkers());
   }
-  renderFloatingControls(t) {
-    let n = t.createDiv({ cls: "simplicial-floating-controls" }),
+  renderFloatingControls(e) {
+    let n = e.createDiv({ cls: "simplicial-floating-controls" }),
       i = n.createDiv({ cls: "simplicial-controls-toggle" });
     (i.setText("\u2699\uFE0F"), (i.title = "Canvas settings"));
-    let r = n.createDiv({ cls: "simplicial-controls-panel" });
-    (r.createDiv({ cls: "simplicial-control-header" }).setText("Inference"),
+    let s = n.createDiv({ cls: "simplicial-controls-panel" });
+    (s.createDiv({ cls: "simplicial-control-header" }).setText("Inference"),
       this.addDualSlider(
-        r,
+        s,
         "Link Threshold",
         this.settings.linkStrengthThreshold,
         (p) => {
@@ -5882,54 +6176,54 @@ var ke = class extends Tn.ItemView {
             this.onSettingsChanged());
         },
       ),
-      this.addCanvasSlider(r, "Insight Threshold", this.settings.insightThreshold, 0, 1, 0.05, (p) => {
+      this.addCanvasSlider(s, "Insight Threshold", this.settings.insightThreshold, 0, 1, 0.05, (p) => {
         ((this.settings.insightThreshold = p),
           this.onSettingsChanged(),
           this.onRescan?.("canvas-insight-threshold-changed", 100));
       }),
-      this.addCanvasSlider(r, "Suggestion Min", this.settings.suggestionThreshold, 0.2, 0.95, 0.05, (p) => {
+      this.addCanvasSlider(s, "Suggestion Min", this.settings.suggestionThreshold, 0.2, 0.95, 0.05, (p) => {
         ((this.settings.suggestionThreshold = p), this.onSettingsChanged(), this.renderer.render());
       }),
-      r.createDiv({ cls: "simplicial-control-header" }).setText("Visibility"),
-      this.addCanvasToggle(r, "Show Holes", this.settings.enableBettiComputation, (p) => {
+      s.createDiv({ cls: "simplicial-control-header" }).setText("Visibility"),
+      this.addCanvasToggle(s, "Show Holes", this.settings.enableBettiComputation, (p) => {
         ((this.settings.enableBettiComputation = p), this.onSettingsChanged(), this.renderer.render());
       }),
-      this.addCanvasToggle(r, "Suggestions", this.settings.showSuggestions, (p) => {
+      this.addCanvasToggle(s, "Suggestions", this.settings.showSuggestions, (p) => {
         ((this.settings.showSuggestions = p), this.onSettingsChanged(), this.renderer.render());
       }),
-      r.createDiv({ cls: "simplicial-control-header" }).setText("Physics"),
-      this.addCanvasSlider(r, "Repulsion", this.settings.repulsionStrength, 100, 2e3, 100, (p) => {
+      s.createDiv({ cls: "simplicial-control-header" }).setText("Physics"),
+      this.addCanvasSlider(s, "Repulsion", this.settings.repulsionStrength, 100, 2e3, 100, (p) => {
         ((this.settings.repulsionStrength = p), this.onSettingsChanged());
       }),
-      this.addCanvasSlider(r, "Gravity", this.settings.gravityStrength, 1e-4, 0.02, 1e-4, (p) => {
+      this.addCanvasSlider(s, "Gravity", this.settings.gravityStrength, 1e-4, 0.02, 1e-4, (p) => {
         ((this.settings.gravityStrength = p), this.onSettingsChanged());
       }),
-      r.createDiv({ cls: "simplicial-control-header" }).setText("Actions"),
-      r
+      s.createDiv({ cls: "simplicial-control-header" }).setText("Actions"),
+      s
         .createDiv({ cls: "simplicial-control-row" })
         .createEl("button", { cls: "simplicial-control-button", text: "\u{1F504} rescan vault" })
         .addEventListener("click", () => {
           this.onRescan?.("manual-rescan", 0);
         }),
       i.addEventListener("click", () => {
-        r.toggleClass("simplicial-hidden", !r.hasClass("simplicial-hidden"));
+        s.toggleClass("simplicial-hidden", !s.hasClass("simplicial-hidden"));
       }),
-      r.addClass("simplicial-hidden"));
+      s.addClass("simplicial-hidden"));
   }
-  addCanvasToggle(t, n, i, r) {
-    let o = t.createDiv({ cls: "simplicial-control-row" });
+  addCanvasToggle(e, n, i, s) {
+    let o = e.createDiv({ cls: "simplicial-control-row" });
     o.createSpan({ text: n });
     let a = o.createEl("input", { type: "checkbox" });
     ((a.checked = i),
       a.addEventListener("change", () => {
-        r(a.checked);
+        s(a.checked);
       }));
   }
-  addCanvasSlider(t, n, i, r, o, a, l) {
-    let d = t.createDiv({ cls: "simplicial-control-row" });
+  addCanvasSlider(e, n, i, s, o, a, l) {
+    let d = e.createDiv({ cls: "simplicial-control-row" });
     d.createSpan({ text: n });
     let g = d.createEl("input", { type: "range" });
-    ((g.min = String(r)), (g.max = String(o)), (g.step = String(a)), (g.value = String(i)));
+    ((g.min = String(s)), (g.max = String(o)), (g.step = String(a)), (g.value = String(i)));
     let c = a < 0.001 ? 4 : a < 0.01 ? 3 : 2,
       p = d.createSpan({ cls: "simplicial-control-value", text: i.toFixed(c) });
     g.addEventListener("input", () => {
@@ -5937,8 +6231,8 @@ var ke = class extends Tn.ItemView {
       (p.setText(u.toFixed(c)), l(u));
     });
   }
-  addDualSlider(t, n, i, r, o, a, l) {
-    let d = t.createDiv({ cls: "simplicial-dual-slider-wrap" }),
+  addDualSlider(e, n, i, s, o, a, l) {
+    let d = e.createDiv({ cls: "simplicial-dual-slider-wrap" }),
       g = d.createDiv({ cls: "simplicial-dual-slider-header" });
     g.createSpan({ text: n });
     let c = g.createSpan({ cls: "simplicial-control-value", text: i.toFixed(4) }),
@@ -5954,7 +6248,7 @@ var ke = class extends Tn.ItemView {
       y = 0,
       v = () => {
         let b = Math.max(o, Math.min(a, h + y));
-        return (c.setText(b.toFixed(4)), r(b), b);
+        return (c.setText(b.toFixed(4)), s(b), b);
       };
     (u.addEventListener("input", () => {
       ((h = Number(u.value)), (y = 0), (f.value = "0"), v());
@@ -5971,15 +6265,15 @@ var ke = class extends Tn.ItemView {
       !this.sliderWrap || !this.sliderEl || this.filtrationEvents.length === 0)
     )
       return;
-    let t = En(this.filtrationEvents);
+    let e = $n(this.filtrationEvents);
     this.sliderEl.getBoundingClientRect().width !== 0 &&
-      t.forEach((i) => {
-        let r = this.sliderWrap.createDiv({ cls: "simplicial-filtration-marker" }),
+      e.forEach((i) => {
+        let s = this.sliderWrap.createDiv({ cls: "simplicial-filtration-marker" }),
           o = i * 100;
-        (r.style.setProperty("left", `${o}%`), (r.title = `Event at ${i.toFixed(2)}`), this.eventMarkers.push(r));
+        (s.style.setProperty("left", `${o}%`), (s.title = `Event at ${i.toFixed(2)}`), this.eventMarkers.push(s));
       });
   }
-  renderLegend(t) {
+  renderLegend(e) {
     [
       { label: "Link baseline", cls: "is-link" },
       { label: "Tag affinity", cls: "is-tag" },
@@ -5988,32 +6282,33 @@ var ke = class extends Tn.ItemView {
       { label: "Soft cluster", cls: "is-cluster" },
       { label: "Confirmed simplex", cls: "is-confirmed" },
     ].forEach((i) => {
-      let r = t.createDiv({ cls: "simplicial-legend-item" });
-      (r.createSpan({ cls: `simplicial-legend-swatch ${i.cls}` }), r.createSpan({ text: i.label }));
+      let s = e.createDiv({ cls: "simplicial-legend-item" });
+      (s.createSpan({ cls: `simplicial-legend-swatch ${i.cls}` }), s.createSpan({ text: i.label }));
     });
   }
 };
 var x = require("obsidian");
-var Ie = class extends x.PluginSettingTab {
-  constructor(t, n) {
-    super(t, n);
+var He = class extends x.PluginSettingTab {
+  constructor(e, n) {
+    super(e, n);
     this.plugin = n;
   }
   display() {
-    let { containerEl: t } = this;
-    (t.empty(),
-      this.renderPersistenceSettings(t),
-      this.renderHypergraphSettings(t),
-      this.renderLayoutSettings(t),
-      this.renderInferenceSettings(t),
-      this.renderCommandUiSettings(t),
-      this.renderBettiSettings(t),
-      this.renderEmergentSettings(t),
-      this.renderLegacySettings(t),
+    let { containerEl: e } = this;
+    (e.empty(),
+      this.renderPersistenceSettings(e),
+      this.renderHypergraphSettings(e),
+      this.renderDynamicsSettings(e),
+      this.renderLayoutSettings(e),
+      this.renderInferenceSettings(e),
+      this.renderCommandUiSettings(e),
+      this.renderBettiSettings(e),
+      this.renderEmergentSettings(e),
+      this.renderLegacySettings(e),
       this.refreshSettingVisibility());
   }
-  renderPersistenceSettings(t) {
-    (new x.Setting(t)
+  renderPersistenceSettings(e) {
+    (new x.Setting(e)
       .setName("Persistence mode")
       .setDesc("Choose where confirmed simplices are stored.")
       .addDropdown((n) => {
@@ -6021,25 +6316,25 @@ var Ie = class extends x.PluginSettingTab {
           n.addOption("central-file", "Central file"),
           n.setValue(this.plugin.settings.persistenceMode),
           n.onChange(async (i) => {
-            let r = i;
-            ((this.plugin.settings.persistenceMode = r),
-              r === "central-file" && (await W(this.app, this.plugin.settings.centralFile)),
+            let s = i;
+            ((this.plugin.settings.persistenceMode = s),
+              s === "central-file" && (await _(this.app, this.plugin.settings.centralFile)),
               await this.plugin.saveSettings());
           }));
       }),
-      new x.Setting(t).setName("Central file").addText((n) => {
+      new x.Setting(e).setName("Central file").addText((n) => {
         (n.setValue(this.plugin.settings.centralFile),
           n.onChange(async (i) => {
             ((this.plugin.settings.centralFile = i || "_simplicial.md"),
               this.plugin.settings.persistenceMode === "central-file" &&
-                (await W(this.app, this.plugin.settings.centralFile)),
+                (await _(this.app, this.plugin.settings.centralFile)),
               await this.plugin.saveSettings());
           }));
       }));
   }
-  renderLayoutSettings(t) {
+  renderLayoutSettings(e) {
     {
-      let n = new x.Setting(t)
+      let n = new x.Setting(e)
         .setName("Max rendered dimension")
         .setDesc("Highest simplex dimension to draw. A 10-node simplex has dimension 9.");
       this.addNumberSlider(n, this.plugin.settings.maxRenderedDim, 1, 12, 1, async (i) => {
@@ -6047,7 +6342,7 @@ var Ie = class extends x.PluginSettingTab {
       });
     }
     {
-      let n = new x.Setting(t).setName("Noise amount");
+      let n = new x.Setting(e).setName("Noise amount");
       this.addNumberSlider(n, this.plugin.settings.noiseAmount, 0, 0.5, 0.01, async (i) => {
         ((this.plugin.settings.noiseAmount = i),
           this.plugin.engine.configure({ noiseAmount: i }),
@@ -6055,7 +6350,7 @@ var Ie = class extends x.PluginSettingTab {
       });
     }
     {
-      let n = new x.Setting(t).setName("Repulsion strength").setDesc("Higher values push nodes apart more strongly.");
+      let n = new x.Setting(e).setName("Repulsion strength").setDesc("Higher values push nodes apart more strongly.");
       this.addNumberSlider(n, this.plugin.settings.repulsionStrength, 200, 6e3, 100, async (i) => {
         ((this.plugin.settings.repulsionStrength = i),
           this.plugin.engine.configure({ repulsionStrength: i }),
@@ -6063,7 +6358,7 @@ var Ie = class extends x.PluginSettingTab {
       });
     }
     {
-      let n = new x.Setting(t)
+      let n = new x.Setting(e)
         .setName("Cohesion strength")
         .setDesc("Higher values pull connected simplices together more strongly.");
       this.addNumberSlider(n, this.plugin.settings.cohesionStrength, 0.001, 0.03, 0.001, async (i) => {
@@ -6073,7 +6368,7 @@ var Ie = class extends x.PluginSettingTab {
       });
     }
     {
-      let n = new x.Setting(t)
+      let n = new x.Setting(e)
         .setName("Gravity strength")
         .setDesc("Higher values keep nodes toward the center instead of drifting to the edges.");
       this.addNumberSlider(n, this.plugin.settings.gravityStrength, 1e-4, 0.01, 1e-4, async (i) => {
@@ -6083,7 +6378,7 @@ var Ie = class extends x.PluginSettingTab {
       });
     }
     {
-      let n = new x.Setting(t)
+      let n = new x.Setting(e)
         .setName("Damping")
         .setDesc("Higher values make motion settle more slowly and glide more.");
       this.addNumberSlider(n, this.plugin.settings.dampingFactor, 0.5, 0.99, 0.01, async (i) => {
@@ -6093,7 +6388,7 @@ var Ie = class extends x.PluginSettingTab {
       });
     }
     {
-      let n = new x.Setting(t)
+      let n = new x.Setting(e)
         .setName("Boundary padding")
         .setDesc("Minimum distance nodes keep from the canvas edges.");
       this.addNumberSlider(n, this.plugin.settings.boundaryPadding, 0, 200, 5, async (i) => {
@@ -6103,14 +6398,14 @@ var Ie = class extends x.PluginSettingTab {
       });
     }
     {
-      let n = new x.Setting(t).setName("Sleep threshold");
+      let n = new x.Setting(e).setName("Sleep threshold");
       this.addNumberSlider(n, this.plugin.settings.sleepThreshold, 0.001, 0.1, 0.001, async (i) => {
         ((this.plugin.settings.sleepThreshold = i),
           this.plugin.engine.configure({ sleepThreshold: i }),
           await this.plugin.saveSettings());
       });
     }
-    new x.Setting(t).setName("Dark mode").addDropdown((n) => {
+    new x.Setting(e).setName("Dark mode").addDropdown((n) => {
       (n.addOption("auto", "Auto"),
         n.addOption("force-light", "Force light"),
         n.addOption("force-dark", "Force dark"),
@@ -6120,9 +6415,9 @@ var Ie = class extends x.PluginSettingTab {
         }));
     });
   }
-  renderHypergraphSettings(t) {
-    (new x.Setting(t).setName("Hypergraph layer").setHeading(),
-      new x.Setting(t)
+  renderHypergraphSettings(e) {
+    (new x.Setting(e).setName("Hypergraph layer").setHeading(),
+      new x.Setting(e)
         .setName("Show encounters")
         .setDesc(
           "Render hyperedges (\u25C7) as transient enclosures. An encounter records that notes came together as one irreducible whole, without asserting any pair within it.",
@@ -6136,14 +6431,14 @@ var Ie = class extends x.PluginSettingTab {
             }));
         }));
     {
-      let n = new x.Setting(t)
+      let n = new x.Setting(e)
         .setName("Encounter opacity")
         .setDesc("How present encounter enclosures are against the simplicial fields.");
       this.addNumberSlider(n, this.plugin.settings.hyperedgeOpacity, 0.1, 1, 0.05, async (i) => {
         ((this.plugin.settings.hyperedgeOpacity = i), await this.plugin.saveSettings(), this.plugin.renderer.render());
       });
     }
-    new x.Setting(t)
+    new x.Setting(e)
       .setName("Pulse focused encounters")
       .setDesc(
         "Breathe the participants of a focused encounter in phase \u2014 a temporary alignment of attention, not a permanent connection. Turned off automatically when your system asks for reduced motion.",
@@ -6157,7 +6452,7 @@ var Ie = class extends x.PluginSettingTab {
           }));
       });
     {
-      let n = new x.Setting(t)
+      let n = new x.Setting(e)
         .setName("Recurrence threshold")
         .setDesc(
           "How many recorded encounters over the same notes mark a configuration as recurring. Recurrence enables crystallization; it never promotes anything on its own.",
@@ -6166,7 +6461,7 @@ var Ie = class extends x.PluginSettingTab {
         ((this.plugin.settings.encounterRecurrenceThreshold = i), await this.plugin.saveSettings());
       });
     }
-    (new x.Setting(t)
+    (new x.Setting(e)
       .setName("Crystallize folder")
       .setDesc("Where notes created by 'crystallize concept' are placed. Leave empty for the vault root.")
       .addText((n) => {
@@ -6176,7 +6471,7 @@ var Ie = class extends x.PluginSettingTab {
             ((this.plugin.settings.crystallizeFolder = i.trim()), await this.plugin.saveSettings());
           }));
       }),
-      new x.Setting(t)
+      new x.Setting(e)
         .setName("Record relation history")
         .setDesc(
           "Keep an append-only log of how relations came to be \u2014 encountered, promoted, relaxed, crystallized, dissolved. Turning this off stops new entries; it never deletes existing ones.",
@@ -6189,7 +6484,7 @@ var Ie = class extends x.PluginSettingTab {
                 new x.Notice(i ? "History resumes on next reload." : "History paused. Existing entries are kept."));
             }));
         }),
-      new x.Setting(t)
+      new x.Setting(e)
         .setName("History file")
         .setDesc("Vault path of the append-only relation history.")
         .addText((n) => {
@@ -6202,8 +6497,34 @@ var Ie = class extends x.PluginSettingTab {
             }));
         }));
   }
-  renderInferenceSettings(t) {
-    (new x.Setting(t)
+  renderDynamicsSettings(e) {
+    (new x.Setting(e).setName("Dynamics").setHeading(),
+      new x.Setting(e)
+        .setName("Enable dynamics lab")
+        .setDesc(
+          "Adds a view that runs your vault under three models of how attention spreads \u2014 pairwise, simplicial and hypergraph \u2014 and reports where they disagree. Experimental. Requires a reload.",
+        )
+        .addToggle((n) => {
+          (n.setValue(this.plugin.settings.enableDynamicsLab),
+            n.onChange(async (i) => {
+              ((this.plugin.settings.enableDynamicsLab = i),
+                await this.plugin.saveSettings(),
+                new x.Notice(i ? "Dynamics lab appears after a reload." : "Dynamics lab removed after a reload."));
+            }));
+        }));
+    {
+      let n = new x.Setting(e)
+        .setName("Attention half-life (minutes)")
+        .setDesc(
+          "How long a note stays visibly in play after you leave it. Attention is never written to a note \u2014 it exists only while the plugin is running.",
+        );
+      this.addNumberSlider(n, this.plugin.settings.activationDecayHalfLifeMinutes, 1, 240, 1, async (i) => {
+        ((this.plugin.settings.activationDecayHalfLifeMinutes = i), await this.plugin.saveSettings());
+      });
+    }
+  }
+  renderInferenceSettings(e) {
+    (new x.Setting(e)
       .setName("Link graph baseline")
       .setDesc("Always show note-to-note vault links as 1-simplices, even without higher-order structure.")
       .addToggle((n) => {
@@ -6212,7 +6533,7 @@ var Ie = class extends x.PluginSettingTab {
             ((this.plugin.settings.linkGraphBaseline = i), await this.plugin.saveSettings());
           }));
       }),
-      new x.Setting(t)
+      new x.Setting(e)
         .setName("Enable inferred edges")
         .setDesc("Use tags, links, titles, content, and folders to infer lightweight edges.")
         .addToggle((n) => {
@@ -6222,14 +6543,14 @@ var Ie = class extends x.PluginSettingTab {
             }));
         }));
     {
-      let n = new x.Setting(t)
+      let n = new x.Setting(e)
         .setName("Inference threshold")
         .setDesc("Minimum combined signal needed before an inferred edge is created.");
       this.addNumberSlider(n, this.plugin.settings.inferenceThreshold, 0.05, 0.6, 0.01, async (i) => {
         ((this.plugin.settings.inferenceThreshold = i), await this.plugin.saveSettings());
       });
     }
-    new x.Setting(t)
+    new x.Setting(e)
       .setName("Show suggestions")
       .setDesc("Render closure and soft-cluster suggestions directly on the canvas.")
       .addToggle((n) => {
@@ -6241,7 +6562,7 @@ var Ie = class extends x.PluginSettingTab {
           }));
       });
     {
-      let n = new x.Setting(t)
+      let n = new x.Setting(e)
         .setName("Suggestion threshold")
         .setDesc("Confidence level required before a suggestion is surfaced in the UI.");
       this.addNumberSlider(n, this.plugin.settings.suggestionThreshold, 0.2, 0.95, 0.01, async (i) => {
@@ -6249,16 +6570,16 @@ var Ie = class extends x.PluginSettingTab {
       });
     }
   }
-  renderCommandUiSettings(t) {
+  renderCommandUiSettings(e) {
     {
-      let n = new x.Setting(t)
+      let n = new x.Setting(e)
         .setName("Command simplex size")
         .setDesc("How many nodes the create-from-open-note command tries to include.");
       this.addNumberSlider(n, this.plugin.settings.commandSimplexSize, 2, 6, 1, async (i) => {
         ((this.plugin.settings.commandSimplexSize = i), await this.plugin.saveSettings());
       });
     }
-    new x.Setting(t)
+    new x.Setting(e)
       .setName("Formal mode")
       .setDesc("Switch from ambient blobs to a crisper geometric rendering with analysis overlays.")
       .addToggle((n) => {
@@ -6268,7 +6589,7 @@ var Ie = class extends x.PluginSettingTab {
           }));
       });
     {
-      let n = new x.Setting(t).setName("Sparse edge length").setDesc("Preferred spacing for sparse link-only graphs.");
+      let n = new x.Setting(e).setName("Sparse edge length").setDesc("Preferred spacing for sparse link-only graphs.");
       this.addNumberSlider(n, this.plugin.settings.sparseEdgeLength, 60, 280, 5, async (i) => {
         ((this.plugin.settings.sparseEdgeLength = i),
           this.plugin.engine.configure({ sparseEdgeLength: i }),
@@ -6276,7 +6597,7 @@ var Ie = class extends x.PluginSettingTab {
       });
     }
     {
-      let n = new x.Setting(t)
+      let n = new x.Setting(e)
         .setName("Sparse gravity boost")
         .setDesc("Extra centering force when the graph is mostly pairwise and sparse.");
       this.addNumberSlider(n, this.plugin.settings.sparseGravityBoost, 1, 4, 0.1, async (i) => {
@@ -6286,14 +6607,14 @@ var Ie = class extends x.PluginSettingTab {
       });
     }
     {
-      let n = new x.Setting(t)
+      let n = new x.Setting(e)
         .setName("Label density")
         .setDesc("Controls how many non-focused labels are allowed before decluttering hides the rest.");
       this.addNumberSlider(n, this.plugin.settings.labelDensity, 0.1, 1, 0.05, async (i) => {
         ((this.plugin.settings.labelDensity = i), await this.plugin.saveSettings(), this.plugin.renderer.render());
       });
     }
-    new x.Setting(t)
+    new x.Setting(e)
       .setName("Filtration metric")
       .setDesc("Choose which simplex strength field the live filtration slider uses.")
       .addDropdown((n) => {
@@ -6308,7 +6629,7 @@ var Ie = class extends x.PluginSettingTab {
           }));
       });
     {
-      let n = new x.Setting(t)
+      let n = new x.Setting(e)
         .setName("Filtration threshold")
         .setDesc("Hide simplices below this threshold in the active filtration metric.");
       this.addNumberSlider(n, this.plugin.settings.renderFilterThreshold, 0, 1, 0.01, async (i) => {
@@ -6317,7 +6638,7 @@ var Ie = class extends x.PluginSettingTab {
           this.plugin.renderer.render());
       });
     }
-    new x.Setting(t)
+    new x.Setting(e)
       .setName("Open metadata panel after create")
       .setDesc("Show the metadata panel immediately after the command creates a simplex.")
       .addToggle((n) => {
@@ -6327,7 +6648,7 @@ var Ie = class extends x.PluginSettingTab {
           }));
       });
     {
-      let n = new x.Setting(t)
+      let n = new x.Setting(e)
         .setName("Metadata hover delay")
         .setDesc("Delay before hover-driven metadata UI should appear.");
       this.addNumberSlider(n, this.plugin.settings.metadataHoverDelayMs, 250, 2e3, 50, async (i) => {
@@ -6335,8 +6656,8 @@ var Ie = class extends x.PluginSettingTab {
       });
     }
   }
-  renderBettiSettings(t) {
-    (new x.Setting(t)
+  renderBettiSettings(e) {
+    (new x.Setting(e)
       .setName("Enable betti computation")
       .setDesc("Calculate topological invariants (\u03B2\u2080, \u03B2\u2081, \u03B2\u2082) to detect holes and voids.")
       .addToggle((n) => {
@@ -6349,7 +6670,7 @@ var Ie = class extends x.PluginSettingTab {
               new x.Notice(i ? "Betti computation enabled" : "Betti computation disabled"));
           }));
       }),
-      new x.Setting(t)
+      new x.Setting(e)
         .setName("Display betti on canvas")
         .setDesc("Show live betti numbers in the top-left hud overlay (requires betti computation to be enabled).")
         .addToggle((n) => {
@@ -6361,7 +6682,7 @@ var Ie = class extends x.PluginSettingTab {
                 new x.Notice(i ? "Betti HUD will appear in top-left of graph" : "Betti HUD hidden"));
             }));
         }),
-      new x.Setting(t)
+      new x.Setting(e)
         .setName("Max betti dimension")
         .setDesc("Compute holes up to this dimension (1 = triangles, 2 = tetrahedra).")
         .addDropdown((n) => {
@@ -6374,7 +6695,7 @@ var Ie = class extends x.PluginSettingTab {
                 this.plugin.renderer.render());
             }));
         }),
-      new x.Setting(t)
+      new x.Setting(e)
         .setName("Show filtration slider")
         .setDesc("Enable the slider UI with topological event markers in the graph view. (requires reopening the view)")
         .addToggle((n) => {
@@ -6386,7 +6707,7 @@ var Ie = class extends x.PluginSettingTab {
                 new x.Notice(i ? "Filtration slider enabled" : "Filtration slider hidden"));
             }));
         }),
-      new x.Setting(t)
+      new x.Setting(e)
         .setName("Enable explanation panel")
         .setDesc("Show human-readable explanations for inferred simplices in the metadata panel.")
         .addToggle((n) => {
@@ -6399,13 +6720,13 @@ var Ie = class extends x.PluginSettingTab {
             }));
         }));
   }
-  renderEmergentSettings(t) {
-    (new x.Setting(t).setName("Inference engine (v2)").setHeading(),
-      t.createEl("p", {
+  renderEmergentSettings(e) {
+    (new x.Setting(e).setName("Inference engine (v2)").setHeading(),
+      e.createEl("p", {
         cls: "setting-item-description",
         text: "The plugin has two inference systems: emergent (graph-based with semantic clustering) and legacy (rule-based). Choose which to use.",
       }),
-      new x.Setting(t)
+      new x.Setting(e)
         .setName("Inference mode")
         .setDesc("Emergent = semantic graph analysis | legacy = rule-based heuristics | hybrid = both")
         .addDropdown((i) => {
@@ -6413,15 +6734,15 @@ var Ie = class extends x.PluginSettingTab {
             i.addOption("taxonomic", "Legacy (rule-based)"),
             i.addOption("hybrid", "Hybrid (both systems)"),
             i.setValue(this.plugin.settings.inferenceMode),
-            i.onChange(async (r) => {
-              ((this.plugin.settings.inferenceMode = r),
+            i.onChange(async (s) => {
+              ((this.plugin.settings.inferenceMode = s),
                 await this.plugin.saveSettings(),
-                new x.Notice(`Inference mode: ${r}. Rescanning vault...`),
+                new x.Notice(`Inference mode: ${s}. Rescanning vault...`),
                 this.plugin.scheduleFullScan("inference-mode-changed", 100),
                 this.refreshSettingVisibility());
             }));
         }));
-    let n = t.createDiv({ cls: "emergent-settings" });
+    let n = e.createDiv({ cls: "emergent-settings" });
     (new x.Setting(n).setName("Emergent inference").setHeading(),
       new x.Setting(n)
         .setName("Domain source")
@@ -6431,10 +6752,10 @@ var Ie = class extends x.PluginSettingTab {
             i.addOption("content-cluster", "Content clustering (tf-idf)"),
             i.addOption("hybrid", "Hybrid (folder + content)"),
             i.setValue(this.plugin.settings.domainSource),
-            i.onChange(async (r) => {
-              ((this.plugin.settings.domainSource = r),
+            i.onChange(async (s) => {
+              ((this.plugin.settings.domainSource = s),
                 await this.plugin.saveSettings(),
-                new x.Notice(`Domain source: ${r}. Rescanning...`),
+                new x.Notice(`Domain source: ${s}. Rescanning...`),
                 this.plugin.scheduleFullScan("domain-source-changed", 100));
             }));
         }));
@@ -6442,11 +6763,11 @@ var Ie = class extends x.PluginSettingTab {
       let i = new x.Setting(n)
         .setName("Content cluster count")
         .setDesc("Number of semantic clusters (used when domain source is content-cluster or hybrid).");
-      this.addNumberSlider(i, this.plugin.settings.contentClusterCount, 2, 12, 1, async (r) => {
-        ((this.plugin.settings.contentClusterCount = r),
+      this.addNumberSlider(i, this.plugin.settings.contentClusterCount, 2, 12, 1, async (s) => {
+        ((this.plugin.settings.contentClusterCount = s),
           await this.plugin.saveSettings(),
           this.plugin.settings.domainSource !== "folder" &&
-            (new x.Notice(`Cluster count: ${r}. Rescanning...`),
+            (new x.Notice(`Cluster count: ${s}. Rescanning...`),
             this.plugin.scheduleFullScan("cluster-count-changed", 100)));
       });
     }
@@ -6456,23 +6777,23 @@ var Ie = class extends x.PluginSettingTab {
         .setDesc(
           "Minimum edge strength for emergent mode to create a visible link (0.0 = all edges, 1.0 = only strongest).",
         );
-      this.addNumberSlider(i, this.plugin.settings.linkStrengthThreshold, 0, 1, 0.01, async (r) => {
-        ((this.plugin.settings.linkStrengthThreshold = r),
+      this.addNumberSlider(i, this.plugin.settings.linkStrengthThreshold, 0, 1, 0.01, async (s) => {
+        ((this.plugin.settings.linkStrengthThreshold = s),
           await this.plugin.saveSettings(),
-          new x.Notice(`Link threshold: ${r.toFixed(2)}. Rescanning...`),
+          new x.Notice(`Link threshold: ${s.toFixed(2)}. Rescanning...`),
           this.plugin.scheduleFullScan("link-threshold-changed", 100));
       });
     }
     this._emergentSettingsDiv = n;
   }
-  renderLegacySettings(t) {
-    (new x.Setting(t).setName("Legacy inference weights").setHeading(),
-      t.createEl("p", {
+  renderLegacySettings(e) {
+    (new x.Setting(e).setName("Legacy inference weights").setHeading(),
+      e.createEl("p", {
         cls: "setting-item-description",
         text: "These weights only apply when using legacy or hybrid inference mode. They control rule-based edge detection.",
       }),
       this.addWeightSlider(
-        t,
+        e,
         "Link weight",
         "Strength added by a resolved outbound link.",
         "linkWeight",
@@ -6482,7 +6803,7 @@ var Ie = class extends x.PluginSettingTab {
         0.01,
       ),
       this.addWeightSlider(
-        t,
+        e,
         "Mutual link bonus",
         "Extra weight when both notes link each other.",
         "mutualLinkBonus",
@@ -6492,7 +6813,7 @@ var Ie = class extends x.PluginSettingTab {
         0.01,
       ),
       this.addWeightSlider(
-        t,
+        e,
         "Shared tag weight",
         "Weight contributed by each shared tag.",
         "sharedTagWeight",
@@ -6502,7 +6823,7 @@ var Ie = class extends x.PluginSettingTab {
         0.01,
       ),
       this.addWeightSlider(
-        t,
+        e,
         "Title overlap weight",
         "Maximum title-token overlap contribution.",
         "titleOverlapWeight",
@@ -6512,7 +6833,7 @@ var Ie = class extends x.PluginSettingTab {
         0.01,
       ),
       this.addWeightSlider(
-        t,
+        e,
         "Content overlap weight",
         "Maximum body-text overlap contribution.",
         "contentOverlapWeight",
@@ -6522,7 +6843,7 @@ var Ie = class extends x.PluginSettingTab {
         0.01,
       ),
       this.addWeightSlider(
-        t,
+        e,
         "Same folder weight",
         "Boost when two notes share the same folder (Legacy mode only).",
         "sameFolderWeight",
@@ -6532,7 +6853,7 @@ var Ie = class extends x.PluginSettingTab {
         0.01,
       ),
       this.addWeightSlider(
-        t,
+        e,
         "Top folder weight",
         "Boost when two notes share the same top-level folder (Legacy mode only).",
         "sameTopFolderWeight",
@@ -6543,14 +6864,14 @@ var Ie = class extends x.PluginSettingTab {
       ));
   }
   refreshSettingVisibility() {
-    let t = this._emergentSettingsDiv;
-    if (!t) return;
+    let e = this._emergentSettingsDiv;
+    if (!e) return;
     let n = this.plugin.settings.inferenceMode === "emergent" || this.plugin.settings.inferenceMode === "hybrid";
-    t.style.display = n ? "block" : "none";
+    e.style.display = n ? "block" : "none";
   }
-  addNumberSlider(t, n, i, r, o, a) {
-    t.addSlider((l) => {
-      let d = t.controlEl.createSpan({ cls: "simplicial-setting-value" }),
+  addNumberSlider(e, n, i, s, o, a) {
+    e.addSlider((l) => {
+      let d = e.controlEl.createSpan({ cls: "simplicial-setting-value" }),
         g = (c) => {
           let p = o >= 1 ? 0 : (`${o}`.split(".")[1]?.length ?? 0);
           return c
@@ -6559,15 +6880,15 @@ var Ie = class extends x.PluginSettingTab {
             .replace(/(\.\d*?)0+$/, "$1");
         };
       (d.setText(g(n)),
-        l.setLimits(i, r, o),
+        l.setLimits(i, s, o),
         l.setValue(n),
         l.onChange(async (c) => {
           (d.setText(g(c)), await a(c));
         }));
     });
   }
-  addWeightSlider(t, n, i, r, o, a, l, d) {
-    let g = new x.Setting(t).setName(n).setDesc(i),
+  addWeightSlider(e, n, i, s, o, a, l, d) {
+    let g = new x.Setting(e).setName(n).setDesc(i),
       c = null,
       p = (u) => {
         let m = d >= 1 ? 0 : (`${d}`.split(".")[1]?.length ?? 0);
@@ -6586,17 +6907,17 @@ var Ie = class extends x.PluginSettingTab {
       g.addSlider((u) => {
         c = u;
         let m = g.controlEl.createSpan({ cls: "simplicial-setting-value" });
-        (m.setText(p(this.plugin.settings[r])),
+        (m.setText(p(this.plugin.settings[s])),
           u.setLimits(a, l, d),
-          u.setValue(this.plugin.settings[r]),
+          u.setValue(this.plugin.settings[s]),
           u.setDisabled(!this.plugin.settings[o]),
           u.onChange(async (f) => {
-            (m.setText(p(f)), (this.plugin.settings[r] = f), await this.plugin.saveSettings());
+            (m.setText(p(f)), (this.plugin.settings[s] = f), await this.plugin.saveSettings());
           }));
       }));
   }
 };
-var De = class extends M.Plugin {
+var Le = class extends M.Plugin {
   constructor() {
     super(...arguments);
     this.panelView = null;
@@ -6604,10 +6925,12 @@ var De = class extends M.Plugin {
     this.saveTimer = null;
     this.rescanTimer = null;
     this.subsetScorer = null;
+    this.activation = new ve();
+    this.activationTimer = null;
   }
   async onload() {
-    let t = (await this.loadData()) ?? {};
-    ((this.settings = { ...Tt(), ...t }),
+    let e = (await this.loadData()) ?? {};
+    ((this.settings = { ...$t(), ...e }),
       this.settings.maxRenderedDim === 3 && (this.settings.maxRenderedDim = 12),
       C.info("plugin", "Loading plugin", {
         persistenceMode: this.settings.persistenceMode,
@@ -6617,11 +6940,11 @@ var De = class extends M.Plugin {
         showCores: this.settings.showCores,
         pinnedNodeCount: Object.keys(this.settings.pinnedNodes).length,
       }),
-      (this.model = new pe()),
-      (this.history = new ge()),
-      (this.historyStore = new me(this.app, this.settings.historyFile)),
+      (this.model = new fe()),
+      (this.history = new ye()),
+      (this.historyStore = new be(this.app, this.settings.historyFile)),
       this.settings.enableRelationHistory && this.history.onAppend((i) => this.historyStore.record(i)),
-      (this.engine = new be()),
+      (this.engine = new Ce()),
       this.engine.configure({
         noiseAmount: this.settings.noiseAmount,
         sleepThreshold: this.settings.sleepThreshold,
@@ -6633,7 +6956,7 @@ var De = class extends M.Plugin {
         sparseEdgeLength: this.settings.sparseEdgeLength,
         sparseGravityBoost: this.settings.sparseGravityBoost,
       }),
-      (this.controller = new ve(
+      (this.controller = new we(
         this.model,
         () => this.engine.wake(),
         (i) => this.panelView?.setSelection(i),
@@ -6644,38 +6967,38 @@ var De = class extends M.Plugin {
         (i) => this.saveInteractionState(i),
       )));
     let n = this.settings.interactionState;
-    (n && this.controller.setInteractionTracker(ft(n)),
-      (this.renderer = new Ne(this.model, this.engine, this.controller, this.settings, {
-        onContextMenu: (i, r) => this.openCanvasContextMenu(i, r),
+    (n && this.controller.setInteractionTracker(Dt(n)),
+      (this.renderer = new De(this.model, this.engine, this.controller, this.settings, {
+        onContextMenu: (i, s) => this.openCanvasContextMenu(i, s),
         onLassoCreate: (i) => {
           this.openCreateSimplexModal(i, i[0] ?? "");
         },
         onNodeOpen: (i) => {
           this.openNodeNote(i);
         },
-        onHoleHover: (i, r) => {
-          if (i && r) {
+        onHoleHover: (i, s) => {
+          if (i && s) {
             let o = i.boundaryNodes.map((a) => a.split("/").pop()?.replace(/\.md$/, "") ?? a);
             new M.Notice(
-              `Hole: ${r.headline}
+              `Hole: ${s.headline}
 ${o.join(" \xB7 ")}`,
               3e3,
             );
           }
         },
-        onHoleClick: (i, r) => {
+        onHoleClick: (i, s) => {
           let o = i.boundaryNodes.map((a) => a.split("/").pop()?.replace(/\.md$/, "") ?? a);
           new M.Notice(
-            `\u{1F573}\uFE0F ${r.headline}
+            `\u{1F573}\uFE0F ${s.headline}
 
 Notes: ${o.join(" \xB7 ")}
 
-${r.prompt}`,
+${s.prompt}`,
             8e3,
           );
         },
       })),
-      (this.index = new ye(
+      (this.index = new xe(
         this.app,
         this.model,
         this.settings,
@@ -6683,8 +7006,8 @@ ${r.prompt}`,
         (i) => this.recordEncounter(i, "parser"),
       )),
       this.restorePinnedNodes(),
-      this.registerView(ie, (i) => {
-        let r = new ke(
+      this.registerView(re, (i) => {
+        let s = new Ae(
           i,
           this.model,
           this.renderer,
@@ -6692,12 +7015,12 @@ ${r.prompt}`,
           () => this.queueSaveSettings(),
           (o, a) => this.scheduleFullScan(o, a),
         );
-        return ((this.simplicialView = r), r);
+        return ((this.simplicialView = s), s);
       }),
       this.registerView(q, (i) => {
-        let r = new Pe(i, this.model);
+        let s = new Re(i, this.model);
         return (
-          r.setActions({
+          s.setActions({
             saveMetadata: (o, a) => this.persistSimplexMetadata(o, a),
             promoteSimplex: (o) => this.promoteSimplex(o),
             dissolveSimplex: (o) => this.dissolveSimplex(o),
@@ -6707,13 +7030,22 @@ ${r.prompt}`,
             crystallizeEncounter: (o) => this.crystallizeEncounter(o),
             dissolveHyperedge: (o) => this.dissolveHyperedge(o),
           }),
-          r.setHistory(this.history),
-          r.setSettings(this.settings),
-          r.setSubsetScorer(this.subsetScorer),
-          (this.panelView = r),
-          r
+          s.setHistory(this.history),
+          s.setSettings(this.settings),
+          s.setSubsetScorer(this.subsetScorer),
+          (this.panelView = s),
+          s
         );
       }),
+      this.settings.enableDynamicsLab &&
+        (this.registerView(oe, (i) => new Fe(i, this.model)),
+        this.addCommand({
+          id: "open-dynamics-lab",
+          name: "Open dynamics lab",
+          callback: () => {
+            this.activateDynamicsLab();
+          },
+        })),
       this.addRibbonIcon("network", "Simplicial graph", () => {
         this.activateView();
       }),
@@ -6807,7 +7139,18 @@ ${r.prompt}`,
             this.openPanelForCurrentSelection();
         },
       }),
-      this.addSettingTab(new Ie(this.app, this)),
+      this.addSettingTab(new He(this.app, this)),
+      this.activation.configure({ halfLifeMinutes: this.settings.activationDecayHalfLifeMinutes }),
+      this.registerEvent(
+        this.app.workspace.on("file-open", (i) => {
+          i && this.registerActivation(i.path, "opened");
+        }),
+      ),
+      this.registerEvent(
+        this.app.vault.on("modify", (i) => {
+          i instanceof M.TFile && this.registerActivation(i.path, "edited");
+        }),
+      ),
       this.model.subscribe(() => {
         this.engine.wake();
       }),
@@ -6819,6 +7162,7 @@ ${r.prompt}`,
   }
   onunload() {
     (this.rescanTimer !== null && window.clearTimeout(this.rescanTimer),
+      this.activationTimer !== null && window.clearTimeout(this.activationTimer),
       C.info("plugin", "Unloading plugin", {
         indexedNodeCount: this.model.nodes.size,
         simplexCount: this.model.simplices.size,
@@ -6830,16 +7174,16 @@ ${r.prompt}`,
   }
   restorePinnedNodes() {
     (C.info("plugin", "Restoring pinned nodes", { pinnedNodeCount: Object.keys(this.settings.pinnedNodes).length }),
-      Object.entries(this.settings.pinnedNodes).forEach(([t, n]) => {
-        this.model.setNode(t, { isPinned: !0, px: n.px, py: n.py });
+      Object.entries(this.settings.pinnedNodes).forEach(([e, n]) => {
+        this.model.setNode(e, { isPinned: !0, px: n.px, py: n.py });
       }));
   }
   async saveSettings() {
-    let t = {};
+    let e = {};
     (this.model.getAllNodes().forEach((n) => {
-      n.isPinned && (t[n.id] = { px: n.px, py: n.py });
+      n.isPinned && (e[n.id] = { px: n.px, py: n.py });
     }),
-      (this.settings.pinnedNodes = t),
+      (this.settings.pinnedNodes = e),
       await this.saveData(this.settings),
       this.index?.updateSettings(this.settings),
       C.info("plugin", "Saved persistence state", {
@@ -6884,24 +7228,27 @@ ${r.prompt}`,
         ((this.saveTimer = null), this.saveSettings());
       }, 150)));
   }
-  saveInteractionState(t) {
-    ((this.settings.interactionState = mt(t)), this.queueSaveSettings());
+  saveInteractionState(e) {
+    ((this.settings.interactionState = Tt(e)), this.queueSaveSettings());
   }
   async activateView() {
-    await this.app.workspace.getLeaf(!0).setViewState({ type: ie, active: !0 });
-    let t = this.app.workspace.getRightLeaf(!1);
-    t && (await t.setViewState({ type: q, active: !1 }));
+    await this.app.workspace.getLeaf(!0).setViewState({ type: re, active: !0 });
+    let e = this.app.workspace.getRightLeaf(!1);
+    e && (await e.setViewState({ type: q, active: !1 }));
   }
-  async persistSimplexMetadata(t, n) {
+  async activateDynamicsLab() {
+    await this.app.workspace.getLeaf(!0).setViewState({ type: oe, active: !0 });
+  }
+  async persistSimplexMetadata(e, n) {
     (C.info("plugin", "Persisting simplex metadata", {
-      simplexKey: t,
+      simplexKey: e,
       updates: n,
       persistenceMode: this.settings.persistenceMode,
     }),
-      this.model.updateMetadata(t, n));
-    let i = this.model.getSimplex(t);
+      this.model.updateMetadata(e, n));
+    let i = this.model.getSimplex(e);
     if (!i?.sourcePath) {
-      (C.warn("plugin", "Simplex has no sourcePath; only settings state will be saved", { simplexKey: t }),
+      (C.warn("plugin", "Simplex has no sourcePath; only settings state will be saved", { simplexKey: e }),
         await this.saveSettings());
       return;
     }
@@ -6913,8 +7260,8 @@ ${r.prompt}`,
       new M.Notice("Open a note first.");
       return;
     }
-    let r = this.app.metadataCache.getFileCache(n)?.links?.map((d) => d.link) ?? [],
-      o = r
+    let s = this.app.metadataCache.getFileCache(n)?.links?.map((d) => d.link) ?? [],
+      o = s
         .map((d) => this.app.metadataCache.getFirstLinkpathDest(d, n.path)?.path ?? d)
         .filter((d, g, c) => c.indexOf(d) === g),
       a = Math.max(2, Math.min(6, this.settings.commandSimplexSize)),
@@ -6922,7 +7269,7 @@ ${r.prompt}`,
     if (
       (C.info("plugin", "Form simplex from open note requested", {
         sourcePath: n.path,
-        linkCount: r.length,
+        linkCount: s.length,
         desiredSize: a,
         proposedNodes: l,
       }),
@@ -6933,26 +7280,40 @@ ${r.prompt}`,
     }
     this.openCreateSimplexModal(l, n.path);
   }
-  recordEncounter(t, n) {
-    let i = this.history.occurrencesOf(t.nodes);
+  recordEncounter(e, n) {
+    let i = this.history.occurrencesOf(e.nodes);
     (n === "parser" && i.length > 0) ||
       (this.history.append({
         type: i.length > 0 ? "recurred" : "encountered",
         kind: "hyperedge",
-        nodes: t.nodes,
+        nodes: e.nodes,
         actor: n,
-        ...(t.label || t.mode
-          ? { detail: { ...(t.label ? { label: t.label } : {}), ...(t.mode ? { mode: t.mode } : {}) } }
+        ...(e.label || e.mode
+          ? { detail: { ...(e.label ? { label: e.label } : {}), ...(e.mode ? { mode: e.mode } : {}) } }
           : {}),
       }),
       this.syncEncounterState());
   }
   syncEncounterState() {
-    lt(this.model, this.history, this.settings.encounterRecurrenceThreshold);
+    ft(this.model, this.history, this.settings.encounterRecurrenceThreshold);
+  }
+  registerActivation(e, n) {
+    this.model.nodes.has(e) && (this.activation.register(e, n), this.refreshActivation());
+  }
+  refreshActivation() {
+    this.activationTimer !== null && window.clearTimeout(this.activationTimer);
+    let e = this.activation.field(),
+      n = Ye(this.model, "hypergraph");
+    (this.renderer.setActivation(St(n, e, 3)),
+      this.engine.wake(),
+      e.size !== 0 &&
+        (this.activationTimer = window.setTimeout(() => {
+          ((this.activationTimer = null), this.refreshActivation());
+        }, 2e4)));
   }
   rebuildSubsetScorer() {
-    let t = this.index.getInferenceContexts();
-    ((this.subsetScorer = t.length > 0 ? pt(t, this.settings) : null),
+    let e = this.index.getInferenceContexts();
+    ((this.subsetScorer = e.length > 0 ? Mt(e, this.settings) : null),
       this.panelView?.setSubsetScorer(this.subsetScorer));
   }
   createEncounterFromOpenNote() {
@@ -6972,17 +7333,17 @@ ${r.prompt}`,
     (C.info("plugin", "Create encounter from open note requested", { sourcePath: n.path, participantCount: a.length }),
       this.openCreateRelationModal(a, n.path, "hyperedge"));
   }
-  async createHyperedge(t, n) {
-    let i = t.nodes.map((l) => this.resolveDraftNode(l, n)),
-      r = this.settings.persistenceMode === "central-file" ? this.settings.centralFile : n,
+  async createHyperedge(e, n) {
+    let i = e.nodes.map((l) => this.resolveDraftNode(l, n)),
+      s = this.settings.persistenceMode === "central-file" ? this.settings.centralFile : n,
       o = {
         nodes: i,
-        label: t.label,
-        weight: t.weight,
-        mode: t.mode ?? "encounter",
+        label: e.label,
+        weight: e.weight,
+        mode: e.mode ?? "encounter",
         occurredAt: Date.now(),
         persistence: "momentary",
-        sourcePath: r,
+        sourcePath: s,
       },
       a = this.model.addHyperedge(o);
     return a
@@ -6991,68 +7352,68 @@ ${r.prompt}`,
         a)
       : "";
   }
-  async persistHyperedge(t) {
+  async persistHyperedge(e) {
     if (
-      t.sourcePath === this.settings.centralFile ||
-      (!t.sourcePath && this.settings.persistenceMode === "central-file")
+      e.sourcePath === this.settings.centralFile ||
+      (!e.sourcePath && this.settings.persistenceMode === "central-file")
     ) {
-      let { file: o, content: a } = await Ct(this.app, this.settings.centralFile, {
-        ...t,
+      let { file: o, content: a } = await Ht(this.app, this.settings.centralFile, {
+        ...e,
         sourcePath: this.settings.centralFile,
       });
       (await this.app.vault.modify(o, a), this.index.recordWrite(o.path, a));
       return;
     }
-    let i = this.app.vault.getAbstractFileByPath(t.sourcePath ?? "");
+    let i = this.app.vault.getAbstractFileByPath(e.sourcePath ?? "");
     if (!(i instanceof M.TFile)) {
-      C.warn("plugin", "Unable to persist hyperedge to source note", { nodeKey: N(t.nodes), sourcePath: t.sourcePath });
+      C.warn("plugin", "Unable to persist hyperedge to source note", { nodeKey: N(e.nodes), sourcePath: e.sourcePath });
       return;
     }
-    let r = await wt(this.app, i, t);
-    (await this.app.vault.modify(i, r), this.index.recordWrite(i.path, r));
+    let s = await At(this.app, i, e);
+    (await this.app.vault.modify(i, s), this.index.recordWrite(i.path, s));
   }
-  async removeHyperedgeFromNote(t) {
-    let n = N(t.nodes),
-      r =
-        t.sourcePath === this.settings.centralFile ||
-        (!t.sourcePath && this.settings.persistenceMode === "central-file")
-          ? await W(this.app, this.settings.centralFile)
-          : this.app.vault.getAbstractFileByPath(t.sourcePath ?? "");
-    if (!(r instanceof M.TFile)) return;
-    let o = await Nt(this.app, r, n);
-    (await this.app.vault.modify(r, o), this.index.recordWrite(r.path, o));
+  async removeHyperedgeFromNote(e) {
+    let n = N(e.nodes),
+      s =
+        e.sourcePath === this.settings.centralFile ||
+        (!e.sourcePath && this.settings.persistenceMode === "central-file")
+          ? await _(this.app, this.settings.centralFile)
+          : this.app.vault.getAbstractFileByPath(e.sourcePath ?? "");
+    if (!(s instanceof M.TFile)) return;
+    let o = await Lt(this.app, s, n);
+    (await this.app.vault.modify(s, o), this.index.recordWrite(s.path, o));
   }
-  promoteEncounter(t) {
-    let n = this.model.getHyperedge(t);
+  promoteEncounter(e) {
+    let n = this.model.getHyperedge(e);
     if (!n) return;
-    let i = this.model.facesImpliedByPromotion(t);
-    new Ee(this.app, n.nodes, i, async () => {
-      let r = this.model.promoteToSimplex(t);
-      if (!r) return;
+    let i = this.model.facesImpliedByPromotion(e);
+    new Ie(this.app, n.nodes, i, async () => {
+      let s = this.model.promoteToSimplex(e);
+      if (!s) return;
       this.history.append({
         type: "promoted",
         kind: "hyperedge",
         nodes: n.nodes,
         actor: "user",
         prior: { persistence: n.persistence ?? "momentary" },
-        detail: { createdFaceCount: r.createdFaces.length },
+        detail: { createdFaceCount: s.createdFaces.length },
       });
-      let o = this.model.getSimplex(r.simplexKey);
+      let o = this.model.getSimplex(s.simplexKey);
       (o && (await this.persistSimplex(o)),
-        await this.persistHyperedge(this.model.getHyperedge(t)),
-        this.controller.selectSimplex(r.simplexKey),
-        await this.openPanel({ kind: "simplex", key: r.simplexKey }, !1),
+        await this.persistHyperedge(this.model.getHyperedge(e)),
+        this.controller.selectSimplex(s.simplexKey),
+        await this.openPanel({ kind: "simplex", key: s.simplexKey }, !1),
         new M.Notice(
-          r.createdFaces.length > 0
-            ? `Promoted. ${r.createdFaces.length} face${r.createdFaces.length === 1 ? "" : "s"} asserted.`
+          s.createdFaces.length > 0
+            ? `Promoted. ${s.createdFaces.length} face${s.createdFaces.length === 1 ? "" : "s"} asserted.`
             : "Promoted. Every implied face already existed.",
         ));
     }).open();
   }
-  async relaxSimplex(t) {
-    let n = this.model.getSimplex(t);
+  async relaxSimplex(e) {
+    let n = this.model.getSimplex(e);
     if (!n || n.autoGenerated) return;
-    let i = this.model.relaxToHyperedge(t);
+    let i = this.model.relaxToHyperedge(e);
     if (!i) return;
     this.history.append({
       type: "relaxed",
@@ -7061,21 +7422,21 @@ ${r.prompt}`,
       actor: "user",
       prior: { label: n.label ?? null, weight: n.weight ?? null },
     });
-    let r = this.app.vault.getAbstractFileByPath(n.sourcePath ?? "");
-    if (r instanceof M.TFile) {
-      let o = await re(this.app, r, t);
-      (await this.app.vault.modify(r, o), this.index.recordWrite(r.path, o));
+    let s = this.app.vault.getAbstractFileByPath(n.sourcePath ?? "");
+    if (s instanceof M.TFile) {
+      let o = await le(this.app, s, e);
+      (await this.app.vault.modify(s, o), this.index.recordWrite(s.path, o));
     }
     (await this.persistHyperedge(this.model.getHyperedge(i)),
       this.controller.selectHyperedge(i),
       await this.openPanel({ kind: "hyperedge", key: i }, !1),
       new M.Notice("Relaxed to encounter. The group relation is kept; its faces are not asserted."));
   }
-  async crystallizeEncounter(t) {
-    let n = this.model.getHyperedge(t);
+  async crystallizeEncounter(e) {
+    let n = this.model.getHyperedge(e);
     if (!n) return;
     let i = n.label?.trim() || `encounter-${N(n.nodes).replace(/[|/]/g, "-")}`,
-      r = this.settings.crystallizeFolder.replace(/\/+$/, ""),
+      s = this.settings.crystallizeFolder.replace(/\/+$/, ""),
       a = [
         "---",
         "crystallizedFrom:",
@@ -7095,9 +7456,9 @@ ${r.prompt}`,
         "",
       ].join(`
 `),
-      l = await tt(this.app, r ? `${r}/${i}` : i, a);
+      l = await ct(this.app, s ? `${s}/${i}` : i, a);
     (this.index.recordWrite(l.path, a),
-      this.model.crystallizeHyperedge(t, l.path),
+      this.model.crystallizeHyperedge(e, l.path),
       this.history.append({
         type: "crystallized",
         kind: "hyperedge",
@@ -7105,15 +7466,15 @@ ${r.prompt}`,
         actor: "user",
         detail: { conceptNote: l.path },
       }),
-      await this.persistHyperedge(this.model.getHyperedge(t)),
+      await this.persistHyperedge(this.model.getHyperedge(e)),
       new M.Notice(`Crystallized into ${l.basename}. The encounter is unchanged.`),
       await this.app.workspace.getLeaf(!0).openFile(l));
   }
-  async dissolveHyperedge(t) {
-    let n = this.model.getHyperedge(t);
+  async dissolveHyperedge(e) {
+    let n = this.model.getHyperedge(e);
     n &&
       (await this.removeHyperedgeFromNote(n),
-      this.model.removeHyperedge(t),
+      this.model.removeHyperedge(e),
       this.history.append({
         type: "dissolved",
         kind: "hyperedge",
@@ -7125,42 +7486,42 @@ ${r.prompt}`,
       this.panelView?.setSelection(null),
       new M.Notice("Encounter dissolved. Its history is kept."));
   }
-  async saveHyperedgeMetadata(t, n) {
-    let i = this.model.updateHyperedge(t, n);
+  async saveHyperedgeMetadata(e, n) {
+    let i = this.model.updateHyperedge(e, n);
     i && (await this.persistHyperedge(i));
   }
-  async promoteSimplex(t) {
-    let n = this.model.getSimplex(t);
+  async promoteSimplex(e) {
+    let n = this.model.getSimplex(e);
     if (!n || n.autoGenerated) return;
-    this.controller.logPromote(t, n.nodes);
-    let i = n.label?.trim() || `simplex-${t.replace(/\|/g, "-")}`,
-      r = n.nodes.map((g) => `- [[${g.replace(/\.md$/, "")}]]`).join(`
+    this.controller.logPromote(e, n.nodes);
+    let i = n.label?.trim() || `simplex-${e.replace(/\|/g, "-")}`,
+      s = n.nodes.map((g) => `- [[${g.replace(/\.md$/, "")}]]`).join(`
 `),
-      o = await tt(this.app, i, r),
+      o = await ct(this.app, i, s),
       a = { ...n, sourcePath: o.path, userDefined: !0, inferred: !1, suggested: !1, autoGenerated: !1 };
     if (n.sourcePath && n.sourcePath !== o.path) {
       let g = this.app.vault.getAbstractFileByPath(n.sourcePath);
       if (g instanceof M.TFile) {
-        let c = await re(this.app, g, t);
+        let c = await le(this.app, g, e);
         (await this.app.vault.modify(g, c), this.index.recordWrite(g.path, c));
       }
     }
-    let l = await Ge(this.app, o, a);
-    (await this.app.vault.modify(o, l), this.index.recordWrite(o.path, l), this.model.removeSimplex(t));
+    let l = await tt(this.app, o, a);
+    (await this.app.vault.modify(o, l), this.index.recordWrite(o.path, l), this.model.removeSimplex(e));
     let d = this.model.addSimplex(a);
     (this.controller.selectSimplex(d),
       await this.openPanel(d, !1),
       new M.Notice(`Simplex now owned by ${o.basename}.`));
   }
-  openCreateSimplexModal(t, n) {
-    this.openCreateRelationModal(t, n, "simplex");
+  openCreateSimplexModal(e, n) {
+    this.openCreateRelationModal(e, n, "simplex");
   }
-  openCreateRelationModal(t, n, i) {
-    let r = this.settings.persistenceMode === "central-file" ? this.settings.centralFile : n;
-    new Me(
+  openCreateRelationModal(e, n, i) {
+    let s = this.settings.persistenceMode === "central-file" ? this.settings.centralFile : n;
+    new ke(
       this.app,
-      t,
-      r,
+      e,
+      s,
       async (o) => {
         if (o.kind === "hyperedge") {
           let d = await this.createHyperedge(o, n);
@@ -7169,7 +7530,7 @@ ${r.prompt}`,
             this.settings.commandAutoOpenPanel && (await this.openPanel({ kind: "hyperedge", key: d }, !1)),
             C.info("plugin", "Encounter created from guided modal", {
               relationKey: d,
-              sourcePath: r,
+              sourcePath: s,
               hyperedgeCount: this.model.hyperedges.size,
             }),
             new M.Notice(
@@ -7183,7 +7544,7 @@ ${r.prompt}`,
             nodes: o.nodes.map((d) => this.resolveDraftNode(d, n)),
             label: o.label,
             weight: o.weight,
-            sourcePath: r,
+            sourcePath: s,
             userDefined: !0,
             autoGenerated: !1,
           },
@@ -7207,12 +7568,12 @@ ${r.prompt}`,
     ).open();
   }
   async openPanelForCurrentSelection() {
-    let t =
+    let e =
       this.controller.hoveredSimplexKey ??
       (this.controller.hoveredNodeId && this.model.getSimplicesForNode(this.controller.hoveredNodeId)[0]?.nodes
         ? N(this.model.getSimplicesForNode(this.controller.hoveredNodeId)[0].nodes)
         : null);
-    await this.openPanel(t, !0);
+    await this.openPanel(e, !0);
   }
   async logPersistenceState() {
     (C.info("plugin", "Persistence state", {
@@ -7220,148 +7581,148 @@ ${r.prompt}`,
       centralFile: this.settings.centralFile,
     }),
       this.settings.persistenceMode === "central-file"
-        ? await Et(this.app, this.settings.centralFile)
+        ? await Ot(this.app, this.settings.centralFile)
         : C.info("persistence", "Source-note persistence active", { mode: this.settings.persistenceMode }));
   }
-  async persistSimplex(t) {
+  async persistSimplex(e) {
     if (
-      t.sourcePath === this.settings.centralFile ||
-      (!t.sourcePath && this.settings.persistenceMode === "central-file")
+      e.sourcePath === this.settings.centralFile ||
+      (!e.sourcePath && this.settings.persistenceMode === "central-file")
     ) {
-      let { file: o, content: a } = await Mt(this.app, this.settings.centralFile, {
-        ...t,
+      let { file: o, content: a } = await Kt(this.app, this.settings.centralFile, {
+        ...e,
         sourcePath: this.settings.centralFile,
       });
       (await this.app.vault.modify(o, a),
         this.index.recordWrite(o.path, a),
-        C.info("plugin", "Persisted simplex to central file", { simplexKey: N(t.nodes), path: o.path }));
+        C.info("plugin", "Persisted simplex to central file", { simplexKey: N(e.nodes), path: o.path }));
       return;
     }
-    let i = this.app.vault.getAbstractFileByPath(t.sourcePath ?? "");
+    let i = this.app.vault.getAbstractFileByPath(e.sourcePath ?? "");
     if (!(i instanceof M.TFile)) {
       C.warn("plugin", "Unable to persist simplex to source note", {
-        simplexKey: N(t.nodes),
-        sourcePath: t.sourcePath,
+        simplexKey: N(e.nodes),
+        sourcePath: e.sourcePath,
       });
       return;
     }
-    let r = await Ge(this.app, i, t);
-    (await this.app.vault.modify(i, r),
-      this.index.recordWrite(i.path, r),
-      C.info("plugin", "Persisted simplex to source note", { simplexKey: N(t.nodes), path: i.path }));
+    let s = await tt(this.app, i, e);
+    (await this.app.vault.modify(i, s),
+      this.index.recordWrite(i.path, s),
+      C.info("plugin", "Persisted simplex to source note", { simplexKey: N(e.nodes), path: i.path }));
   }
-  openCanvasContextMenu(t, n) {
+  openCanvasContextMenu(e, n) {
     let i = new M.Menu();
     if (
-      (t.nodeId &&
-        (i.addItem((r) =>
-          r
+      (e.nodeId &&
+        (i.addItem((s) =>
+          s
             .setTitle("Open note")
             .setIcon("file-text")
             .onClick(() => {
-              this.openNodeNote(t.nodeId);
+              this.openNodeNote(e.nodeId);
             }),
         ),
-        i.addItem((r) =>
-          r
+        i.addItem((s) =>
+          s
             .setTitle("Focus node")
             .setIcon("crosshair")
             .onClick(() => {
-              ((this.controller.hoveredNodeId = t.nodeId), this.controller.focusHoveredNode(), this.renderer.render());
+              ((this.controller.hoveredNodeId = e.nodeId), this.controller.focusHoveredNode(), this.renderer.render());
             }),
         ),
-        i.addItem((r) =>
-          r
+        i.addItem((s) =>
+          s
             .setTitle("Create simplex from node + neighbors")
             .setIcon("plus-circle")
             .onClick(() => {
-              this.createSimplexFromNode(t.nodeId);
+              this.createSimplexFromNode(e.nodeId);
             }),
         ),
-        i.addItem((r) =>
-          r
+        i.addItem((s) =>
+          s
             .setTitle("Record encounter from node + neighbors")
             .setIcon("diamond")
             .onClick(() => {
-              this.createEncounterFromNode(t.nodeId);
+              this.createEncounterFromNode(e.nodeId);
             }),
         ),
-        i.addItem((r) =>
-          r
-            .setTitle(this.model.nodes.get(t.nodeId)?.isPinned ? "Unpin node" : "Pin node")
+        i.addItem((s) =>
+          s
+            .setTitle(this.model.nodes.get(e.nodeId)?.isPinned ? "Unpin node" : "Pin node")
             .setIcon("pin")
             .onClick(() => {
-              (this.controller.togglePin(t.nodeId), this.renderer.render());
+              (this.controller.togglePin(e.nodeId), this.renderer.render());
             }),
         )),
-      t.simplexKey &&
-        (i.addItem((r) =>
-          r
+      e.simplexKey &&
+        (i.addItem((s) =>
+          s
             .setTitle("Open metadata")
             .setIcon("info")
             .onClick(() => {
-              this.openPanel(t.simplexKey, !0);
+              this.openPanel(e.simplexKey, !0);
             }),
         ),
-        i.addItem((r) =>
-          r
+        i.addItem((s) =>
+          s
             .setTitle("Promote to note")
             .setIcon("up-right-from-square")
             .onClick(() => {
-              this.promoteSimplex(t.simplexKey);
+              this.promoteSimplex(e.simplexKey);
             }),
         ),
-        i.addItem((r) =>
-          r
+        i.addItem((s) =>
+          s
             .setTitle("Dissolve simplex")
             .setIcon("trash")
             .onClick(() => {
-              this.dissolveSimplex(t.simplexKey);
+              this.dissolveSimplex(e.simplexKey);
             }),
         ),
-        i.addItem((r) =>
-          r
+        i.addItem((s) =>
+          s
             .setTitle("Relax to encounter")
             .setIcon("diamond")
             .onClick(() => {
-              this.relaxSimplex(t.simplexKey);
+              this.relaxSimplex(e.simplexKey);
             }),
         ),
-        i.addItem((r) =>
-          r
+        i.addItem((s) =>
+          s
             .setTitle("Show in formal view")
             .setIcon("sigma")
             .onClick(async () => {
               ((this.settings.formalMode = !0),
                 await this.saveSettings(),
-                this.controller.selectSimplex(t.simplexKey),
+                this.controller.selectSimplex(e.simplexKey),
                 this.renderer.render());
             }),
         )),
-      t.hyperedgeKey)
+      e.hyperedgeKey)
     ) {
-      let r = this.model.getHyperedge(t.hyperedgeKey);
+      let s = this.model.getHyperedge(e.hyperedgeKey);
       (i.addItem((o) =>
         o
           .setTitle("Open encounter")
           .setIcon("info")
           .onClick(() => {
-            this.openPanel({ kind: "hyperedge", key: t.hyperedgeKey }, !0);
+            this.openPanel({ kind: "hyperedge", key: e.hyperedgeKey }, !0);
           }),
       ),
         i.addItem((o) =>
           o
             .setTitle("Promote to simplex")
             .setIcon("triangle")
-            .onClick(() => this.promoteEncounter(t.hyperedgeKey)),
+            .onClick(() => this.promoteEncounter(e.hyperedgeKey)),
         ),
-        r?.persistence === "recurring" &&
+        s?.persistence === "recurring" &&
           i.addItem((o) =>
             o
               .setTitle("Crystallize concept")
               .setIcon("sparkles")
               .onClick(() => {
-                this.crystallizeEncounter(t.hyperedgeKey);
+                this.crystallizeEncounter(e.hyperedgeKey);
               }),
           ),
         i.addItem((o) =>
@@ -7369,82 +7730,82 @@ ${r.prompt}`,
             .setTitle("Dissolve encounter")
             .setIcon("trash")
             .onClick(() => {
-              this.dissolveHyperedge(t.hyperedgeKey);
+              this.dissolveHyperedge(e.hyperedgeKey);
             }),
         ));
     }
     i.showAtMouseEvent(n);
   }
-  async openNodeNote(t) {
-    let n = this.app.vault.getAbstractFileByPath(t),
-      i = n instanceof M.TFile ? n : de(t, t, this.app);
+  async openNodeNote(e) {
+    let n = this.app.vault.getAbstractFileByPath(e),
+      i = n instanceof M.TFile ? n : ue(e, e, this.app);
     if (!(i instanceof M.TFile)) {
       new M.Notice("This node is not backed by a note yet.");
       return;
     }
     await this.app.workspace.getLeaf(!0).openFile(i);
   }
-  createSimplexFromNode(t) {
-    let n = this.model.getNeighbors(t),
-      i = [t, ...n].slice(0, Math.max(2, this.settings.commandSimplexSize));
+  createSimplexFromNode(e) {
+    let n = this.model.getNeighbors(e),
+      i = [e, ...n].slice(0, Math.max(2, this.settings.commandSimplexSize));
     if (i.length < 2) {
       new M.Notice("Need at least one connected neighbor to form a simplex.");
       return;
     }
-    this.openCreateSimplexModal(i, t);
+    this.openCreateSimplexModal(i, e);
   }
-  createEncounterFromNode(t) {
-    let n = [t, ...this.model.getNeighbors(t)];
+  createEncounterFromNode(e) {
+    let n = [e, ...this.model.getNeighbors(e)];
     if (n.length < 2) {
       new M.Notice("Need at least one connected neighbor to record an encounter.");
       return;
     }
-    this.openCreateRelationModal(n, t, "hyperedge");
+    this.openCreateRelationModal(n, e, "hyperedge");
   }
-  async dissolveSimplex(t) {
-    let n = this.model.getSimplex(t);
+  async dissolveSimplex(e) {
+    let n = this.model.getSimplex(e);
     if (!n || n.autoGenerated) return;
     if (
-      (this.controller.logDissolve(t, n.nodes),
+      (this.controller.logDissolve(e, n.nodes),
       n.sourcePath === this.settings.centralFile || (!n.sourcePath && this.settings.persistenceMode === "central-file"))
     ) {
-      let r = await W(this.app, this.settings.centralFile),
-        o = await re(this.app, r, t);
-      (await this.app.vault.modify(r, o), this.index.recordWrite(r.path, o));
+      let s = await _(this.app, this.settings.centralFile),
+        o = await le(this.app, s, e);
+      (await this.app.vault.modify(s, o), this.index.recordWrite(s.path, o));
     } else {
-      let r = n.sourcePath ?? "",
-        o = this.app.vault.getAbstractFileByPath(r);
+      let s = n.sourcePath ?? "",
+        o = this.app.vault.getAbstractFileByPath(s);
       if (!(o instanceof M.TFile)) return;
-      let a = await re(this.app, o, t);
+      let a = await le(this.app, o, e);
       (await this.app.vault.modify(o, a), this.index.recordWrite(o.path, a));
     }
-    (this.model.removeSimplex(t),
+    (this.model.removeSimplex(e),
       this.controller.clearFocus(),
       this.panelView?.setSelection(null),
-      C.info("plugin", "Dissolved simplex", { simplexKey: t, persistenceMode: this.settings.persistenceMode }));
+      C.info("plugin", "Dissolved simplex", { simplexKey: e, persistenceMode: this.settings.persistenceMode }));
   }
-  async openPanel(t, n) {
+  async openPanel(e, n) {
     let i = this.app.workspace.getRightLeaf(!1);
     if (!i) return;
-    let r = typeof t == "string" ? { kind: "simplex", key: t } : t;
+    let s = typeof e == "string" ? { kind: "simplex", key: e } : e;
     (await i.setViewState({ type: q, active: n }),
-      this.panelView?.setSelection(r),
-      C.info("plugin", "Opened metadata panel", { kind: r?.kind ?? null, relationKey: r?.key ?? null, active: n }));
+      this.panelView?.setSelection(s),
+      C.info("plugin", "Opened metadata panel", { kind: s?.kind ?? null, relationKey: s?.key ?? null, active: n }));
   }
-  resolveDraftNode(t, n) {
-    return this.app.metadataCache.getFirstLinkpathDest(t, n)?.path ?? t.trim();
+  resolveDraftNode(e, n) {
+    return this.app.metadataCache.getFirstLinkpathDest(e, n)?.path ?? e.trim();
   }
-  scheduleFullScan(t, n) {
+  scheduleFullScan(e, n) {
     (this.rescanTimer !== null && window.clearTimeout(this.rescanTimer),
       (this.rescanTimer = window.setTimeout(async () => {
         ((this.rescanTimer = null),
-          C.info("plugin", "Running full scan", { reason: t }),
+          C.info("plugin", "Running full scan", { reason: e }),
           await this.index.fullScan(),
           this.syncEncounterState(),
           this.rebuildSubsetScorer(),
           this.renderer.render(),
           C.info("plugin", "Full scan complete", {
-            reason: t,
+            reason: e,
             indexedNodeCount: this.model.nodes.size,
             simplexCount: this.model.simplices.size,
           }));

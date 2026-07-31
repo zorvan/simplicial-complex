@@ -17,6 +17,7 @@ export class SimplicialSettingTab extends PluginSettingTab {
 
     this.renderPersistenceSettings(containerEl);
     this.renderHypergraphSettings(containerEl);
+    this.renderDynamicsSettings(containerEl);
     this.renderLayoutSettings(containerEl);
     this.renderInferenceSettings(containerEl);
     this.renderCommandUiSettings(containerEl);
@@ -246,6 +247,36 @@ export class SimplicialSettingTab extends PluginSettingTab {
           await this.plugin.saveSettings();
         });
       });
+  }
+
+  private renderDynamicsSettings(containerEl: HTMLElement): void {
+    new Setting(containerEl).setName("Dynamics").setHeading();
+
+    new Setting(containerEl)
+      .setName("Enable dynamics lab")
+      .setDesc(
+        "Adds a view that runs your vault under three models of how attention spreads — pairwise, simplicial and hypergraph — and reports where they disagree. Experimental. Requires a reload.",
+      )
+      .addToggle((toggle) => {
+        toggle.setValue(this.plugin.settings.enableDynamicsLab);
+        toggle.onChange(async (value) => {
+          this.plugin.settings.enableDynamicsLab = value;
+          await this.plugin.saveSettings();
+          new Notice(value ? "Dynamics lab appears after a reload." : "Dynamics lab removed after a reload.");
+        });
+      });
+
+    {
+      const setting = new Setting(containerEl)
+        .setName("Attention half-life (minutes)")
+        .setDesc(
+          "How long a note stays visibly in play after you leave it. Attention is never written to a note — it exists only while the plugin is running.",
+        );
+      this.addNumberSlider(setting, this.plugin.settings.activationDecayHalfLifeMinutes, 1, 240, 1, async (value) => {
+        this.plugin.settings.activationDecayHalfLifeMinutes = value;
+        await this.plugin.saveSettings();
+      });
+    }
   }
 
   private renderInferenceSettings(containerEl: HTMLElement): void {

@@ -16,6 +16,7 @@ import { InteractionController } from "../interaction/controller";
 import { renderBlob, renderHyperedge } from "./blobs";
 import { encounterStyle, pulsePhase, pulsedNodeRadius } from "./encounter-style";
 import { closureDeficit } from "../core/diagnostics";
+import type { ActivationField } from "../core/activation";
 import { renderEdges } from "./edges";
 import { effectiveColorForSimplex } from "./palette";
 import { drawBettiHUD, drawEncounterHUD } from "./components/hud";
@@ -106,6 +107,12 @@ export class Renderer {
   private readonly progressiveNodeStep = 140;
   private readonly progressiveSimplexStep = 220;
 
+  /**
+   * Ephemeral attention, refreshed by the plugin. Read only for emphasis — nothing
+   * here is ever written to a note, and the renderer has no way to write one.
+   */
+  private activation: ActivationField = new Map();
+
   constructor(
     private model: SimplicialModel,
     private engine: LayoutEngine,
@@ -113,6 +120,10 @@ export class Renderer {
     private settings: PluginSettings,
     private callbacks: RendererCallbacks = {},
   ) {}
+
+  setActivation(field: ActivationField): void {
+    this.activation = field;
+  }
 
   // Cached text measurement for performance
   private measureTextWidth(ctx: CanvasRenderingContext2D, text: string): number {
@@ -1024,16 +1035,20 @@ export class Renderer {
       // together, which is the assertion — temporary alignment of attention.
       const baseRadius = this.settings.formalMode ? 4.5 : isHovered ? 7 : 5;
       const nodeRadius = pulsingNodeIds.has(node.id) ? pulsedNodeRadius(baseRadius, pulse) : baseRadius;
+      // HG-19. Activation lifts a note toward full presence without ever making an
+      // unattended one invisible: attention is emphasis, not a filter.
+      const activationLift = this.activation.get(node.id) ?? 0;
+      const alpha = Math.min(1, (isActive ? node.displayAlpha : 0.2) + activationLift * 0.5);
 
       ctx.beginPath();
       if (node.isVirtual) {
         ctx.arc(node.px, node.py, nodeRadius, 0, Math.PI * 2);
-        ctx.strokeStyle = `rgba(${r},${g},${b},${node.displayAlpha})`;
+        ctx.strokeStyle = `rgba(${r},${g},${b},${alpha})`;
         ctx.lineWidth = 1.5;
         ctx.stroke();
       } else {
         ctx.arc(node.px, node.py, nodeRadius, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${r},${g},${b},${isActive ? node.displayAlpha : 0.2})`;
+        ctx.fillStyle = `rgba(${r},${g},${b},${alpha})`;
         ctx.fill();
       }
 

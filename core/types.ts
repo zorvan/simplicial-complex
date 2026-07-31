@@ -3,6 +3,7 @@ export type SimplexKey = string;
 
 export const VIEW_TYPE_SIMPLICIAL = "simplicial-view";
 export const VIEW_TYPE_SIMPLICIAL_PANEL = "simplicial-panel";
+export const VIEW_TYPE_SIMPLICIAL_DYNAMICS = "simplicial-dynamics";
 export const MAX_FACE_GEN_DIM = 4;
 export const MAX_RENDERED_DIM = 3;
 export const HOLD_REPULSION = 900;
@@ -204,6 +205,17 @@ export interface PluginSettings {
   /** Append-only relation event log (HG-30). */
   historyFile: string;
   enableRelationHistory: boolean;
+  // --- dynamics (HG-19 … HG-21) ---
+  /**
+   * Registers the Dynamics Lab view and command. Off by default: it is an
+   * experimental instrument, and a vault with no encounters has nothing to run.
+   */
+  enableDynamicsLab: boolean;
+  /**
+   * How fast ephemeral attention fades. Attention is never written to a note; this
+   * only governs how long a note stays visibly in play after you leave it.
+   */
+  activationDecayHalfLifeMinutes: number;
 }
 
 export interface RelationSelection {

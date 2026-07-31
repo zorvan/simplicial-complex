@@ -30,6 +30,17 @@ import {
 } from "../core/diagnostics.js";
 import { explainEncounter, explainSimpliciality } from "../data/explainer.js";
 import { PULSE_PERIOD_MS, encounterStyle, pulsePhase, pulsedNodeRadius } from "../render/encounter-style.js";
+import {
+  ActivationState,
+  DEFAULT_SOURCE_WEIGHTS,
+  competingRhythms,
+  createKernel,
+  kernelGroups,
+  orderParameter,
+  propagate,
+  synchronizationTime,
+  type ActivationField,
+} from "../core/activation.js";
 
 // ---------------------------------------------------------------------------
 // HG-01 — namespaced relation keys
@@ -973,4 +984,156 @@ test("every style value stays in range across the whole input space", () => {
       }
     }
   }
+});
+
+// ---------------------------------------------------------------------------
+// HG-19 — activation: attention, never content
+// ---------------------------------------------------------------------------
+
+test("activation decays by its half-life and never accumulates past full", () => {
+  const now = Date.UTC(2026, 0, 1);
+  const state = new ActivationState({ halfLifeMinutes: 30, sourceWeights: DEFAULT_SOURCE_WEIGHTS });
+
+  state.register("a.md", "opened", now);
+  assert.equal(state.valueAt("a.md", now), 1);
+  assert.ok(Math.abs(state.valueAt("a.md", now + 30 * 60000) - 0.5) < 1e-9);
+
+  state.register("a.md", "opened", now);
+  state.register("a.md", "opened", now);
+  assert.equal(state.valueAt("a.md", now), 1, "a note cannot be more open than open");
+});
+
+test("opening a note raises its encounter co-members and leaves unrelated notes quiet", () => {
+  const model = new SimplicialModel();
+  model.addHyperedge({ nodes: ["a.md", "b.md", "c.md"] });
+  model.setNode("stranger.md");
+
+  const kernel = createKernel(model, "hypergraph");
+  const seeded: ActivationField = new Map([["a.md", 1]]);
+  const spread = propagate(kernel, seeded, 4);
+
+  assert.ok(spread.get("b.md")! > 0.1, "a co-member should be raised");
+  assert.ok(spread.get("c.md")! > 0.1);
+  assert.equal(spread.get("stranger.md") ?? 0, 0, "an unrelated note must stay quiet");
+});
+
+test("the three kernels read different structure from the same vault", () => {
+  const model = new SimplicialModel();
+  model.addSimplex({ nodes: ["a.md", "b.md"], userDefined: true });
+  model.addHyperedge({ nodes: ["a.md", "x.md", "y.md"] });
+
+  assert.deepEqual(kernelGroups(model, "pairwise"), [["a.md", "b.md"]]);
+  assert.deepEqual(kernelGroups(model, "hypergraph"), [["a.md", "x.md", "y.md"]]);
+  // The simplicial kernel takes the faces too: that is what downward closure means
+  // for propagation, and dropping them would quietly make it a fourth kernel.
+  model.addSimplex({ nodes: ["p.md", "q.md", "r.md"], userDefined: true });
+  assert.equal(kernelGroups(model, "simplicial").length, model.simplices.size);
+});
+
+test("propagation never mutates the field it was given", () => {
+  const model = new SimplicialModel();
+  model.addHyperedge({ nodes: ["a.md", "b.md"] });
+  const kernel = createKernel(model, "hypergraph");
+  const seeded: ActivationField = new Map([["a.md", 1]]);
+  propagate(kernel, seeded, 3);
+  assert.equal(seeded.get("a.md"), 1);
+  assert.equal(seeded.size, 1);
+});
+
+// ---------------------------------------------------------------------------
+// HG-20 — synchronization time
+// ---------------------------------------------------------------------------
+
+test("synchronization time is deterministic under a seeded initial state", () => {
+  const model = new SimplicialModel();
+  const key = model.addHyperedge({ nodes: ["a.md", "b.md", "c.md"] });
+
+  const first = synchronizationTime(model, key, "hypergraph", { seed: 42 });
+  const second = synchronizationTime(model, key, "hypergraph", { seed: 42 });
+  assert.deepEqual(first!.orderTrace, second!.orderTrace);
+  assert.equal(first!.iterations, second!.iterations);
+  assert.equal(first!.converged, true);
+});
+
+test("a kernel that cannot reach the members reports that it never settled", () => {
+  const model = new SimplicialModel();
+  const key = model.addHyperedge({ nodes: ["a.md", "b.md", "c.md"] });
+
+  // No simplices at all: the pairwise kernel has nothing to propagate along, so the
+  // members keep whatever the seed gave them and never agree.
+  const result = synchronizationTime(model, key, "pairwise", { maxIterations: 50 });
+  assert.equal(result!.converged, false);
+  assert.equal(result!.iterations, null, "the iteration cap is not an answer");
+});
+
+test("synchronization stays bounded on a large vault", () => {
+  const model = new SimplicialModel();
+  for (let index = 0; index < 500; index++) model.setNode(`n${index}.md`);
+  const key = model.addHyperedge({ nodes: ["n0.md", "n1.md", "n2.md", "n3.md"] });
+
+  const started = Date.now();
+  const result = synchronizationTime(model, key, "hypergraph", { maxIterations: 400 });
+  assert.ok(result);
+  assert.ok(Date.now() - started < 5000, "a bounded simulation must stay bounded");
+});
+
+test("the order parameter is one when members agree and falls as they split", () => {
+  assert.equal(orderParameter([0.5, 0.5, 0.5]), 1);
+  assert.ok(orderParameter([0, 1]) < 0.05);
+  assert.ok(orderParameter([0.4, 0.6]) > orderParameter([0.1, 0.9]));
+});
+
+test("competing rhythms need shared members and a real separation", () => {
+  const base = { kernel: "hypergraph" as const, converged: true, orderTrace: [], finalVariance: 0 };
+  const results = [
+    { ...base, relationKey: "h:a", members: ["shared.md", "a.md"], iterations: 4 },
+    { ...base, relationKey: "h:b", members: ["shared.md", "b.md"], iterations: 40 },
+    { ...base, relationKey: "h:c", members: ["far.md"], iterations: 400 },
+  ];
+
+  const competing = competingRhythms(results, 5);
+  assert.equal(competing.length, 1, "disjoint encounters compete over nothing");
+  assert.deepEqual(competing[0].sharedNodes, ["shared.md"]);
+  assert.equal(competing[0].separation, 36);
+
+  assert.equal(competingRhythms(results, 100).length, 0, "a small separation is not a competing rhythm");
+});
+
+test("an encounter that never settled cannot be in a competing rhythm", () => {
+  const base = { kernel: "hypergraph" as const, orderTrace: [], finalVariance: 0 };
+  const results = [
+    { ...base, relationKey: "h:a", members: ["shared.md"], iterations: 4, converged: true },
+    { ...base, relationKey: "h:b", members: ["shared.md"], iterations: null, converged: false },
+  ];
+  assert.equal(competingRhythms(results, 1).length, 0);
+});
+
+test("activation never reaches a note — no persistence path can see it", async () => {
+  // The structural claim, asserted structurally: nothing that writes to the vault
+  // imports the activation layer, and the activation layer has no serializer for
+  // anything to call. A vault that recorded who was paying attention to what would
+  // be a different and much worse artifact than a vault of notes.
+  const { readFile } = await import("node:fs/promises");
+  const writers = ["data/persistence.ts", "data/frontmatter.ts", "data/history-store.ts", "core/history.ts"];
+
+  for (const path of writers) {
+    const source = await readFile(new URL(`../../${path}`, import.meta.url), "utf8");
+    // `getDefaultSettings` is excluded on purpose: settings live in plugin data, not
+    // in a note, and the half-life of attention is a setting like any other. What
+    // must never happen is a *note writer* learning the word.
+    const writerSource = source.split("export function getDefaultSettings")[0];
+    assert.equal(/activation/i.test(writerSource), false, `${path} must not know activation exists`);
+  }
+
+  const state = new ActivationState();
+  state.register("a.md", "opened");
+  const surface = [
+    ...Object.getOwnPropertyNames(ActivationState.prototype),
+    ...Object.keys(state as unknown as Record<string, unknown>),
+  ];
+  assert.equal(
+    surface.some((name) => /serial|persist|save|write|toJSON/i.test(name)),
+    false,
+    "activation exposes no way to be written down",
+  );
 });

@@ -524,3 +524,83 @@
   line-height: 1.5;
   color: var(--text-muted);
 }
+
+/* Dynamics lab: three kernels, one vault */
+.simplicial-kernel-legend {
+  margin: 12px 0 18px;
+}
+
+.simplicial-kernel-legend-row {
+  display: grid;
+  grid-template-columns: 10px 90px 1fr;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.simplicial-kernel-swatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  display: inline-block;
+}
+
+.simplicial-kernel-swatch.is-pairwise,
+.simplicial-kernel-name.is-pairwise,
+.simplicial-trace-bar.is-pairwise {
+  background: var(--color-blue, #4c8dff);
+}
+
+.simplicial-kernel-swatch.is-simplicial,
+.simplicial-kernel-name.is-simplicial,
+.simplicial-trace-bar.is-simplicial {
+  background: var(--color-purple, #7f77dd);
+}
+
+.simplicial-kernel-swatch.is-hypergraph,
+.simplicial-kernel-name.is-hypergraph,
+.simplicial-trace-bar.is-hypergraph {
+  background: var(--color-orange, #e08a4b);
+}
+
+.simplicial-kernel-name {
+  font-size: 12px;
+  color: var(--text-normal);
+}
+
+.simplicial-kernel-name.is-pairwise,
+.simplicial-kernel-name.is-simplicial,
+.simplicial-kernel-name.is-hypergraph {
+  background: none;
+}
+
+.simplicial-kernel-claim {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.simplicial-dynamics-card {
+  border-top: 1px solid var(--background-modifier-border);
+  padding-top: 12px;
+  margin-bottom: 18px;
+}
+
+.simplicial-dynamics-row {
+  margin-bottom: 10px;
+}
+
+.simplicial-trace {
+  display: flex;
+  align-items: flex-end;
+  gap: 1px;
+  height: 34px;
+  margin-top: 5px;
+}
+
+.simplicial-trace-bar {
+  flex: 1 1 auto;
+  min-width: 1px;
+  border-radius: 1px 1px 0 0;
+  opacity: 0.75;
+}

@@ -5,10 +5,11 @@ import { normalizeKey, resolveNodeId } from "./core/normalize";
 import { logger } from "./core/logger";
 import { RelationHistory, syncEncounterPersistence, type RelationEventInput } from "./core/history";
 import type { SubsetScorer } from "./core/diagnostics";
+import { ActivationState, createKernel, propagate, type ActivationSource } from "./core/activation";
 import { createSubsetScorer } from "./data/inference/subset-scorer";
 import type { Hyperedge, PluginSettings, RelationKey, RelationSelection, Simplex } from "./core/types";
 import { deserializeReinforcement, serializeReinforcement, type ReinforcementState } from "./data/interactions";
-import { VIEW_TYPE_SIMPLICIAL, VIEW_TYPE_SIMPLICIAL_PANEL } from "./core/types";
+import { VIEW_TYPE_SIMPLICIAL, VIEW_TYPE_SIMPLICIAL_DYNAMICS, VIEW_TYPE_SIMPLICIAL_PANEL } from "./core/types";
 import {
   ensureCentralFile,
   getDefaultSettings,
@@ -28,6 +29,7 @@ import { Renderer } from "./render/renderer";
 import { CreateSimplexModal, type RelationDraft } from "./ui/create-simplex-modal";
 import { PromoteEncounterModal } from "./ui/promote-encounter-modal";
 import { createPromotedNote, MetadataPanel } from "./ui/panel";
+import { DynamicsLabView } from "./ui/dynamics-view";
 import { SimplicialView } from "./ui/view";
 import { SimplicialSettingTab } from "./settings/setting-tab";
 
@@ -49,6 +51,9 @@ export default class SimplicialPlugin extends Plugin {
    * part, so it happens once per scan rather than once per panel render.
    */
   private subsetScorer: SubsetScorer | null = null;
+  /** HG-19. Ephemeral attention. Never written to a note; see `core/activation.ts`. */
+  private activation = new ActivationState();
+  private activationTimer: number | null = null;
 
   async onload(): Promise<void> {
     const saved = ((await this.loadData()) ?? {}) as Partial<PluginSettings>;
@@ -154,6 +159,15 @@ export default class SimplicialPlugin extends Plugin {
       return panel;
     });
 
+    if (this.settings.enableDynamicsLab) {
+      this.registerView(VIEW_TYPE_SIMPLICIAL_DYNAMICS, (leaf) => new DynamicsLabView(leaf, this.model));
+      this.addCommand({
+        id: "open-dynamics-lab",
+        name: "Open dynamics lab",
+        callback: () => void this.activateDynamicsLab(),
+      });
+    }
+
     this.addRibbonIcon("network", "Simplicial graph", () => void this.activateView());
     this.addCommand({
       id: "open-simplicial",
@@ -246,6 +260,18 @@ export default class SimplicialPlugin extends Plugin {
     });
     this.addSettingTab(new SimplicialSettingTab(this.app, this));
 
+    this.activation.configure({ halfLifeMinutes: this.settings.activationDecayHalfLifeMinutes });
+    this.registerEvent(
+      this.app.workspace.on("file-open", (file) => {
+        if (file) this.registerActivation(file.path, "opened");
+      }),
+    );
+    this.registerEvent(
+      this.app.vault.on("modify", (file) => {
+        if (file instanceof TFile) this.registerActivation(file.path, "edited");
+      }),
+    );
+
     this.model.subscribe(() => {
       this.engine.wake();
     });
@@ -261,6 +287,7 @@ export default class SimplicialPlugin extends Plugin {
 
   onunload(): void {
     if (this.rescanTimer !== null) window.clearTimeout(this.rescanTimer);
+    if (this.activationTimer !== null) window.clearTimeout(this.activationTimer);
     logger.info("plugin", "Unloading plugin", {
       indexedNodeCount: this.model.nodes.size,
       simplexCount: this.model.simplices.size,
@@ -346,6 +373,10 @@ export default class SimplicialPlugin extends Plugin {
     }
   }
 
+  async activateDynamicsLab(): Promise<void> {
+    await this.app.workspace.getLeaf(true).setViewState({ type: VIEW_TYPE_SIMPLICIAL_DYNAMICS, active: true });
+  }
+
   private async persistSimplexMetadata(
     simplexKey: string,
     updates: { label?: string; weight?: number },
@@ -426,6 +457,39 @@ export default class SimplicialPlugin extends Plugin {
 
   private syncEncounterState(): void {
     syncEncounterPersistence(this.model, this.history, this.settings.encounterRecurrenceThreshold);
+  }
+
+  /**
+   * HG-19. Record that a note is in play and spread that to whatever it is in
+   * relation with.
+   *
+   * The hypergraph kernel is the one used for emphasis, because that is the claim
+   * this plugin makes about attention: it is a group being present at once, not a
+   * signal walking along edges. The other two exist to be compared against it in
+   * the Dynamics Lab, not to drive the canvas.
+   */
+  private registerActivation(nodeId: string, source: ActivationSource): void {
+    if (!this.model.nodes.has(nodeId)) return;
+    this.activation.register(nodeId, source);
+    this.refreshActivation();
+  }
+
+  /**
+   * Attention decays continuously, so the field is recomputed on a slow timer while
+   * anything is still warm and then stops. There is nothing to persist and nothing
+   * to clean up in a note — the state exists only for as long as the plugin runs.
+   */
+  private refreshActivation(): void {
+    if (this.activationTimer !== null) window.clearTimeout(this.activationTimer);
+    const seed = this.activation.field();
+    const kernel = createKernel(this.model, "hypergraph");
+    this.renderer.setActivation(propagate(kernel, seed, 3));
+    this.engine.wake();
+    if (seed.size === 0) return;
+    this.activationTimer = window.setTimeout(() => {
+      this.activationTimer = null;
+      this.refreshActivation();
+    }, 20000);
   }
 
   /** HG-12's evidence source. Absent until the vault has been scanned at least once. */

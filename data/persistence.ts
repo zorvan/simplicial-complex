@@ -275,5 +275,7 @@ export function getDefaultSettings(): PluginSettings {
     crystallizeFolder: "",
     historyFile: "_simplicial-history.md",
     enableRelationHistory: true,
+    enableDynamicsLab: false,
+    activationDecayHalfLifeMinutes: 30,
   };
 }
