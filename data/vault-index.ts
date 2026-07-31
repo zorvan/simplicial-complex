@@ -3,7 +3,7 @@ import { debounce, TFile, type App, type TAbstractFile } from "obsidian";
 import { djb2Hash } from "../core/hash.js";
 import { logger } from "../core/logger.js";
 import { SimplicialModel } from "../core/model.js";
-import type { PluginSettings } from "../core/types.js";
+import type { Hyperedge, PluginSettings } from "../core/types.js";
 import { buildInferenceContext, inferSimplices, inferSimplicesLegacy, type InferenceContext } from "./inference.js";
 import { runEmergentInferenceWithHoles } from "./inference/engine.js";
 import { parseSimplices } from "./parser.js";
@@ -25,6 +25,8 @@ export class VaultIndex {
     private model: SimplicialModel,
     private settings: PluginSettings,
     private onExternalChange?: () => void,
+    /** Fires for every encounter read out of a note, so the event log can record recurrence. */
+    private onEncounterParsed?: (_hyperedge: Hyperedge) => void,
   ) {
     this.debouncedChange = debounce(
       (file: TFile) => {
@@ -107,7 +109,7 @@ export class VaultIndex {
     logger.info("vault-index", "File deleted", { path: file.path });
     this.inferenceContexts.delete(file.path);
     this.model.removeNode(file.path);
-    this.model.replaceSourceSimplices(file.path, []);
+    this.model.replaceSourceRelations(file.path, [], []);
     void this.scheduleInferenceRebuild().then(() => this.onExternalChange?.());
   }
 
@@ -133,15 +135,18 @@ export class VaultIndex {
   private processFile(file: TFile, content: string): void {
     this.model.setNode(file.path, { isVirtual: false });
     const parsed = parseSimplices(content, file.path, this.app);
-    this.model.replaceSourceSimplices(file.path, parsed.simplices);
+    this.model.replaceSourceRelations(file.path, parsed.simplices, parsed.hyperedges);
     this.fileSimplexKeys.set(file.path, new Set(parsed.simplices.map((simplex) => simplex.nodes.join("|"))));
     this.inferenceContexts.set(file.path, buildInferenceContext(this.app, file, content));
+    parsed.hyperedges.forEach((hyperedge) => this.onEncounterParsed?.(hyperedge));
     logger.info("vault-index", "Indexed file", {
       path: file.path,
       parsedSimplexCount: parsed.simplices.length,
+      parsedHyperedgeCount: parsed.hyperedges.length,
       parsedNodeCount: parsed.nodeIds.size,
       totalNodeCount: this.model.nodes.size,
       totalSimplexCount: this.model.simplices.size,
+      totalHyperedgeCount: this.model.hyperedges.size,
     });
   }
 

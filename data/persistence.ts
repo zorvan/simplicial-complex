@@ -1,11 +1,25 @@
 import { parseYaml, stringifyYaml, TFile, type App } from "obsidian";
 import { logger } from "../core/logger";
 import { normalizeKey } from "../core/normalize";
-import type { PluginSettings, Simplex } from "../core/types";
+import type { Hyperedge, PluginSettings, Simplex } from "../core/types";
+import {
+  parseManagedFrontmatter as parseManagedFrontmatterWith,
+  serializeFrontmatter as serializeFrontmatterWith,
+  updateManagedArray,
+  type YamlCodec,
+} from "./frontmatter";
+
+const yamlCodec: YamlCodec = {
+  parse: (source) => (parseYaml(source) as Record<string, unknown> | null) ?? null,
+  stringify: (value) => stringifyYaml(value),
+};
 
 function serializeFrontmatter(frontmatter: Record<string, unknown>, body: string): string {
-  const yaml = stringifyYaml(frontmatter).trimEnd();
-  return `---\n${yaml}\n---\n${body.replace(/^\n*/, "")}`;
+  return serializeFrontmatterWith(frontmatter, body, yamlCodec);
+}
+
+function parseManagedFrontmatter(content: string): { frontmatter: Record<string, unknown>; body: string } {
+  return parseManagedFrontmatterWith(content, yamlCodec);
 }
 
 function simplexToSerializable(simplex: Simplex): Record<string, unknown> {
@@ -16,17 +30,15 @@ function simplexToSerializable(simplex: Simplex): Record<string, unknown> {
   };
 }
 
-function parseManagedFrontmatter(content: string): { frontmatter: Record<string, unknown>; body: string } {
-  const match = content.match(/^---\n([\s\S]*?)\n---\n?/);
-  if (!match) return { frontmatter: {}, body: content };
-  try {
-    return {
-      frontmatter: (parseYaml(match[1]) as Record<string, unknown> | null) ?? {},
-      body: content.replace(/^---\n[\s\S]*?\n---\n?/, ""),
-    };
-  } catch {
-    return { frontmatter: {}, body: content.replace(/^---\n[\s\S]*?\n---\n?/, "") };
-  }
+function hyperedgeToSerializable(hyperedge: Hyperedge): Record<string, unknown> {
+  return {
+    nodes: hyperedge.nodes,
+    ...(hyperedge.label ? { label: hyperedge.label } : {}),
+    ...(hyperedge.weight !== undefined ? { weight: hyperedge.weight } : {}),
+    ...(hyperedge.mode ? { mode: hyperedge.mode } : {}),
+    ...(hyperedge.occurredAt !== undefined ? { occurredAt: hyperedge.occurredAt } : {}),
+    ...(hyperedge.persistence ? { persistence: hyperedge.persistence } : {}),
+  };
 }
 
 function updateSimplexArray(
@@ -34,16 +46,15 @@ function updateSimplexArray(
   simplexKey: string,
   nextEntry?: Record<string, unknown>,
 ): Record<string, unknown> {
-  const simplices = Array.isArray(frontmatter.simplices) ? [...(frontmatter.simplices as unknown[])] : [];
-  const filtered = simplices.filter((entry) => {
-    const nodes = Array.isArray((entry as Record<string, unknown>).nodes)
-      ? ((entry as Record<string, unknown>).nodes as unknown[]).map(String)
-      : [];
-    return normalizeKey(nodes) !== simplexKey;
-  });
-  if (nextEntry) filtered.push(nextEntry);
-  frontmatter.simplices = filtered;
-  return frontmatter;
+  return updateManagedArray(frontmatter, "simplices", simplexKey, nextEntry);
+}
+
+function updateHyperedgeArray(
+  frontmatter: Record<string, unknown>,
+  nodeKey: string,
+  nextEntry?: Record<string, unknown>,
+): Record<string, unknown> {
+  return updateManagedArray(frontmatter, "hyperedges", nodeKey, nextEntry);
 }
 
 export async function writeSimplexToSourceNote(app: App, file: TFile, simplex: Simplex): Promise<string> {
@@ -61,6 +72,53 @@ export async function writeSimplexToSourceNote(app: App, file: TFile, simplex: S
   return serializeFrontmatter(frontmatter, body);
 }
 
+export async function writeHyperedgeToSourceNote(app: App, file: TFile, hyperedge: Hyperedge): Promise<string> {
+  const content = await app.vault.read(file);
+  const { frontmatter, body } = parseManagedFrontmatter(content);
+  const key = normalizeKey(hyperedge.nodes);
+  updateHyperedgeArray(frontmatter, key, hyperedgeToSerializable(hyperedge));
+  logger.info("persistence", "Prepared source-note hyperedge write", {
+    mode: "source-note",
+    file: file.path,
+    nodeKey: key,
+    hyperedgeCount: Array.isArray(frontmatter.hyperedges) ? frontmatter.hyperedges.length : 0,
+  });
+  return serializeFrontmatter(frontmatter, body);
+}
+
+export async function writeHyperedgeToCentralFile(
+  app: App,
+  centralFile: string,
+  hyperedge: Hyperedge,
+): Promise<{ file: TFile; content: string }> {
+  const file = await ensureCentralFile(app, centralFile);
+  const content = await app.vault.read(file);
+  const { frontmatter, body } = parseManagedFrontmatter(content);
+  const key = normalizeKey(hyperedge.nodes);
+  frontmatter.managedBy = "simplicial-complex";
+  updateHyperedgeArray(frontmatter, key, hyperedgeToSerializable(hyperedge));
+  const nextContent = serializeFrontmatter(frontmatter, body || "<!-- managed by Simplicial Complex plugin -->\n");
+  logger.info("persistence", "Prepared central-file hyperedge write", {
+    mode: "central-file",
+    file: file.path,
+    nodeKey: key,
+    hyperedgeCount: Array.isArray(frontmatter.hyperedges) ? frontmatter.hyperedges.length : 0,
+  });
+  return { file, content: nextContent };
+}
+
+export async function removeHyperedgeFromManagedFile(app: App, file: TFile, nodeKey: string): Promise<string> {
+  const content = await app.vault.read(file);
+  const { frontmatter, body } = parseManagedFrontmatter(content);
+  updateHyperedgeArray(frontmatter, nodeKey);
+  logger.info("persistence", "Prepared hyperedge removal", {
+    file: file.path,
+    nodeKey,
+    remainingHyperedgeCount: Array.isArray(frontmatter.hyperedges) ? frontmatter.hyperedges.length : 0,
+  });
+  return serializeFrontmatter(frontmatter, body);
+}
+
 export async function ensureCentralFile(app: App, centralFile: string): Promise<TFile> {
   const existing = app.vault.getAbstractFileByPath(centralFile);
   if (existing instanceof TFile) return existing;
@@ -68,6 +126,7 @@ export async function ensureCentralFile(app: App, centralFile: string): Promise<
     "---",
     "managedBy: simplicial-complex",
     "simplices: []",
+    "hyperedges: []",
     "---",
     "",
     "<!-- managed by Simplicial Complex plugin -->",

@@ -1,7 +1,14 @@
 import { test } from "node:test";
 import { strict as assert } from "node:assert";
-import { normalizeKey, parseRelationKey, relationKey } from "../core/normalize.js";
+import { normalizeKey, normalizeNodes, parseRelationKey, relationKey } from "../core/normalize.js";
 import { SimplicialModel } from "../core/model.js";
+import { parseRelations, type ParserDeps } from "../data/parser-core.js";
+import {
+  parseManagedFrontmatter,
+  serializeFrontmatter,
+  updateManagedArray,
+  type YamlCodec,
+} from "../data/frontmatter.js";
 import {
   buildIncidenceMatrix,
   crossLayerMap,
@@ -201,4 +208,155 @@ test("cross-layer cache invalidates on relation mutation", () => {
   model.addSimplex({ nodes: ["a.md", "b.md"], userDefined: true });
 
   assert.equal(crossLayerMap(model).hyperedges.get(key)!.presentFaces.length, 1);
+});
+
+// ---------------------------------------------------------------------------
+// HG-04 — ◇ syntax, hyperedges: frontmatter, and the frontmatter/inline merge
+// ---------------------------------------------------------------------------
+
+/** Identity resolution plus a JSON stand-in for Obsidian's YAML, which tests cannot load. */
+function parserDeps(frontmatter: Record<string, unknown> | null = null): ParserDeps {
+  return {
+    canonicalize: (rawId) => rawId.trim(),
+    parseYaml: () => frontmatter,
+  };
+}
+
+test("◇ produces a hyperedge and generates no faces", () => {
+  const parsed = parseRelations("◇ Levinas AI-Agent refusal\n", "note.md", parserDeps());
+
+  assert.equal(parsed.simplices.length, 0);
+  assert.equal(parsed.hyperedges.length, 1);
+  assert.deepEqual(parsed.hyperedges[0].nodes, normalizeNodes(["Levinas", "AI-Agent", "refusal"]));
+
+  const model = new SimplicialModel();
+  model.replaceSourceRelations("note.md", parsed.simplices, parsed.hyperedges);
+  assert.equal(model.simplices.size, 0, "an encounter creates no faces");
+});
+
+test("hyperedge arity is unbounded, unlike △ and △△", () => {
+  const parsed = parseRelations("◇ a b c d e f g\n△ a b c d e f g\n", "note.md", parserDeps());
+
+  assert.equal(parsed.hyperedges[0].nodes.length, 7);
+  assert.equal(parsed.simplices[0].nodes.length, 3, "△ still takes exactly three");
+});
+
+test("encounter: and hyperedge: are accepted as prose aliases for ◇", () => {
+  const parsed = parseRelations("encounter: a b c\nhyperedge: d e\n", "note.md", parserDeps());
+
+  assert.equal(parsed.hyperedges.length, 2);
+});
+
+test("frontmatter and inline markers merge instead of the frontmatter winning outright", () => {
+  const content = ["---", "simplices: []", "hyperedges: []", "---", "", "△ x y z", "◇ p q r", ""].join("\n");
+  const frontmatter = {
+    simplices: [{ nodes: ["Levinas", "responsibility", "Other"], label: "ethical responsibility" }],
+    hyperedges: [{ nodes: ["Levinas", "AI Agent", "refusal"], label: "unmandated interruption", mode: "encounter" }],
+  };
+
+  const parsed = parseRelations(content, "note.md", parserDeps(frontmatter));
+
+  assert.equal(parsed.simplices.length, 2, "frontmatter simplex plus the inline △ — the old code dropped the latter");
+  assert.equal(parsed.hyperedges.length, 2);
+  assert.equal(parsed.hyperedges[0].label, "unmandated interruption");
+  assert.equal(parsed.hyperedges[0].mode, "encounter");
+});
+
+test("dedupe is per kind, so a simplex and an encounter over the same nodes both survive", () => {
+  const content = ["---", "x: y", "---", "△ a b c", "◇ a b c", "◇ a b c"].join("\n");
+
+  const parsed = parseRelations(content, "note.md", parserDeps({ x: "y" }));
+
+  assert.equal(parsed.simplices.length, 1);
+  assert.equal(parsed.hyperedges.length, 1, "identical encounters in one note collapse");
+  assert.deepEqual(parsed.simplices[0].nodes, parsed.hyperedges[0].nodes);
+});
+
+// ---------------------------------------------------------------------------
+// HG-05 / HG-06 — persistence and back-compat
+// ---------------------------------------------------------------------------
+
+const jsonYaml: YamlCodec = {
+  parse: (source) => JSON.parse(source) as Record<string, unknown>,
+  stringify: (value) => JSON.stringify(value),
+};
+
+test("hyperedge write-back leaves unrelated frontmatter keys untouched", () => {
+  const original = {
+    title: "Encounters",
+    tags: ["philosophy", "ai"],
+    aliases: ["the refusal note"],
+    cssclass: "wide",
+    simplices: [{ nodes: ["a.md", "b.md"] }],
+  };
+  const content = `---\n${JSON.stringify(original)}\n---\nbody text\n`;
+
+  const { frontmatter, body } = parseManagedFrontmatter(content, jsonYaml);
+  updateManagedArray(frontmatter, "hyperedges", normalizeKey(["c.md", "d.md"]), {
+    nodes: ["c.md", "d.md"],
+    mode: "encounter",
+  });
+
+  assert.equal(frontmatter.title, "Encounters");
+  assert.deepEqual(frontmatter.tags, ["philosophy", "ai"]);
+  assert.deepEqual(frontmatter.aliases, ["the refusal note"]);
+  assert.equal(frontmatter.cssclass, "wide");
+  assert.deepEqual(frontmatter.simplices, [{ nodes: ["a.md", "b.md"] }], "the other layer is not disturbed");
+  assert.equal(body, "body text\n");
+});
+
+test("writing a hyperedge does not stamp an empty simplices array onto a note that never had one", () => {
+  const content = `---\n${JSON.stringify({ title: "Plain note" })}\n---\nbody\n`;
+
+  const { frontmatter } = parseManagedFrontmatter(content, jsonYaml);
+  updateManagedArray(frontmatter, "hyperedges", normalizeKey(["a.md", "b.md"]), { nodes: ["a.md", "b.md"] });
+
+  assert.equal(Object.prototype.hasOwnProperty.call(frontmatter, "simplices"), false);
+  assert.deepEqual(frontmatter.hyperedges, [{ nodes: ["a.md", "b.md"] }]);
+});
+
+test("managed array update replaces the matching entry rather than appending a duplicate", () => {
+  const frontmatter: Record<string, unknown> = {
+    hyperedges: [
+      { nodes: ["a.md", "b.md"], label: "first" },
+      { nodes: ["c.md", "d.md"], label: "other" },
+    ],
+  };
+
+  updateManagedArray(frontmatter, "hyperedges", normalizeKey(["b.md", "a.md"]), {
+    nodes: ["a.md", "b.md"],
+    label: "second",
+  });
+
+  const entries = frontmatter.hyperedges as Array<Record<string, unknown>>;
+  assert.equal(entries.length, 2);
+  assert.equal(entries.find((entry) => (entry.nodes as string[])[0] === "a.md")!.label, "second");
+});
+
+test("a hyperedge survives serialize → parse → model round-trip with its metadata", () => {
+  const frontmatter: Record<string, unknown> = {};
+  updateManagedArray(frontmatter, "hyperedges", normalizeKey(["levinas.md", "refusal.md"]), {
+    nodes: ["levinas.md", "refusal.md"],
+    label: "unmandated ethical interruption",
+    mode: "encounter",
+    occurredAt: 1700000000000,
+    persistence: "momentary",
+  });
+  const written = serializeFrontmatter(frontmatter, "body\n", jsonYaml);
+
+  const parsed = parseRelations(written, "note.md", {
+    canonicalize: (rawId) => rawId.trim(),
+    parseYaml: (source) => JSON.parse(source) as Record<string, unknown>,
+  });
+
+  assert.equal(parsed.hyperedges.length, 1);
+  assert.equal(parsed.hyperedges[0].label, "unmandated ethical interruption");
+  assert.equal(parsed.hyperedges[0].mode, "encounter");
+  assert.equal(parsed.hyperedges[0].occurredAt, 1700000000000);
+
+  const model = new SimplicialModel();
+  model.replaceSourceRelations("note.md", parsed.simplices, parsed.hyperedges);
+  const restored = model.getHyperedge(relationKey("hyperedge", ["levinas.md", "refusal.md"]));
+  assert.equal(restored!.mode, "encounter");
+  assert.equal(model.simplices.size, 0);
 });
