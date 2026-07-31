@@ -34,11 +34,10 @@ jobs:
           fi
           echo "Version $MANIFEST matches the tag"
 
+      # `npm run build` prettifies main.js itself, so the bundle released here is
+      # byte-identical to the one committed to the repo.
       - name: Build production
         run: npm run build
-
-      - name: Prettify build output
-        run: npx prettier --write main.js styles.css manifest.json
 
       - name: Verify output
         run: |
