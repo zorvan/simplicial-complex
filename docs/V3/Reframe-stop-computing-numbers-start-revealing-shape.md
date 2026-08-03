@@ -99,20 +99,20 @@ This section turns the vision above into an implementation plan grounded in the 
 
 ## What is already implemented
 
-| Area | Status | Evidence in the repository | Mathematical assessment |
-| --- | --- | --- | --- |
-| Simplicial model and downward closure | Implemented | `core/model.ts`, `core/faces.ts`, `core/normalize.ts` | The simplex/hyperedge distinction is enforced: simplices generate faces; hyperedges do not. |
-| Static “Betti” analysis | Naive and incorrectly generalised | `core/betti.ts`, `core/types.ts` | β₀ is computed correctly from the 1-skeleton. β₁ and β₂ are **not** Betti numbers in general: the code counts empty 3-cycles and tetrahedral shells only. It misses longer cycles, dependencies between cycles, and arbitrary 2-cycles. |
-| Filtration UI and event markers | Partial heuristic | `core/filtration.ts`, `ui/view.ts` | Simplices are sorted by weight, but there is no persistence module, reduction pairing, barcode, or induced homology map. “Triangle close” is a local motif event, not a persistence death in general. |
-| Hole rendering and explanations | Implemented for motifs only | `render/components/holes.ts`, `render/renderer.ts`, `data/explainer.ts` | Useful UI plumbing exists, but the rendered objects are missing-face motifs, not homology-class representatives. |
-| Hypergraph encounters | Substantially implemented | `core/incidence.ts`, `core/activation.ts`, `core/history.ts`, `core/diagnostics.ts`, `data/inference/encounters.ts`, `ui/dynamics-view.ts` | Irreducible encounters, incidence, recurrence, cross-layer closure diagnostics, and pairwise/simplicial/hypergraph propagation are real, separate objects. The propagation kernel is an averaging dynamic, not yet a theorem-derived hypergraph Laplacian or oscillator model. |
-| Contextuality/sheaf UI | Substantially implemented as a custom model | `core/sheaf.ts`, `core/sheaf-workflow.ts`, `core/linalg.ts`, `data/sheaf-store.ts`, `ui/sheaf-view.ts`, `render/components/obstructions.ts` | Context covers, local role assignments, overlaps, gluing tests, cycle holonomy, exact rational rank, obstruction witnesses, and a contextual fraction are present. However, this is **not yet an Abramsky–Brandenburger empirical model**, and its reported `h1` is a rank of open holonomies rather than a demonstrated sheaf-cohomology group. |
-| Hodge decomposition / HodgeRank | Not implemented | No source module or test | The existing `sheafLaplacian` only forms \(\delta^T\delta\) for a supplied matrix; it does not construct simplicial \(L_0,L_1\), project edge flows, or solve HodgeRank. |
-| Discrete Morse theory | Not implemented | No source module or test | No discrete gradient vector field, critical cells, cancellations, or Morse–Smale decomposition. |
-| Discrete Ricci curvature | Not implemented | No source module or test | No Forman, augmented Forman, or Ollivier curvature. |
-| Mapper | Not implemented | No source module or test | No cover, pullback clustering, nerve, or stability diagnostics. |
-| Diffusion geometry | Not implemented | No source module or test | Activation averaging is not a diffusion-map embedding or heat-kernel signature. |
-| Rips, zigzag/vineyards, diagram distance, bootstrap confidence | Not implemented | No source module or test | These remain frontier work. |
+| Area                                                           | Status                                      | Evidence in the repository                                                                                                                  | Mathematical assessment                                                                                                                                                                                                                                                                                                                          |
+| -------------------------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Simplicial model and downward closure                          | Implemented                                 | `core/model.ts`, `core/faces.ts`, `core/normalize.ts`                                                                                       | The simplex/hyperedge distinction is enforced: simplices generate faces; hyperedges do not.                                                                                                                                                                                                                                                      |
+| Static “Betti” analysis                                        | Naive and incorrectly generalised           | `core/betti.ts`, `core/types.ts`                                                                                                            | β₀ is computed correctly from the 1-skeleton. β₁ and β₂ are **not** Betti numbers in general: the code counts empty 3-cycles and tetrahedral shells only. It misses longer cycles, dependencies between cycles, and arbitrary 2-cycles.                                                                                                          |
+| Filtration UI and event markers                                | Partial heuristic                           | `core/filtration.ts`, `ui/view.ts`                                                                                                          | Simplices are sorted by weight, but there is no persistence module, reduction pairing, barcode, or induced homology map. “Triangle close” is a local motif event, not a persistence death in general.                                                                                                                                            |
+| Hole rendering and explanations                                | Implemented for motifs only                 | `render/components/holes.ts`, `render/renderer.ts`, `data/explainer.ts`                                                                     | Useful UI plumbing exists, but the rendered objects are missing-face motifs, not homology-class representatives.                                                                                                                                                                                                                                 |
+| Hypergraph encounters                                          | Substantially implemented                   | `core/incidence.ts`, `core/activation.ts`, `core/history.ts`, `core/diagnostics.ts`, `data/inference/encounters.ts`, `ui/dynamics-view.ts`  | Irreducible encounters, incidence, recurrence, cross-layer closure diagnostics, and pairwise/simplicial/hypergraph propagation are real, separate objects. The propagation kernel is an averaging dynamic, not yet a theorem-derived hypergraph Laplacian or oscillator model.                                                                   |
+| Contextuality/sheaf UI                                         | Substantially implemented as a custom model | `core/sheaf.ts`, `core/sheaf-workflow.ts`, `core/linalg.ts`, `data/sheaf-store.ts`, `ui/sheaf-view.ts`, `render/components/obstructions.ts` | Context covers, local role assignments, overlaps, gluing tests, cycle holonomy, exact rational rank, obstruction witnesses, and a contextual fraction are present. However, this is **not yet an Abramsky–Brandenburger empirical model**, and its reported `h1` is a rank of open holonomies rather than a demonstrated sheaf-cohomology group. |
+| Hodge decomposition / HodgeRank                                | Not implemented                             | No source module or test                                                                                                                    | The existing `sheafLaplacian` only forms \(\delta^T\delta\) for a supplied matrix; it does not construct simplicial \(L_0,L_1\), project edge flows, or solve HodgeRank.                                                                                                                                                                         |
+| Discrete Morse theory                                          | Not implemented                             | No source module or test                                                                                                                    | No discrete gradient vector field, critical cells, cancellations, or Morse–Smale decomposition.                                                                                                                                                                                                                                                  |
+| Discrete Ricci curvature                                       | Not implemented                             | No source module or test                                                                                                                    | No Forman, augmented Forman, or Ollivier curvature.                                                                                                                                                                                                                                                                                              |
+| Mapper                                                         | Not implemented                             | No source module or test                                                                                                                    | No cover, pullback clustering, nerve, or stability diagnostics.                                                                                                                                                                                                                                                                                  |
+| Diffusion geometry                                             | Not implemented                             | No source module or test                                                                                                                    | Activation averaging is not a diffusion-map embedding or heat-kernel signature.                                                                                                                                                                                                                                                                  |
+| Rips, zigzag/vineyards, diagram distance, bootstrap confidence | Not implemented                             | No source module or test                                                                                                                    | These remain frontier work.                                                                                                                                                                                                                                                                                                                      |
 
 Two existing names must be separated immediately:
 
@@ -140,11 +140,11 @@ Function comments must explain why the theorem applies at that point in the algo
 Do this before adding new visuals.
 
 1. Rename the current motif output from `Hole` to `MissingFaceBoundary` and expose it as a local completion opportunity, not a Betti class. Keep a temporary compatibility adapter for UI consumers.
-2. Replace `computeBetti` with boundary-operator ranks over \(\mathbb F_2\):
+2. Replace `computeBetti` with boundary-operator ranks over \(\mathbb F*2\):
    \[
-   \beta_k = \dim C_k - \operatorname{rank}\partial_k - \operatorname{rank}\partial_{k+1}.
+   \beta_k = \dim C_k - \operatorname{rank}\partial_k - \operatorname{rank}\partial*{k+1}.
    \]
-   Build canonical ordered bases, sparse boundary columns, and assert \(\partial_{k-1}\partial_k=0\). This is the rank-nullity theorem applied to \(H_k=\ker\partial_k/\operatorname{im}\partial_{k+1}\), not empty-cycle enumeration.
+   Build canonical ordered bases, sparse boundary columns, and assert \(\partial*{k-1}\partial_k=0\). This is the rank-nullity theorem applied to \(H_k=\ker\partial_k/\operatorname{im}\partial*{k+1}\), not empty-cycle enumeration.
 3. Add fixtures that distinguish motifs from homology: a square boundary has β₁=1 but no empty triangle; two homologous cycles must not be counted twice; a triangulated disk has β₁=0; a triangulated sphere has β₂=1; a filled tetrahedron has β₂=0.
 4. Correct user-facing labels, inference rules, and explainers. `open-triad` may consume missing triangular faces, but must not claim that every such face is an independent β₁ generator.
 5. In `core/sheaf.ts`, temporarily rename `h1` to `obstructionRank` and `h0` to `globalBaselineDimension`, or implement the actual cochain complex before retaining cohomological notation. Add a documentation warning in the Contextuality Lab.
@@ -247,28 +247,28 @@ Implement these in dependency order, not in the visual order of the original vis
 
 ## Delivery slices
 
-| Slice | User-visible result | Required internal proof obligation |
-| --- | --- | --- |
-| A | Correct static β₀/β₁/β₂ and separately named missing-face prompts | Boundary complex, rank-nullity, Euler–Poincaré tests |
-| B | Barcode linked to a cycle witness | Valid filtration, reduction pairing, witness boundary is zero |
-| C | Ranked “gaps to write” with uncertainty | Reproducible resampling and disclosed ranking provenance |
-| D | Gradient/harmonic/curl flow view | Hodge reconstruction, orthogonality, harmonic–Betti equality |
-| E | Honest Contextuality Lab with two modes | Actual sheaf cochains or renamed holonomy; AB global-section semantics |
-| F | Theorem-labelled hypergraph dynamics | Operator and model hypotheses shown with every result |
-| G | Curvature/diffusion/Mapper/Morse views | Fixture truth cases and parameter-sensitivity reports |
+| Slice | User-visible result                                               | Required internal proof obligation                                     |
+| ----- | ----------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| A     | Correct static β₀/β₁/β₂ and separately named missing-face prompts | Boundary complex, rank-nullity, Euler–Poincaré tests                   |
+| B     | Barcode linked to a cycle witness                                 | Valid filtration, reduction pairing, witness boundary is zero          |
+| C     | Ranked “gaps to write” with uncertainty                           | Reproducible resampling and disclosed ranking provenance               |
+| D     | Gradient/harmonic/curl flow view                                  | Hodge reconstruction, orthogonality, harmonic–Betti equality           |
+| E     | Honest Contextuality Lab with two modes                           | Actual sheaf cochains or renamed holonomy; AB global-section semantics |
+| F     | Theorem-labelled hypergraph dynamics                              | Operator and model hypotheses shown with every result                  |
+| G     | Curvature/diffusion/Mapper/Morse views                            | Fixture truth cases and parameter-sensitivity reports                  |
 
 Slices A–C are the next release. D–E are the following release. F–G and frontier work should not block the first rigorous “shape of knowledge” product.
 
 ## Primary references to keep beside the implementation
 
-- Edelsbrunner, Letscher, and Zomorodian, *Topological Persistence and Simplification*; Zomorodian and Carlsson, *Computing Persistent Homology*.
-- Cohen-Steiner, Edelsbrunner, and Harer, *Stability of Persistence Diagrams*.
-- Eckmann, *Harmonische Funktionen und Randwertaufgaben in einem Komplex*; modern combinatorial Hodge treatments should be cited for the exact operators implemented.
-- Forman, *Morse Theory for Cell Complexes* and *Bochner's Method for Cell Complexes and Combinatorial Ricci Curvature*.
-- Singh, Mémoli, and Carlsson, *Topological Methods for the Analysis of High Dimensional Data Sets and 3D Object Recognition* (Mapper).
-- Coifman and Lafon, *Diffusion Maps*.
-- Abramsky and Brandenburger, *The Sheaf-Theoretic Structure of Non-Locality and Contextuality*.
-- Abramsky, Mansfield, and Barbosa, *The Cohomology of Non-Locality and Contextuality*; and later work on cohomological obstructions and their limitations.
-- Hansen and Ghrist, *Toward a Spectral Theory of Cellular Sheaves*.
+- Edelsbrunner, Letscher, and Zomorodian, _Topological Persistence and Simplification_; Zomorodian and Carlsson, _Computing Persistent Homology_.
+- Cohen-Steiner, Edelsbrunner, and Harer, _Stability of Persistence Diagrams_.
+- Eckmann, _Harmonische Funktionen und Randwertaufgaben in einem Komplex_; modern combinatorial Hodge treatments should be cited for the exact operators implemented.
+- Forman, _Morse Theory for Cell Complexes_ and _Bochner's Method for Cell Complexes and Combinatorial Ricci Curvature_.
+- Singh, Mémoli, and Carlsson, _Topological Methods for the Analysis of High Dimensional Data Sets and 3D Object Recognition_ (Mapper).
+- Coifman and Lafon, _Diffusion Maps_.
+- Abramsky and Brandenburger, _The Sheaf-Theoretic Structure of Non-Locality and Contextuality_.
+- Abramsky, Mansfield, and Barbosa, _The Cohomology of Non-Locality and Contextuality_; and later work on cohomological obstructions and their limitations.
+- Hansen and Ghrist, _Toward a Spectral Theory of Cellular Sheaves_.
 
 The references guide implementation; the acceptance tests decide whether the implementation has earned the language used in the interface.

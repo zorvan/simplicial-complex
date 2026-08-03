@@ -243,16 +243,11 @@ test("replacing inferred encounters preserves encounter-discovery suggestions", 
     suggestionSource: "encounter-discovery",
   });
 
-  model.replaceInferredHyperedges([
-    { nodes: ["d.md", "e.md", "f.md"], inferred: true, suggested: true },
-  ]);
+  model.replaceInferredHyperedges([{ nodes: ["d.md", "e.md", "f.md"], inferred: true, suggested: true }]);
 
   assert.equal(model.hyperedges.size, 2);
   assert.ok(model.getHyperedge(relationKey("hyperedge", ["a.md", "b.md", "c.md"])));
-  assert.equal(
-    model.getHyperedge(relationKey("hyperedge", ["d.md", "e.md", "f.md"]))?.suggestionSource,
-    "inference",
-  );
+  assert.equal(model.getHyperedge(relationKey("hyperedge", ["d.md", "e.md", "f.md"]))?.suggestionSource, "inference");
 });
 
 // ---------------------------------------------------------------------------

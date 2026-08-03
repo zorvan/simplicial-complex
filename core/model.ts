@@ -413,11 +413,7 @@ export class SimplicialModel {
       for (const [key, hyperedge] of this.hyperedges) {
         // Unmarked suggestions are legacy inference output. Discovery suggestions
         // have their own lifecycle and must survive ordinary parameter changes.
-        if (
-          hyperedge.inferred &&
-          hyperedge.suggested &&
-          hyperedge.suggestionSource !== "encounter-discovery"
-        ) {
+        if (hyperedge.inferred && hyperedge.suggested && hyperedge.suggestionSource !== "encounter-discovery") {
           this.hyperedges.delete(key);
         }
       }

@@ -369,11 +369,19 @@ export class SimplicialView extends ItemView {
     });
 
     // Suggestion Threshold
-    this.addCanvasSlider(discovery, "Visible suggestion", this.settings.suggestionThreshold, 0.2, 0.95, 0.05, (value) => {
-      this.settings.suggestionThreshold = value;
-      this.onSettingsChanged();
-      this.renderer.render();
-    });
+    this.addCanvasSlider(
+      discovery,
+      "Visible suggestion",
+      this.settings.suggestionThreshold,
+      0.2,
+      0.95,
+      0.05,
+      (value) => {
+        this.settings.suggestionThreshold = value;
+        this.onSettingsChanged();
+        this.renderer.render();
+      },
+    );
 
     this.addCanvasToggle(discovery, "Infer links", this.settings.enableLinkInference, (value) => {
       this.settings.enableLinkInference = value;
@@ -385,11 +393,19 @@ export class SimplicialView extends ItemView {
       this.onSettingsChanged();
       this.onRescan?.("canvas-encounter-discovery-changed", 100);
     });
-    this.addCanvasSlider(discovery, "Encounter confidence", this.settings.encounterSuggestionThreshold, 0.4, 0.95, 0.05, (value) => {
-      this.settings.encounterSuggestionThreshold = value;
-      this.onSettingsChanged();
-      this.onRescan?.("canvas-encounter-threshold-changed", 100);
-    });
+    this.addCanvasSlider(
+      discovery,
+      "Encounter confidence",
+      this.settings.encounterSuggestionThreshold,
+      0.4,
+      0.95,
+      0.05,
+      (value) => {
+        this.settings.encounterSuggestionThreshold = value;
+        this.onSettingsChanged();
+        this.onRescan?.("canvas-encounter-threshold-changed", 100);
+      },
+    );
 
     const visibility = this.addControlSection(panel, "What is shown", true);
 
