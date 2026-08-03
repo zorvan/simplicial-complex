@@ -150,6 +150,7 @@ export default class SimplicialPlugin extends Plugin {
         {
           recordEncounter: () => this.createEncounterFromOpenNote(),
           openContextuality: () => void this.activateSheafView(),
+          findExpressiveView: () => this.findExpressiveView(),
         },
         this.history,
       );
@@ -203,6 +204,11 @@ export default class SimplicialPlugin extends Plugin {
       id: "open-simplicial",
       name: "Open simplicial graph",
       callback: () => void this.activateView(),
+    });
+    this.addCommand({
+      id: "find-expressive-view",
+      name: "Find expressive view (suggestion-only)",
+      callback: () => void this.findExpressiveView(),
     });
     this.addCommand({
       id: "insert-simplex-symbol",
@@ -508,7 +514,7 @@ export default class SimplicialPlugin extends Plugin {
 
   private refreshEncounterSuggestions(): number {
     for (const [key, hyperedge] of [...this.model.hyperedges]) {
-      if (hyperedge.suggested) this.model.removeHyperedge(key);
+      if (hyperedge.suggested && hyperedge.suggestionSource === "encounter-discovery") this.model.removeHyperedge(key);
     }
     if (!this.settings.enableEncounterSuggestions) return 0;
     const suggestions = suggestEncounters(this.model, {
@@ -528,6 +534,7 @@ export default class SimplicialPlugin extends Plugin {
     const confirmed: Hyperedge = {
       ...candidate,
       suggested: false,
+      suggestionSource: undefined,
       inferred: false,
       mode: "encounter",
       occurredAt: Date.now(),
@@ -1170,5 +1177,50 @@ export default class SimplicialPlugin extends Plugin {
         simplexCount: this.model.simplices.size,
       });
     }, delayMs);
+  }
+
+  /**
+   * A reversible, suggestion-only discovery profile. It deliberately changes no
+   * authored relation and persists no inferred encounter; the user remains the
+   * final judge of every proposed shape.
+   */
+  private async findExpressiveView(): Promise<void> {
+    Object.assign(this.settings, {
+      inferenceMode: "hybrid",
+      inferenceEmits: "simplex",
+      enableInferredEdges: true,
+      enableLinkInference: true,
+      enableMutualLinkBonus: true,
+      enableSharedTags: true,
+      enableTitleOverlap: true,
+      enableContentOverlap: true,
+      enableSameFolderInference: true,
+      enableSameTopFolderInference: true,
+      insightThreshold: 0.35,
+      linkStrengthThreshold: 0.32,
+      suggestionThreshold: 0.28,
+      showSuggestions: true,
+      enableEncounterSuggestions: true,
+      encounterSuggestionThreshold: 0.48,
+      showHyperedges: true,
+      // Hole computation is intentionally never enabled by guided discovery: it
+      // can be expensive on large vaults and is independent of expressiveness.
+      maxRenderedDim: 12,
+      renderFilterThreshold: 0,
+    } satisfies Partial<PluginSettings>);
+    await this.saveSettings();
+    await this.index.fullScan();
+    this.syncEncounterState();
+    this.rebuildSubsetScorer();
+    const encounterCount = this.refreshEncounterSuggestions();
+    this.refreshSheafAnalysis();
+    this.sheafView?.revealDiscoverySuggestions();
+    this.simplicialView?.refreshSettings();
+    this.renderer.render();
+    const inferredCount = [...this.model.simplices.values()].filter((simplex) => simplex.inferred).length;
+    new Notice(
+      `Expressive view ready: ${inferredCount} inferred relation${inferredCount === 1 ? "" : "s"} and ${encounterCount} possible encounter${encounterCount === 1 ? "" : "s"}. Review before confirming; no suggestions were written to notes.`,
+      9000,
+    );
   }
 }

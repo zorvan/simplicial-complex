@@ -97,6 +97,8 @@ export interface Hyperedge {
   crystallizedInto?: NodeID;
   /** Probabilistic, in-memory candidate. It asserts no encounter and is never written until confirmed. */
   suggested?: boolean;
+  /** Keeps independent suggestion passes from deleting one another's results. */
+  suggestionSource?: "inference" | "encounter-discovery";
   inferred?: boolean;
   confidence?: number;
 }

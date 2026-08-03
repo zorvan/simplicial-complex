@@ -17,6 +17,7 @@ import {
   deriveContext,
   readStoredSheaf,
   suggestDerivedContexts,
+  suggestContextRoles,
   suggestRelationContexts,
   uniqueContextId,
   writeStoredSheaf,
@@ -61,13 +62,27 @@ export class SheafView extends ItemView {
     this.render();
   }
 
+  /** Reveal every non-destructive context and mapping proposal on the next visit. */
+  revealDiscoverySuggestions(): void {
+    this.showDerivedSeeds = true;
+    this.render();
+  }
+
   private render(): void {
     const { contentEl } = this;
     contentEl.empty();
     contentEl.createEl("div", { cls: "simplicial-panel-title", text: "Contextuality lab" });
     contentEl.createEl("div", {
       cls: "simplicial-explanation-tension",
-      text: "Contexts may each make sense locally yet fail to admit one shared reading. This is a gluing obstruction, not a missing topological filler.",
+      text: "Use this after you have overlapping groups. A context is one viewpoint (for example a project, folder, or theme). Give the same note a role in each viewpoint; the lab then shows whether those local readings agree when combined.",
+    });
+    const guide = contentEl.createEl("details", { cls: "simplicial-sheaf-guide" });
+    guide.createEl("summary", { text: "What should I expect to see?" });
+    guide.createEl("p", {
+      text: "Start by adding suggested context seeds. In each context, assign roles only where they make sense. The report will show either a compatible shared reading, a direct local disagreement, or contextuality: every overlap looks compatible on its own, but all viewpoints cannot be combined at once. Suggestions are hypotheses and never change your notes automatically.",
+    });
+    guide.createEl("p", {
+      text: "Role vocabulary: action = something being done; project = organized work; research = investigation; idea = a concept or proposal; creative = an expressive work; reference = supporting material. Every role is local to one context and can be corrected.",
     });
 
     const stored = readStoredSheaf(this.settings);
@@ -80,24 +95,24 @@ export class SheafView extends ItemView {
   }
 
   private renderSuggestions(container: HTMLElement, stored: StoredSheaf): void {
-    const suggestions = suggestRelationContexts(this.model, stored.contexts);
+    const suggestions = suggestRelationContexts(this.app, this.model, stored.contexts);
     const section = container.createDiv({ cls: "simplicial-sheaf-suggestions" });
     section.createEl("div", { cls: "simplicial-panel-section-label", text: "Suggested starting cover" });
     section.createEl("div", {
       cls: "simplicial-measure-reading",
       text: suggestions.length
-        ? "These seeds come from authored relations that overlap elsewhere. Review and add them; no role or meaning is assigned automatically."
+        ? "Each worksheet includes a deterministic first draft from authored overlap and note metadata. Add it, then rename it and correct any local role that does not fit."
         : "No new overlapping authored relations are available as context seeds.",
     });
-    suggestions.forEach(({ context, reason }) => {
+    suggestions.forEach(({ context, reason, initialRoles }) => {
       new Setting(section)
         .setName(context.name)
-        .setDesc(reason)
+        .setDesc(`${reason} Starter roles: ${this.roleSummary(initialRoles)}.`)
         .addButton((button) => {
-          button.setButtonText("Add seed");
+          button.setButtonText("Add worksheet");
           button.onClick(async () => {
             stored.contexts.push(context);
-            stored.sections[context.id] = {};
+            stored.sections[context.id] = { ...initialRoles };
             appendSheafAudit(stored, { action: "context-added", contextId: context.id, after: context.name, reason });
             await this.persist(stored);
           });
@@ -114,15 +129,15 @@ export class SheafView extends ItemView {
         });
       });
     if (this.showDerivedSeeds) {
-      suggestDerivedContexts(this.app, this.model, stored.contexts).forEach(({ context, reason }) => {
+      suggestDerivedContexts(this.app, this.model, stored.contexts).forEach(({ context, reason, initialRoles }) => {
         new Setting(section)
           .setName(`${context.source}: ${context.name}`)
-          .setDesc(reason)
+          .setDesc(`${reason} Starter roles: ${this.roleSummary(initialRoles)}.`)
           .addButton((button) => {
-            button.setButtonText("Add seed");
+            button.setButtonText("Add worksheet");
             button.onClick(async () => {
               stored.contexts.push(context);
-              stored.sections[context.id] = {};
+              stored.sections[context.id] = { ...initialRoles };
               appendSheafAudit(stored, { action: "context-added", contextId: context.id, after: context.name, reason });
               await this.persist(stored);
             });
@@ -317,6 +332,40 @@ export class SheafView extends ItemView {
     heading.createEl("strong", { text: context.name });
     heading.createEl("span", { text: `${context.source}${context.definition ? ` · ${context.definition}` : ""}` });
     const support = contextSupport(this.model, context);
+    if (Object.keys(stored.sections[context.id] ?? {}).length === 0 && support.length > 0) {
+      new Setting(card)
+        .setName("This worksheet has no local readings yet")
+        .setDesc("Create an editable first draft from note tags and paths. This is a starting point, not a conclusion.")
+        .addButton((button) => {
+          button.setButtonText("Prepare starter worksheet").setCta();
+          button.onClick(async () => {
+            const roles = suggestContextRoles(this.app, this.model, context);
+            const oldName = context.name;
+            if (/^inferred relation$/i.test(context.name)) {
+              context.name = support.map(shortName).join(" · ");
+              context.definition = `Overlapping relation among ${context.name}. Deterministic draft; rename and refine it.`;
+              appendSheafAudit(stored, {
+                action: "context-refined",
+                contextId: context.id,
+                before: oldName,
+                after: context.name,
+                reason: "Accepted a descriptive participant-based starter name.",
+              });
+            }
+            stored.sections[context.id] = { ...roles };
+            Object.entries(roles).forEach(([nodeId, role]) =>
+              appendSheafAudit(stored, {
+                action: "role-refined",
+                contextId: context.id,
+                nodeId,
+                after: role,
+                reason: "Accepted deterministic starter role from note metadata; remains editable.",
+              }),
+            );
+            await this.persist(stored);
+          });
+        });
+    }
     const overlaps = stored.contexts
       .filter((other) => other.id !== context.id)
       .map((other) => ({ other, nodes: support.filter((node) => contextSupport(this.model, other).includes(node)) }))
@@ -335,7 +384,9 @@ export class SheafView extends ItemView {
     const data = buildSheafData(this.model, stored, buildGlobalRoles(this.app, this.model));
     const section = data.sections.get(context.id);
     support.forEach((nodeId) => {
-      const row = new Setting(card).setName(shortName(nodeId));
+      const row = new Setting(card)
+        .setName(shortName(nodeId))
+        .setDesc("Role inside this context only—not the note's permanent identity.");
       row.addDropdown((dropdown) => {
         SHEAF_ROLES.forEach((role) => dropdown.addOption(role, role));
         dropdown.setValue(section?.get(nodeId) ?? "reference");
@@ -481,6 +532,13 @@ export class SheafView extends ItemView {
     const bare = key.startsWith("s:") ? key.slice(2) : key;
     const relation = this.model.getSimplex(bare);
     return `△ ${relation?.label?.trim() || relation?.nodes.map(shortName).join(" · ") || key}`;
+  }
+
+  private roleSummary(roles: Record<string, (typeof SHEAF_ROLES)[number]>): string {
+    const entries = Object.entries(roles);
+    if (entries.length === 0) return "none available";
+    const preview = entries.slice(0, 4).map(([nodeId, role]) => `${shortName(nodeId)} → ${role}`);
+    return `${preview.join("; ")}${entries.length > preview.length ? `; +${entries.length - preview.length} more` : ""}`;
   }
 }
 

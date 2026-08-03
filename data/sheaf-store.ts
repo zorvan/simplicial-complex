@@ -226,10 +226,24 @@ export interface ContextSeedSuggestion {
   context: SheafContext;
   reason: string;
   usefulOverlap: number;
+  initialRoles: Record<NodeID, SheafRole>;
 }
 
-/** Suggest a starting cover from overlapping authored relations without assigning meaning. */
+/** A transparent, deterministic first draft from note metadata; never an absolute classification. */
+export function suggestContextRoles(
+  app: App,
+  model: SimplicialModel,
+  context: SheafContext,
+): Record<NodeID, SheafRole> {
+  const global = buildGlobalRoles(app, model);
+  return Object.fromEntries(
+    contextSupport(model, context).map((nodeId) => [nodeId, global.get(nodeId) ?? "reference"]),
+  );
+}
+
+/** Suggest a starting cover from overlapping authored relations with an editable role draft. */
 export function suggestRelationContexts(
+  app: App,
   model: SimplicialModel,
   existing: SheafContext[],
   limit = 12,
@@ -255,12 +269,13 @@ export function suggestRelationContexts(
     .slice(0, Math.max(0, limit))
     .map(({ key, relation, overlap }) => {
       const fallback = relation.nodes.map((nodeId) => nodeId.split("/").pop()?.replace(/\.md$/, "")).join(" · ");
-      const name = relation.label?.trim() || fallback || "Relation context";
+      const label = relation.label?.trim();
+      const name = label && !/^inferred relation$/i.test(label) ? label : fallback || "Relation context";
       const context: SheafContext = {
         id: uniqueContextId(name, ids),
         name,
         source: "manual",
-        definition: "Suggested from an authored relation; review before keeping.",
+        definition: `Overlapping relation among ${fallback}. Deterministic draft; rename and refine it.`,
         relations: [key],
       };
       ids.push(context);
@@ -268,6 +283,7 @@ export function suggestRelationContexts(
         context,
         reason: `Shares ${overlap.length} participant${overlap.length === 1 ? "" : "s"} with another relation.`,
         usefulOverlap: overlap.length,
+        initialRoles: suggestContextRoles(app, model, context),
       };
     });
 }
@@ -310,6 +326,7 @@ export function suggestDerivedContexts(
         context,
         usefulOverlap,
         reason: `${context.relations.length} relation${context.relations.length === 1 ? "" : "s"}; useful overlap score ${usefulOverlap}.`,
+        initialRoles: suggestContextRoles(app, model, context),
       };
     })
     .filter(

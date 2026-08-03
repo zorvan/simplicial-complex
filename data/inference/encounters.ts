@@ -57,6 +57,7 @@ export function suggestEncounters(model: SimplicialModel, options: EncounterSugg
         confidence,
         suggested: true,
         inferred: true,
+        suggestionSource: "encounter-discovery",
       } satisfies Hyperedge;
     })
     .filter((candidate) => (candidate.confidence ?? 0) >= options.threshold)

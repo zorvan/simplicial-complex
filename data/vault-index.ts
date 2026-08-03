@@ -5,8 +5,7 @@ import { logger } from "../core/logger.js";
 import { SimplicialModel } from "../core/model.js";
 import { invalidateAliasIndex } from "../core/normalize.js";
 import type { Hyperedge, PluginSettings } from "../core/types.js";
-import { buildInferenceContext, inferSimplices, inferSimplicesLegacy, type InferenceContext } from "./inference.js";
-import { runEmergentInferenceWithHoles } from "./inference/engine.js";
+import { buildInferenceContext, inferSimplices, type InferenceContext } from "./inference.js";
 import { parseSimplices } from "./parser.js";
 
 export class VaultIndex {
@@ -219,27 +218,9 @@ export class VaultIndex {
   }
 
   private rebuildInferredSimplices(): void {
-    let inferred: import("../core/types").Simplex[];
-
-    // Use optimized path with cached Betti holes when enabled
-    if (
-      this.settings.enableBettiComputation &&
-      (this.settings.inferenceMode === "emergent" || this.settings.inferenceMode === "hybrid")
-    ) {
-      const holes = this.model.getCachedBetti().holes;
-      inferred = runEmergentInferenceWithHoles([...this.inferenceContexts.values()], this.settings, holes);
-
-      // Add legacy inferences if in hybrid mode (only taxonomic/legacy, NOT emergent)
-      if (this.settings.inferenceMode === "hybrid") {
-        const legacy = inferSimplicesLegacy([...this.inferenceContexts.values()], this.settings);
-        // Deduplicate by key
-        const existingKeys = new Set(inferred.map((s) => s.nodes.sort().join("|")));
-        const uniqueLegacy = legacy.filter((s) => !existingKeys.has(s.nodes.sort().join("|")));
-        inferred.push(...uniqueLegacy);
-      }
-    } else {
-      inferred = inferSimplices([...this.inferenceContexts.values()], this.settings);
-    }
+    // Hole analysis is an optional visualization and must never change the graph.
+    // In particular, toggling it must not select a different inference algorithm.
+    const inferred = inferSimplices([...this.inferenceContexts.values()], this.settings);
 
     const inferredEncounters: Hyperedge[] =
       this.settings.inferenceEmits === "hyperedge"
@@ -252,6 +233,7 @@ export class VaultIndex {
               confidence: simplex.confidence,
               inferred: true,
               suggested: true,
+              suggestionSource: "inference",
             }))
         : [];
     const inferredSimplices =

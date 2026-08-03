@@ -407,13 +407,23 @@ export class SimplicialModel {
     });
   }
 
-  /** Replace probabilistic inferred encounters without touching authored encounters. */
+  /** Replace inference-engine encounters without touching authored or discovery encounters. */
   replaceInferredHyperedges(hyperedges: Hyperedge[]): void {
     this.batch(() => {
       for (const [key, hyperedge] of this.hyperedges) {
-        if (hyperedge.inferred && hyperedge.suggested) this.hyperedges.delete(key);
+        // Unmarked suggestions are legacy inference output. Discovery suggestions
+        // have their own lifecycle and must survive ordinary parameter changes.
+        if (
+          hyperedge.inferred &&
+          hyperedge.suggested &&
+          hyperedge.suggestionSource !== "encounter-discovery"
+        ) {
+          this.hyperedges.delete(key);
+        }
       }
-      hyperedges.forEach((hyperedge) => this.addHyperedge({ ...hyperedge, inferred: true, suggested: true }));
+      hyperedges.forEach((hyperedge) =>
+        this.addHyperedge({ ...hyperedge, inferred: true, suggested: true, suggestionSource: "inference" }),
+      );
       this.invalidateAnalysisCache();
       this.emitChange();
     });

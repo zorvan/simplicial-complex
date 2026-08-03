@@ -502,8 +502,10 @@ export class SimplicialSettingTab extends PluginSettingTab {
 
   private renderBettiSettings(containerEl: HTMLElement): void {
     new Setting(containerEl)
-      .setName("Enable betti computation")
-      .setDesc("Calculate topological invariants (β₀, β₁, β₂) to detect holes and voids.")
+      .setName("Compute holes (advanced, slow)")
+      .setDesc(
+        "Explicitly calculate β₀, β₁, and β₂ holes. This can make large canvases slow or unresponsive, is never enabled by automatic discovery, and does not control links or encounters.",
+      )
       .addToggle((toggle) => {
         toggle.setValue(this.plugin.settings.enableBettiComputation);
         toggle.onChange(async (value) => {
@@ -511,6 +513,7 @@ export class SimplicialSettingTab extends PluginSettingTab {
           await this.plugin.saveSettings();
           this.plugin.simplicialView?.refreshSettings();
           this.plugin.renderer.render();
+          if (!value) this.plugin.scheduleFullScan("hole-analysis-disabled", 0);
           new Notice(value ? "Betti computation enabled" : "Betti computation disabled");
         });
       });

@@ -285,13 +285,84 @@
   position: absolute;
   top: 44px;
   right: 0;
-  width: 220px;
+  width: min(340px, calc(100vw - 42px));
+  max-height: calc(100vh - 130px);
+  overflow-y: auto;
   background: color-mix(in srgb, var(--background-primary) 95%, transparent);
   border: 1px solid var(--background-modifier-border);
   border-radius: 12px;
   padding: 12px;
   backdrop-filter: blur(12px);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.simplicial-controls-title {
+  color: var(--text-normal);
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.simplicial-controls-help {
+  margin: 4px 0 10px;
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.simplicial-control-guide {
+  margin-bottom: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--interactive-accent) 8%, var(--background-secondary));
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.simplicial-control-guide summary {
+  cursor: pointer;
+  color: var(--text-normal);
+  font-weight: 600;
+}
+
+.simplicial-control-guide p {
+  margin: 7px 0 0;
+}
+
+.simplicial-control-section {
+  border-top: 1px solid var(--background-modifier-border);
+  padding: 7px 0;
+}
+
+.simplicial-control-section > summary {
+  cursor: pointer;
+  color: var(--text-normal);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.simplicial-control-section-body {
+  padding-top: 4px;
+}
+
+.simplicial-sheaf-guide {
+  margin: 10px 0 16px;
+  padding: 10px 12px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 10px;
+  background: var(--background-secondary);
+  color: var(--text-muted);
+}
+
+.simplicial-sheaf-guide summary {
+  cursor: pointer;
+  color: var(--text-normal);
+  font-weight: 600;
+}
+
+.simplicial-sheaf-guide p {
+  margin: 8px 0 0;
+  line-height: 1.5;
 }
 
 .simplicial-control-row {

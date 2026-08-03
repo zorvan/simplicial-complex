@@ -234,6 +234,27 @@ test("replacing inferred encounters preserves authored encounters and simplicial
   assert.deepEqual(model.getCachedBetti(), before);
 });
 
+test("replacing inferred encounters preserves encounter-discovery suggestions", () => {
+  const model = new SimplicialModel();
+  model.addHyperedge({
+    nodes: ["a.md", "b.md", "c.md"],
+    inferred: true,
+    suggested: true,
+    suggestionSource: "encounter-discovery",
+  });
+
+  model.replaceInferredHyperedges([
+    { nodes: ["d.md", "e.md", "f.md"], inferred: true, suggested: true },
+  ]);
+
+  assert.equal(model.hyperedges.size, 2);
+  assert.ok(model.getHyperedge(relationKey("hyperedge", ["a.md", "b.md", "c.md"])));
+  assert.equal(
+    model.getHyperedge(relationKey("hyperedge", ["d.md", "e.md", "f.md"]))?.suggestionSource,
+    "inference",
+  );
+});
+
 // ---------------------------------------------------------------------------
 // HG-03 — incidence matrix and cross-layer map
 // ---------------------------------------------------------------------------
