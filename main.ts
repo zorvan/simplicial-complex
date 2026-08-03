@@ -29,6 +29,7 @@ import {
   writeSimplexToCentralFile,
   writeSimplexToSourceNote,
 } from "./data/persistence";
+import { migrateSettings } from "./core/settings";
 import { HistoryStore } from "./data/history-store";
 import { VaultIndex } from "./data/vault-index";
 import { InteractionController } from "./interaction/controller";
@@ -67,7 +68,7 @@ export default class SimplicialPlugin extends Plugin {
 
   async onload(): Promise<void> {
     const saved = ((await this.loadData()) ?? {}) as Partial<PluginSettings>;
-    this.settings = { ...getDefaultSettings(), ...saved };
+    this.settings = migrateSettings(getDefaultSettings(), saved);
     if (this.settings.maxRenderedDim === 3) {
       this.settings.maxRenderedDim = 12;
     }

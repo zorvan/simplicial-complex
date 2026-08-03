@@ -58,6 +58,8 @@ import {
   type SheafData,
   type SheafRole,
 } from "../core/sheaf.js";
+import { migrateSettings } from "../core/settings.js";
+import { SheafScratch } from "../core/sheaf-workflow.js";
 
 // ---------------------------------------------------------------------------
 // HG-01 — namespaced relation keys
@@ -124,6 +126,38 @@ test("hyperedges do not perturb Betti numbers", () => {
     { b0: before.b0, b1: before.b1, b2: before.b2 },
     "an encounter over the triad does not fill the hole — only a simplex does",
   );
+});
+
+test("inferred hyperedges never generate faces or alter Betti values", () => {
+  const model = new SimplicialModel();
+  model.addSimplex({ nodes: ["a.md", "b.md"], userDefined: true });
+  model.addSimplex({ nodes: ["b.md", "c.md"], userDefined: true });
+  model.addSimplex({ nodes: ["a.md", "c.md"], userDefined: true });
+  const before = model.getCachedBetti();
+  model.addHyperedge({ nodes: ["a.md", "b.md", "c.md"], inferred: true, confidence: 0.9 });
+  assert.equal(model.simplices.has(normalizeKey(["a.md", "b.md", "c.md"])), false);
+  assert.deepEqual(model.getCachedBetti(), before);
+});
+
+test("settings saved before inferenceEmits migrate to the simplex compatibility default", () => {
+  const defaults = { inferenceEmits: "simplex" as const, showHyperedges: true, opacity: 0.55 };
+  const migrated = migrateSettings(defaults, { showHyperedges: false });
+  assert.equal(migrated.inferenceEmits, "simplex");
+  assert.equal(migrated.showHyperedges, false);
+});
+
+test("Contextuality Lab scratch actions persist only on acceptance and discard explicitly", () => {
+  const sections: Record<string, Record<string, SheafRole>> = { c1: {} };
+  const scratch = new SheafScratch();
+  scratch.set({ contextId: "c1", nodeId: "a.md", role: "research" });
+  scratch.set({ contextId: "c2", nodeId: "b.md", role: "project" });
+  assert.deepEqual(sections, { c1: {} }, "preview does not mutate persisted plugin data");
+  scratch.discard();
+  assert.equal(scratch.list().length, 0);
+  scratch.set({ contextId: "c1", nodeId: "a.md", role: "idea" });
+  assert.equal(scratch.accept(sections).length, 1);
+  assert.equal(sections.c1["a.md"], "idea");
+  assert.equal(scratch.list().length, 0);
 });
 
 test("removeNode drops every hyperedge the node participated in", () => {

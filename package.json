@@ -9,6 +9,7 @@
     "build:dev": "node build.mjs development",
     "check": "./node_modules/typescript/bin/tsc --noEmit",
     "test": "./node_modules/typescript/bin/tsc -p tsconfig.tests.json && node --test tests-dist/tests/*.test.js",
+    "benchmark:hypergraph": "./node_modules/typescript/bin/tsc -p tsconfig.tests.json && node scripts/hypergraph-benchmark.mjs",
     "lint": "eslint .",
     "format:check": "prettier --check .",
     "verify": "node scripts/verify.mjs",

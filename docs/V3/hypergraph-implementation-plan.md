@@ -2,7 +2,7 @@
 
 **Project:** simplicial-complex
 **Source:** `Obsidian-Extension-Hypergraph.md`
-**Status:** Planning
+**Status:** Complete — benchmark and visual acceptance recorded 2026-08-03
 **Owner:** Amin Razavi
 
 ---

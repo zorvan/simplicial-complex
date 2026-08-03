@@ -280,7 +280,7 @@ export function getDefaultSettings(): PluginSettings {
     enableRelationHistory: true,
     enableDynamicsLab: false,
     activationDecayHalfLifeMinutes: 30,
-    sheaf: { contexts: [], sections: {} },
+    sheaf: { contexts: [], sections: {}, audit: [] },
     enableEncounterSuggestions: true,
     encounterSuggestionThreshold: 0.55,
     maxEncounterSuggestions: 20,

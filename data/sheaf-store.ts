@@ -22,9 +22,24 @@ export interface StoredSheaf {
   contexts: SheafContext[];
   /** `contextId → nodeId → role`. Only divergences worth keeping; absent means backfill. */
   sections: Record<string, Record<NodeID, SheafRole>>;
+  /** Append-only record of meaning-changing actions accepted in the lab. */
+  audit: SheafAuditEvent[];
 }
 
-export const EMPTY_SHEAF: StoredSheaf = { contexts: [], sections: {} };
+export type SheafAuditAction = "context-added" | "context-deleted" | "context-refined" | "role-refined";
+
+export interface SheafAuditEvent {
+  id: string;
+  at: number;
+  action: SheafAuditAction;
+  contextId: string;
+  nodeId?: NodeID;
+  before?: string;
+  after?: string;
+  reason: string;
+}
+
+export const EMPTY_SHEAF: StoredSheaf = { contexts: [], sections: {}, audit: [] };
 
 function isRole(value: unknown): value is SheafRole {
   return typeof value === "string" && (SHEAF_ROLES as readonly string[]).includes(value);
@@ -44,7 +59,8 @@ export function readStoredSheaf(settings: PluginSettings): StoredSheaf {
     });
     sections[contextId] = cleaned;
   });
-  return { contexts, sections };
+  const audit = Array.isArray(raw.audit) ? raw.audit.filter(isAuditEvent).map((event) => ({ ...event })) : [];
+  return { contexts, sections, audit };
 }
 
 /** Store only JSON-safe data in plugin settings; sheaf assignments never enter notes. */
@@ -64,7 +80,33 @@ function sanitizeStoredSheaf(stored: StoredSheaf): StoredSheaf {
       Object.entries(source).filter((entry): entry is [string, SheafRole] => isRole(entry[1])),
     );
   });
-  return { contexts, sections };
+  return { contexts, sections, audit: stored.audit.filter(isAuditEvent).map((event) => ({ ...event })) };
+}
+
+function isAuditEvent(value: unknown): value is SheafAuditEvent {
+  if (!value || typeof value !== "object") return false;
+  const event = value as Partial<SheafAuditEvent>;
+  return (
+    typeof event.id === "string" &&
+    typeof event.at === "number" &&
+    ["context-added", "context-deleted", "context-refined", "role-refined"].includes(event.action ?? "") &&
+    typeof event.contextId === "string" &&
+    typeof event.reason === "string"
+  );
+}
+
+export function appendSheafAudit(
+  stored: StoredSheaf,
+  event: Omit<SheafAuditEvent, "id" | "at"> & Partial<Pick<SheafAuditEvent, "id" | "at">>,
+): SheafAuditEvent {
+  const at = event.at ?? Date.now();
+  const record: SheafAuditEvent = {
+    ...event,
+    at,
+    id: event.id ?? `${at}-${stored.audit.length + 1}`,
+  };
+  stored.audit.push(record);
+  return record;
 }
 
 function isStoredContext(value: unknown): value is SheafContext {
@@ -183,6 +225,7 @@ export function deriveContext(
 export interface ContextSeedSuggestion {
   context: SheafContext;
   reason: string;
+  usefulOverlap: number;
 }
 
 /** Suggest a starting cover from overlapping authored relations without assigning meaning. */
@@ -224,6 +267,81 @@ export function suggestRelationContexts(
       return {
         context,
         reason: `Shares ${overlap.length} participant${overlap.length === 1 ? "" : "s"} with another relation.`,
+        usefulOverlap: overlap.length,
+      };
+    });
+}
+
+/** Optional filing-system seeds. Pure and individually reviewable; nothing is persisted here. */
+export function suggestDerivedContexts(
+  app: App,
+  model: SimplicialModel,
+  existing: SheafContext[],
+  limit = 12,
+): ContextSeedSuggestion[] {
+  const candidates = new Map<string, { source: "folder" | "tag"; definition: string }>();
+  model.nodes.forEach((_, nodeId) => {
+    const slash = nodeId.lastIndexOf("/");
+    if (slash > 0) {
+      const folder = nodeId.slice(0, slash);
+      candidates.set(`folder:${folder}`, { source: "folder", definition: folder });
+    }
+    const file = app.vault.getAbstractFileByPath(nodeId);
+    if (!(file instanceof TFile)) return;
+    const cache = app.metadataCache.getFileCache(file);
+    [...(cache?.tags ?? []).map((entry) => entry.tag ?? ""), ...toTagList(cache?.frontmatter?.tags)].forEach((tag) => {
+      if (tag) candidates.set(`tag:${tag.toLowerCase()}`, { source: "tag", definition: tag });
+    });
+  });
+  const existingDefinitions = new Set(
+    existing.map((context) => `${context.source}:${context.definition.toLowerCase()}`),
+  );
+  return [...candidates.values()]
+    .filter(({ source, definition }) => !existingDefinitions.has(`${source}:${definition.toLowerCase()}`))
+    .map(({ source, definition }) => deriveContext(app, model, source, definition, existing))
+    .filter((context): context is SheafContext => context !== null)
+    .map((context) => {
+      const support = new Set(contextSupport(model, context));
+      const usefulOverlap = existing.reduce(
+        (sum, other) => sum + contextSupport(model, other).filter((node) => support.has(node)).length,
+        0,
+      );
+      return {
+        context,
+        usefulOverlap,
+        reason: `${context.relations.length} relation${context.relations.length === 1 ? "" : "s"}; useful overlap score ${usefulOverlap}.`,
+      };
+    })
+    .filter(
+      ({ usefulOverlap, context }) => usefulOverlap > 0 || (existing.length === 0 && context.relations.length > 1),
+    )
+    .sort((a, b) => b.usefulOverlap - a.usefulOverlap || b.context.relations.length - a.context.relations.length)
+    .slice(0, Math.max(0, limit));
+}
+
+export interface ReadingComparison {
+  contextId: string;
+  contextName: string;
+  role: SheafRole;
+  provenance: "explicit override" | "global backfill" | "fallback";
+}
+
+export function compareReadings(
+  model: SimplicialModel,
+  stored: StoredSheaf,
+  globalRoles: Map<NodeID, SheafRole>,
+  nodeId: NodeID,
+): ReadingComparison[] {
+  return stored.contexts
+    .filter((context) => contextSupport(model, context).includes(nodeId))
+    .map((context) => {
+      const explicit = stored.sections[context.id]?.[nodeId];
+      const global = globalRoles.get(nodeId);
+      return {
+        contextId: context.id,
+        contextName: context.name,
+        role: explicit ?? global ?? "reference",
+        provenance: explicit ? "explicit override" : global ? "global backfill" : "fallback",
       };
     });
 }
