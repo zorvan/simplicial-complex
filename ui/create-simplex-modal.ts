@@ -1,6 +1,7 @@
 /* global window -- Allow window for setTimeout in Obsidian/Electron environment (ESLint browser globals) */
 import { Modal, Notice, Setting, TextAreaComponent, type App } from "obsidian";
 import type { RelationKind } from "../core/types";
+import { renderExternalAgentHelp } from "./external-agent-help";
 
 export interface RelationDraft {
   kind: RelationKind;
@@ -107,6 +108,8 @@ export class CreateSimplexModal extends Modal {
             this.modeInput = value;
           });
         });
+
+      renderExternalAgentHelp(contentEl, this.app, true);
     }
 
     new Setting(contentEl)

@@ -541,6 +541,100 @@ export function analyzeSheaf(model: SimplicialModel, data: SheafData): SheafRepo
   };
 }
 
+export interface RoleRefinementSuggestion {
+  contextId: string;
+  nodeId: NodeID;
+  from: SheafRole;
+  to: SheafRole;
+  before: { h1: number; contextualFraction: number; localDisagreements: number; contextualityDetected: boolean };
+  after: { h1: number; contextualFraction: number; localDisagreements: number; contextualityDetected: boolean };
+  score: number;
+}
+
+export interface RoleRefinementOptions {
+  limit?: number;
+  /** Bounds interactive work on very large covers. */
+  maxCandidates?: number;
+}
+
+/**
+ * Test one local-role change at a time and return only improvements. This is a
+ * counterfactual assistant, not an inference engine: it says what would improve
+ * gluing, never which reading is true, and it never mutates `data`.
+ */
+export function suggestRoleRefinements(
+  model: SimplicialModel,
+  data: SheafData,
+  options: RoleRefinementOptions = {},
+): RoleRefinementSuggestion[] {
+  const limit = Math.max(0, options.limit ?? 8);
+  const maxCandidates = Math.max(0, options.maxCandidates ?? 600);
+  if (limit === 0 || maxCandidates === 0 || data.contexts.length === 0) return [];
+
+  const baseline = analyzeSheaf(model, data);
+  const before = {
+    h1: baseline.gluing.h1,
+    contextualFraction: baseline.fraction.value,
+    localDisagreements: baseline.gluing.pairwiseDisagreements.length,
+    contextualityDetected: baseline.gluing.contextualityDetected,
+  };
+  if (before.h1 === 0 && before.localDisagreements === 0) return [];
+
+  const implicatedContexts = new Set<string>();
+  const implicatedNodes = new Set<NodeID>();
+  baseline.obstructions.forEach((obstruction) => {
+    obstruction.contexts.forEach((id) => implicatedContexts.add(id));
+    obstruction.nodes.forEach((id) => implicatedNodes.add(id));
+  });
+  baseline.gluing.pairwiseDisagreements.forEach((disagreement) => {
+    implicatedContexts.add(disagreement.a);
+    implicatedContexts.add(disagreement.b);
+    disagreement.disagreeingNodes.forEach((id) => implicatedNodes.add(id));
+  });
+
+  const suggestions: RoleRefinementSuggestion[] = [];
+  let evaluated = 0;
+  for (const context of data.contexts) {
+    if (implicatedContexts.size > 0 && !implicatedContexts.has(context.id)) continue;
+    const section = data.sections.get(context.id);
+    if (!section) continue;
+    for (const [nodeId, from] of section) {
+      if (implicatedNodes.size > 0 && !implicatedNodes.has(nodeId)) continue;
+      for (const to of SHEAF_ROLES) {
+        if (to === from || evaluated >= maxCandidates) continue;
+        evaluated++;
+        const trialSections = new Map(data.sections);
+        trialSections.set(context.id, new Map(section).set(nodeId, to));
+        const report = analyzeSheaf(model, { contexts: data.contexts, sections: trialSections });
+        const after = {
+          h1: report.gluing.h1,
+          contextualFraction: report.fraction.value,
+          localDisagreements: report.gluing.pairwiseDisagreements.length,
+          contextualityDetected: report.gluing.contextualityDetected,
+        };
+        const score =
+          (before.h1 - after.h1) * 100 +
+          (Number(before.contextualityDetected) - Number(after.contextualityDetected)) * 50 +
+          (after.contextualFraction - before.contextualFraction) * 25 +
+          (before.localDisagreements - after.localDisagreements) * 10;
+        if (score > 1e-9) suggestions.push({ contextId: context.id, nodeId, from, to, before, after, score });
+      }
+      if (evaluated >= maxCandidates) break;
+    }
+    if (evaluated >= maxCandidates) break;
+  }
+
+  return suggestions
+    .sort(
+      (a, b) =>
+        b.score - a.score ||
+        a.contextId.localeCompare(b.contextId) ||
+        a.nodeId.localeCompare(b.nodeId) ||
+        a.to.localeCompare(b.to),
+    )
+    .slice(0, limit);
+}
+
 /** Every relation key a context could name, for the definition UI. */
 export function allRelationKeys(model: SimplicialModel): RelationKey[] {
   return [

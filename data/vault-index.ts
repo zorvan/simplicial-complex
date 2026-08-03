@@ -241,9 +241,26 @@ export class VaultIndex {
       inferred = inferSimplices([...this.inferenceContexts.values()], this.settings);
     }
 
-    this.model.replaceInferredSimplices(inferred);
+    const inferredEncounters: Hyperedge[] =
+      this.settings.inferenceEmits === "hyperedge"
+        ? inferred
+            .filter((simplex) => simplex.nodes.length > 2)
+            .map((simplex) => ({
+              nodes: simplex.nodes,
+              label: simplex.label,
+              weight: simplex.weight,
+              confidence: simplex.confidence,
+              inferred: true,
+              suggested: true,
+            }))
+        : [];
+    const inferredSimplices =
+      this.settings.inferenceEmits === "hyperedge" ? inferred.filter((simplex) => simplex.nodes.length <= 2) : inferred;
+    this.model.replaceInferredSimplices(inferredSimplices);
+    this.model.replaceInferredHyperedges(inferredEncounters);
     const snapshot = JSON.stringify({
-      inferredSimplexCount: inferred.length,
+      inferredSimplexCount: inferredSimplices.length,
+      inferredEncounterCount: inferredEncounters.length,
       totalSimplexCount: this.model.simplices.size,
       totalNodeCount: this.model.nodes.size,
       enabled: this.settings.enableInferredEdges,

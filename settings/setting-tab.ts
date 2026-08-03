@@ -327,6 +327,21 @@ export class SimplicialSettingTab extends PluginSettingTab {
 
   private renderInferenceSettings(containerEl: HTMLElement): void {
     new Setting(containerEl)
+      .setName("Higher-order inference output")
+      .setDesc(
+        "Keep inferred groups of three or more as encounter suggestions until you promote them. Pairwise links remain simplices.",
+      )
+      .addDropdown((dropdown) => {
+        dropdown.addOption("simplex", "Simplex (compatible default)");
+        dropdown.addOption("hyperedge", "Encounter suggestion (safer)");
+        dropdown.setValue(this.plugin.settings.inferenceEmits);
+        dropdown.onChange(async (value) => {
+          this.plugin.settings.inferenceEmits = value as "simplex" | "hyperedge";
+          await this.plugin.saveSettings();
+        });
+      });
+
+    new Setting(containerEl)
       .setName("Link graph baseline")
       .setDesc("Always show note-to-note vault links as 1-simplices, even without higher-order structure.")
       .addToggle((toggle) => {

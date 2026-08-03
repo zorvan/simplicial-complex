@@ -225,6 +225,7 @@ export function getDefaultSettings(): PluginSettings {
     boundaryPadding: 50,
     darkMode: "auto",
     inferenceMode: "hybrid",
+    inferenceEmits: "simplex",
     insightThreshold: 0.45,
     linkStrengthThreshold: 0.4,
     linkThresholdLowerBound: 0.0,

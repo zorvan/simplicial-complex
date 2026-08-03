@@ -73,6 +73,8 @@ On first scan the plugin also proposes lightweight, in-memory `◇` candidates f
 
 **Contextuality (v3):** Define overlapping contexts and give the same note a different local role in each. The Contextuality Lab reports whether those readings glue, identifies H¹ obstruction cycles, and shows the contextual fraction. A crimson failed seam means existing local meanings cannot be reconciled; it is not an orange topological hole, where a filler is absent.
 
+**Optional external-agent help:** Encounter creation and the Contextuality Lab include provider-neutral, copyable prompts for a file-capable agent. The plugin itself never invokes an AI service or sends vault content anywhere. Agents prepare cited proposals; the user reviews and records every meaning-changing intervention. See [AI-assisted discovery](docs/AI-assisted-discovery.md).
+
 **Emergent Inference (v3):** Semantic clustering with TF-IDF, emergent edge detection, hybrid inference modes, domain-aware coloring.
 
 _See [Technical Details](#technical-details) for complete feature documentation._

@@ -1,5 +1,12 @@
 import { ItemView, Notice, Setting, WorkspaceLeaf } from "obsidian";
-import { allRelationKeys, analyzeSheaf, contextSupport, SHEAF_ROLES, type ContextSource } from "../core/sheaf";
+import {
+  allRelationKeys,
+  analyzeSheaf,
+  contextSupport,
+  SHEAF_ROLES,
+  suggestRoleRefinements,
+  type ContextSource,
+} from "../core/sheaf";
 import { SimplicialModel } from "../core/model";
 import { VIEW_TYPE_SIMPLICIAL_SHEAF, type PluginSettings, type RelationKey } from "../core/types";
 import {
@@ -7,10 +14,12 @@ import {
   buildSheafData,
   deriveContext,
   readStoredSheaf,
+  suggestRelationContexts,
   uniqueContextId,
   writeStoredSheaf,
   type StoredSheaf,
 } from "../data/sheaf-store";
+import { renderExternalAgentHelp } from "./external-agent-help";
 
 const SOURCES: ContextSource[] = ["manual", "folder", "tag", "query", "moc"];
 
@@ -56,9 +65,36 @@ export class SheafView extends ItemView {
     });
 
     const stored = readStoredSheaf(this.settings);
+    renderExternalAgentHelp(contentEl, this.app);
+    this.renderSuggestions(contentEl, stored);
     this.renderCreator(contentEl, stored);
     this.renderReport(contentEl, stored);
     stored.contexts.forEach((context) => this.renderContext(contentEl, stored, context.id));
+  }
+
+  private renderSuggestions(container: HTMLElement, stored: StoredSheaf): void {
+    const suggestions = suggestRelationContexts(this.model, stored.contexts);
+    const section = container.createDiv({ cls: "simplicial-sheaf-suggestions" });
+    section.createEl("div", { cls: "simplicial-panel-section-label", text: "Suggested starting cover" });
+    section.createEl("div", {
+      cls: "simplicial-measure-reading",
+      text: suggestions.length
+        ? "These seeds come from authored relations that overlap elsewhere. Review and add them; no role or meaning is assigned automatically."
+        : "No new overlapping authored relations are available as context seeds.",
+    });
+    suggestions.forEach(({ context, reason }) => {
+      new Setting(section)
+        .setName(context.name)
+        .setDesc(reason)
+        .addButton((button) => {
+          button.setButtonText("Add seed");
+          button.onClick(async () => {
+            stored.contexts.push(context);
+            stored.sections[context.id] = {};
+            await this.persist(stored);
+          });
+        });
+    });
   }
 
   private renderCreator(container: HTMLElement, stored: StoredSheaf): void {
@@ -140,6 +176,37 @@ export class SheafView extends ItemView {
       card.createEl("div", {
         cls: "simplicial-measure-reading",
         text: `Local disagreement between ${disagreement.a} and ${disagreement.b}: ${disagreement.disagreeingNodes.map(shortName).join(" · ")}. This is not contextuality.`,
+      });
+    });
+    this.renderRefinements(card, stored, data);
+  }
+
+  private renderRefinements(
+    container: HTMLElement,
+    stored: StoredSheaf,
+    data: ReturnType<typeof buildSheafData>,
+  ): void {
+    const suggestions = suggestRoleRefinements(this.model, data);
+    if (suggestions.length === 0) return;
+    container.createEl("div", { cls: "simplicial-panel-section-label", text: "Try a local refinement" });
+    container.createEl("div", {
+      cls: "simplicial-measure-reading",
+      text: "These are counterfactual improvements, not claims about meaning. Apply one only if the proposed local reading is accurate.",
+    });
+    suggestions.forEach((suggestion) => {
+      const context = stored.contexts.find((candidate) => candidate.id === suggestion.contextId);
+      const setting = new Setting(container)
+        .setName(`${shortName(suggestion.nodeId)} in ${context?.name ?? suggestion.contextId}`)
+        .setDesc(
+          `${suggestion.from} → ${suggestion.to}; H¹ ${suggestion.before.h1} → ${suggestion.after.h1}; contextual fraction ${suggestion.before.contextualFraction.toFixed(2)} → ${suggestion.after.contextualFraction.toFixed(2)}${suggestion.before.contextualityDetected && !suggestion.after.contextualityDetected ? "; converts hidden contextuality into a directly inspectable local disagreement" : ""}.`,
+        );
+      setting.addButton((button) => {
+        button.setButtonText("Apply reading");
+        button.onClick(async () => {
+          stored.sections[suggestion.contextId] ??= {};
+          stored.sections[suggestion.contextId][suggestion.nodeId] = suggestion.to;
+          await this.persist(stored);
+        });
       });
     });
   }

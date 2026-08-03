@@ -407,6 +407,18 @@ export class SimplicialModel {
     });
   }
 
+  /** Replace probabilistic inferred encounters without touching authored encounters. */
+  replaceInferredHyperedges(hyperedges: Hyperedge[]): void {
+    this.batch(() => {
+      for (const [key, hyperedge] of this.hyperedges) {
+        if (hyperedge.inferred && hyperedge.suggested) this.hyperedges.delete(key);
+      }
+      hyperedges.forEach((hyperedge) => this.addHyperedge({ ...hyperedge, inferred: true, suggested: true }));
+      this.invalidateAnalysisCache();
+      this.emitChange();
+    });
+  }
+
   /**
    * Re-seat everything a single file owns. A rescan must clear *both* layers for
    * that path, otherwise a hyperedge deleted from a note would linger forever.

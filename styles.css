@@ -739,3 +739,45 @@
   padding-left: 9px;
   line-height: 1.45;
 }
+
+/* Optional, static instructions for user-operated external AI readers. */
+.simplicial-agent-help {
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  margin: 16px 0;
+  padding: 12px;
+}
+
+.simplicial-agent-help p {
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 6px 0 10px;
+}
+
+.simplicial-agent-help-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.simplicial-agent-guide {
+  max-width: 780px;
+}
+
+.simplicial-agent-guide details {
+  border-top: 1px solid var(--background-modifier-border);
+  margin-top: 14px;
+  padding-top: 12px;
+}
+
+.simplicial-agent-guide summary {
+  cursor: pointer;
+  font-weight: var(--font-semibold);
+}
+
+.simplicial-agent-guide pre {
+  max-height: 320px;
+  overflow: auto;
+  white-space: pre-wrap;
+}

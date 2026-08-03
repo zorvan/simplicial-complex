@@ -52,6 +52,7 @@ import {
   contextSupport,
   contextualFraction,
   restrict,
+  suggestRoleRefinements,
   type LocalSection,
   type SheafContext,
   type SheafData,
@@ -176,6 +177,27 @@ test("getAllRelations tags each layer with its kind", () => {
 
   assert.deepEqual(kinds, ["hyperedge", "simplex"]);
   assert.equal(new Set(relations.map((entry) => entry.key)).size, 2, "same nodes, two distinct keys");
+});
+
+test("replacing inferred encounters preserves authored encounters and simplicial topology", () => {
+  const model = new SimplicialModel();
+  ["d.md", "e.md", "f.md", "g.md", "h.md", "i.md"].forEach((nodeId) => model.setNode(nodeId));
+  const authored = model.addHyperedge({ nodes: ["a.md", "b.md", "c.md"], label: "authored" });
+  model.addSimplex({ nodes: ["x.md", "y.md"], userDefined: true });
+  const before = model.getCachedBetti();
+
+  model.replaceInferredHyperedges([
+    { nodes: ["d.md", "e.md", "f.md"], inferred: true, suggested: true, confidence: 0.8 },
+  ]);
+  model.replaceInferredHyperedges([
+    { nodes: ["g.md", "h.md", "i.md"], inferred: true, suggested: true, confidence: 0.9 },
+  ]);
+
+  assert.equal(model.getHyperedge(authored)?.label, "authored");
+  assert.equal(model.getHyperedge(relationKey("hyperedge", ["d.md", "e.md", "f.md"])), undefined);
+  assert.ok(model.getHyperedge(relationKey("hyperedge", ["g.md", "h.md", "i.md"])));
+  assert.equal(model.simplices.has(normalizeKey(["g.md", "h.md", "i.md"])), false);
+  assert.deepEqual(model.getCachedBetti(), before);
 });
 
 // ---------------------------------------------------------------------------
@@ -1379,6 +1401,41 @@ test("the contextual fraction says how much of the cover still reads together", 
   // Dropping any one of the three breaks the cycle, so two thirds still glue.
   assert.ok(Math.abs(fraction.value - 2 / 3) < 1e-9);
   assert.equal(fraction.consistentContexts.length, 2);
+});
+
+test("role refinement suggestions improve gluing without mutating the live sheaf", () => {
+  const { model, data } = sheafFixture({
+    c1: { "a.md": "research", "b.md": "idea" },
+    c2: { "a.md": "research", "b.md": "action" },
+  });
+  const before = analyzeSheaf(model, data);
+  const snapshot = [...data.sections].map(([id, section]) => [id, [...section]]);
+  const suggestions = suggestRoleRefinements(model, data);
+
+  assert.ok(suggestions.length > 0);
+  assert.ok(
+    suggestions.every(
+      (suggestion) =>
+        suggestion.after.h1 < suggestion.before.h1 ||
+        suggestion.after.contextualFraction > suggestion.before.contextualFraction ||
+        suggestion.after.localDisagreements < suggestion.before.localDisagreements ||
+        (suggestion.before.contextualityDetected && !suggestion.after.contextualityDetected),
+    ),
+  );
+  assert.deepEqual(
+    [...data.sections].map(([id, section]) => [id, [...section]]),
+    snapshot,
+    "counterfactual evaluation must not edit the user's readings",
+  );
+  assert.deepEqual(analyzeSheaf(model, data), before);
+});
+
+test("an already coherent cover receives no role-change pressure", () => {
+  const { model, data } = sheafFixture({
+    c1: { "a.md": "research", "b.md": "research" },
+    c2: { "b.md": "research", "c.md": "research" },
+  });
+  assert.deepEqual(suggestRoleRefinements(model, data), []);
 });
 
 test("contexts and their overlaps are enumerable so a user can see the intersection", () => {

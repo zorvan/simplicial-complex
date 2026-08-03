@@ -13,6 +13,7 @@ export const COLOR_PALETTE = ["purple", "teal", "coral", "pink", "blue", "amber"
 export type ColorKey = (typeof COLOR_PALETTE)[number] | "neutral";
 export type RenderFilterMetric = "weight" | "confidence" | "decayed-weight";
 export type DomainSource = "folder" | "content-cluster" | "hybrid";
+export type InferenceOutput = "simplex" | "hyperedge";
 
 export interface BettiResult {
   b0: number;
@@ -148,6 +149,7 @@ export interface PluginSettings {
   boundaryPadding: number;
   darkMode: "auto" | "force-light" | "force-dark";
   inferenceMode: "emergent" | "taxonomic" | "hybrid";
+  inferenceEmits: InferenceOutput;
   insightThreshold: number;
   linkStrengthThreshold: number;
   linkThresholdLowerBound: number;
