@@ -1,19 +1,34 @@
 /* global activeWindow -- Allow activeWindow for canvas resize handling in Obsidian/Electron environment (ESLint browser globals) */
-import type { LayoutNode, PluginSettings, Rect, RenderFilterMetric, Simplex, Hole } from "../core/types";
-import { normalizeKey } from "../core/normalize";
+import type {
+  Hyperedge,
+  LayoutNode,
+  PluginSettings,
+  Rect,
+  RelationKey,
+  RenderFilterMetric,
+  Simplex,
+  Hole,
+} from "../core/types";
+import { normalizeKey, relationKey } from "../core/normalize";
+import type { RelationReplayState } from "../core/history";
 import { SimplicialModel } from "../core/model";
 import { LayoutEngine } from "../layout/engine";
 import { InteractionController } from "../interaction/controller";
-import { renderBlob } from "./blobs";
+import { renderBlob, renderHyperedge } from "./blobs";
+import { encounterStyle, pulsePhase, pulsedNodeRadius } from "./encounter-style";
+import { closureDeficit } from "../core/diagnostics";
+import type { ActivationField } from "../core/activation";
 import { renderEdges } from "./edges";
 import { effectiveColorForSimplex } from "./palette";
-import { drawBettiHUD } from "./components/hud";
+import { drawBettiHUD, drawEncounterHUD } from "./components/hud";
 import { drawPhantomHoles, type VisibleBounds } from "./components/holes";
+import { drawObstructionSeams } from "./components/obstructions";
+import type { SheafReport } from "../core/sheaf";
 import { explainHole, type SimplexExplanation } from "../data/explainer";
 import type { InferenceContext } from "../data/inference/types";
 
 interface RendererCallbacks {
-  onContextMenu?: (target: { nodeId?: string; simplexKey?: string }, event: MouseEvent) => void;
+  onContextMenu?: (target: { nodeId?: string; simplexKey?: string; hyperedgeKey?: string }, event: MouseEvent) => void;
   onLassoCreate?: (nodeIds: string[]) => void;
   onNodeOpen?: (nodeId: string) => void;
   onHoleHover?: (hole: Hole | null, explanation: SimplexExplanation | null) => void;
@@ -35,7 +50,7 @@ function pointInPolygon(point: { x: number; y: number }, polygon: Array<{ x: num
   return inside;
 }
 
-function simplexPolygon(simplex: Simplex, nodes: LayoutNode[]): Array<{ x: number; y: number }> {
+function simplexPolygon(simplex: { nodes: string[] }, nodes: LayoutNode[]): Array<{ x: number; y: number }> {
   const points = simplex.nodes
     .map((id) => nodes.find((node) => node.id === id))
     .filter(Boolean)
@@ -73,6 +88,8 @@ export class Renderer {
   private lassoPath: Array<{ x: number; y: number }> = [];
   private isLassoActive = false;
   private hoveredHoleKey: string | null = null;
+  private reducedMotionQuery = activeWindow.matchMedia("(prefers-reduced-motion: reduce)");
+  private pulseHeld = false;
   private isPanning = false;
   private panStartScreenX = 0;
   private panStartScreenY = 0;
@@ -93,6 +110,20 @@ export class Renderer {
   private readonly progressiveNodeStep = 140;
   private readonly progressiveSimplexStep = 220;
 
+  /**
+   * Ephemeral attention, refreshed by the plugin. Read only for emphasis — nothing
+   * here is ever written to a note, and the renderer has no way to write one.
+   */
+  private activation: ActivationField = new Map();
+  private sheafReport: SheafReport | null = null;
+  private replayState: RelationReplayState | null = null;
+
+  setReplayState(state: RelationReplayState | null): void {
+    this.replayState = state;
+    this.progressiveSceneKey = "";
+    this.render();
+  }
+
   constructor(
     private model: SimplicialModel,
     private engine: LayoutEngine,
@@ -100,6 +131,15 @@ export class Renderer {
     private settings: PluginSettings,
     private callbacks: RendererCallbacks = {},
   ) {}
+
+  setActivation(field: ActivationField): void {
+    this.activation = field;
+  }
+
+  setSheafReport(report: SheafReport | null): void {
+    this.sheafReport = report;
+    this.render();
+  }
 
   // Cached text measurement for performance
   private measureTextWidth(ctx: CanvasRenderingContext2D, text: string): number {
@@ -214,6 +254,9 @@ export class Renderer {
     focusSimplexKeys: Set<string>,
   ): Array<[string, Simplex]> {
     const ranked = simplices
+      .filter(
+        ([, simplex]) => !this.replayState || this.replayState.simplices.has(relationKey("simplex", simplex.nodes)),
+      )
       .filter(([, simplex]) => this.passesRenderFilter(simplex))
       .filter(([, simplex]) => simplex.nodes.every((nodeId) => renderedNodeIds.has(nodeId)))
       .sort((a, b) => {
@@ -241,6 +284,22 @@ export class Renderer {
       });
 
     return ranked.slice(0, this.progressiveSimplexBudget);
+  }
+
+  /**
+   * Encounters visible this frame.
+   *
+   * `maxRenderedDim` is deliberately not applied: a hyperedge's order is not a
+   * dimension, and capping it by one would silently hide encounters for a reason
+   * that does not apply to them.
+   */
+  private getRenderableHyperedges(renderedNodeIds: Set<string>): Array<[RelationKey, Hyperedge]> {
+    if (!this.settings.showHyperedges) return [];
+    return [...this.model.hyperedges.entries()].filter(
+      ([, hyperedge]) =>
+        (!this.replayState || this.replayState.hyperedges.has(relationKey("hyperedge", hyperedge.nodes))) &&
+        hyperedge.nodes.some((nodeId) => renderedNodeIds.has(nodeId)),
+    );
   }
 
   // Optimized label placement using spatial hashing
@@ -277,6 +336,7 @@ export class Renderer {
       () => ({
         nodes: this.model.getAllNodes(),
         simplices: [...this.model.simplices.values()],
+        hyperedges: [...this.model.hyperedges.values()],
         bounds: { width: this.W, height: this.H },
         holdNode: this.controller.holdNode,
       }),
@@ -404,7 +464,14 @@ export class Renderer {
         return;
       }
       const simplex = this.findSimplexAtPoint(point);
-      this.controller.selectSimplex(simplex ? normalizeKey(simplex.nodes) : null);
+      if (simplex) {
+        this.controller.selectSimplex(normalizeKey(simplex.nodes));
+      } else {
+        // Only fall through to an encounter when no field claims the point, so
+        // clicking a promoted triad still selects the simplex it became.
+        const hyperedgeKey = this.findHyperedgeAtPoint(point);
+        this.controller.selectRelation(hyperedgeKey ? { kind: "hyperedge", key: hyperedgeKey } : null);
+      }
       this.render();
     });
     this.canvas.addEventListener("contextmenu", (event) => {
@@ -412,11 +479,13 @@ export class Renderer {
       const point = this.eventToCanvasPoint(event);
       const node = this.findNodeNearPoint(point);
       const simplex = this.findSimplexAtPoint(point);
-      if (!node && !simplex) return;
+      const hyperedgeKey = this.findHyperedgeAtPoint(point);
+      if (!node && !simplex && !hyperedgeKey) return;
       this.callbacks.onContextMenu?.(
         {
           ...(node ? { nodeId: node.id } : {}),
           ...(simplex ? { simplexKey: normalizeKey(simplex.nodes) } : {}),
+          ...(hyperedgeKey ? { hyperedgeKey } : {}),
         },
         event,
       );
@@ -486,6 +555,39 @@ export class Renderer {
     return hovered
       ? (this.model.getSimplicesForNode(hovered.id).sort((a, b) => b.nodes.length - a.nodes.length)[0] ?? null)
       : null;
+  }
+
+  /**
+   * Encounter hit-testing, kept separate from `findSimplexAtPoint` so a simplex and
+   * a hyperedge over the same nodes stay individually selectable.
+   */
+  private findHyperedgeAtPoint(point: { x: number; y: number }): RelationKey | null {
+    if (!this.settings.showHyperedges) return null;
+    const nodes = this.model.getAllNodes();
+    const candidates = [...this.model.hyperedges.entries()].sort((a, b) => a[1].nodes.length - b[1].nodes.length);
+    for (const [key, hyperedge] of candidates) {
+      const polygon = simplexPolygon(hyperedge, nodes);
+      if (polygon.length < 2) continue;
+      if (polygon.length === 2) {
+        const [a, b] = polygon;
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        const distance = Math.abs(dy * point.x - dx * point.y + b.x * a.y - b.y * a.x) / (Math.hypot(dx, dy) || 1);
+        const padding = this.worldRadius(8);
+        if (
+          point.x >= Math.min(a.x, b.x) - padding &&
+          point.x <= Math.max(a.x, b.x) + padding &&
+          point.y >= Math.min(a.y, b.y) - padding &&
+          point.y <= Math.max(a.y, b.y) + padding &&
+          distance <= this.worldRadius(10)
+        ) {
+          return key;
+        }
+        continue;
+      }
+      if (pointInPolygon(point, polygon)) return key;
+    }
+    return null;
   }
 
   private findHoleAtPoint(point: { x: number; y: number }): Hole | null {
@@ -606,6 +708,39 @@ export class Renderer {
     this.viewZoom = fitZoom * this.userZoom;
     this.viewOffsetX = this.W / 2 - centerX * this.viewZoom + this.userPanX;
     this.viewOffsetY = this.H / 2 - centerY * this.viewZoom + this.userPanY;
+  }
+
+  /**
+   * Encounters borrow the simplex palette so a promoted pair stays recognisably the
+   * same relation; the *form* is what distinguishes them, not the hue.
+   */
+  private hyperedgeColor(hyperedge: Hyperedge): [number, number, number] {
+    return effectiveColorForSimplex(null, {
+      nodes: hyperedge.nodes,
+      label: hyperedge.label,
+      colorKey: hyperedge.colorKey,
+      sourcePath: hyperedge.sourcePath,
+    });
+  }
+
+  /**
+   * HG-17. The breath is only drawn while an encounter is *explicitly* focused —
+   * hovering a member node highlights its encounters but does not set them
+   * breathing, because that would assert alignment the user did not ask for.
+   *
+   * A reader who has asked their system for less motion gets the static highlight
+   * instead: the same emphasis, held still. Same for the settings kill switch.
+   */
+  private encounterPulse(focusState: { hoveredHyperedgeKey: RelationKey | null }): number {
+    if (!this.settings.enableHyperedgePulse) return 0;
+    if (this.reducedMotionQuery.matches) return 0;
+    if (!focusState.hoveredHyperedgeKey) return 0;
+    return pulsePhase(Date.now());
+  }
+
+  /** Null when the encounter is too large to enumerate — unmeasured, not zero. */
+  private encounterDeficit(key: RelationKey): number | null {
+    return closureDeficit(this.model, key)?.deficit ?? null;
   }
 
   private alphaForDimension(dim: number, focused: boolean): number {
@@ -815,6 +950,7 @@ export class Renderer {
     const renderableNodes = this.getProgressiveRenderableNodes(visibleNodes, focusState.activeNodeIds);
     const renderedNodeIds = new Set(renderableNodes.map((node) => node.id));
     const renderableSimplices = this.getRenderableSimplices(simplices, renderedNodeIds, focusState.activeSimplexKeys);
+    const renderableHyperedges = this.getRenderableHyperedges(renderedNodeIds);
 
     ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
     ctx.clearRect(0, 0, this.W, this.H);
@@ -876,6 +1012,44 @@ export class Renderer {
       );
     }
 
+    // Encounters draw above the simplicial fields: a transient enclosure has to read
+    // as laid over the structure, not as another layer of it.
+    const pulse = this.encounterPulse(focusState);
+    if (pulse > 0 !== this.pulseHeld) {
+      this.pulseHeld = pulse > 0;
+      this.engine.setAnimationHold(this.pulseHeld);
+    }
+    const pulsingNodeIds = new Set<string>();
+    renderableHyperedges.forEach(([key, hyperedge]) => {
+      const focused = !focusState.isActive || focusState.involvesRelation({ kind: "hyperedge", ...hyperedge }, key);
+      const isPulseTarget = pulse > 0 && key === focusState.hoveredHyperedgeKey;
+      if (isPulseTarget) hyperedge.nodes.forEach((nodeId) => pulsingNodeIds.add(nodeId));
+      renderHyperedge(
+        ctx,
+        hyperedge,
+        allNodes,
+        this.hyperedgeColor(hyperedge),
+        encounterStyle({
+          opacity: this.settings.hyperedgeOpacity * (hyperedge.suggested ? 0.62 : 1),
+          focused,
+          deficit: this.encounterDeficit(key),
+          emergent: !hyperedge.suggested && hyperedge.persistence === "recurring" && !hyperedge.crystallizedInto,
+          pulse: isPulseTarget ? pulse : 0,
+        }),
+      );
+    });
+
+    // Unlike a β₁ hole, this is not an absent filler. Existing fields fail to meet
+    // along an open seam, so it is drawn over relations and never closed or filled.
+    if (this.sheafReport?.obstructions.length) {
+      drawObstructionSeams(
+        ctx,
+        this.sheafReport.obstructions,
+        new Map(allNodes.map((node) => [node.id, node])),
+        this.isDark,
+      );
+    }
+
     // Only render progressively loaded visible nodes
     renderableNodes.forEach((node) => {
       this.controller.lerpAlpha(node, focusState);
@@ -889,15 +1063,24 @@ export class Renderer {
         ctx.fillStyle = `rgba(${r},${g},${b},0.10)`;
         ctx.fill();
       }
+      // In phase, not each on its own clock: the members are being breathed
+      // together, which is the assertion — temporary alignment of attention.
+      const baseRadius = this.settings.formalMode ? 4.5 : isHovered ? 7 : 5;
+      const nodeRadius = pulsingNodeIds.has(node.id) ? pulsedNodeRadius(baseRadius, pulse) : baseRadius;
+      // HG-19. Activation lifts a note toward full presence without ever making an
+      // unattended one invisible: attention is emphasis, not a filter.
+      const activationLift = this.activation.get(node.id) ?? 0;
+      const alpha = Math.min(1, (isActive ? node.displayAlpha : 0.2) + activationLift * 0.5);
+
       ctx.beginPath();
       if (node.isVirtual) {
-        ctx.arc(node.px, node.py, this.settings.formalMode ? 4.5 : isHovered ? 7 : 5, 0, Math.PI * 2);
-        ctx.strokeStyle = `rgba(${r},${g},${b},${node.displayAlpha})`;
+        ctx.arc(node.px, node.py, nodeRadius, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(${r},${g},${b},${alpha})`;
         ctx.lineWidth = 1.5;
         ctx.stroke();
       } else {
-        ctx.arc(node.px, node.py, this.settings.formalMode ? 4.5 : isHovered ? 7 : 5, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${r},${g},${b},${isActive ? node.displayAlpha : 0.2})`;
+        ctx.arc(node.px, node.py, nodeRadius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${r},${g},${b},${alpha})`;
         ctx.fill();
       }
 
@@ -976,8 +1159,12 @@ export class Renderer {
     this.drawHoveredNodeOverlay(ctx);
 
     // Draw Betti HUD if enabled
-    if (this.settings.bettiDisplayOnCanvas && this.settings.enableBettiComputation) {
+    const showBettiHUD = this.settings.bettiDisplayOnCanvas && this.settings.enableBettiComputation;
+    if (showBettiHUD) {
       drawBettiHUD(ctx, this.model, this.isDark);
+    }
+    if (this.settings.showHyperedges) {
+      drawEncounterHUD(ctx, this.model, this.isDark, showBettiHUD ? 46 : 14);
     }
 
     // Draw phantom holes (void-as-prompt)

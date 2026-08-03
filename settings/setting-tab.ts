@@ -16,6 +16,9 @@ export class SimplicialSettingTab extends PluginSettingTab {
     containerEl.empty();
 
     this.renderPersistenceSettings(containerEl);
+    this.renderHypergraphSettings(containerEl);
+    this.renderDynamicsSettings(containerEl);
+    this.renderSheafSettings(containerEl);
     this.renderLayoutSettings(containerEl);
     this.renderInferenceSettings(containerEl);
     this.renderCommandUiSettings(containerEl);
@@ -153,7 +156,191 @@ export class SimplicialSettingTab extends PluginSettingTab {
     });
   }
 
+  private renderHypergraphSettings(containerEl: HTMLElement): void {
+    new Setting(containerEl).setName("Hypergraph layer").setHeading();
+
+    new Setting(containerEl)
+      .setName("Show encounters")
+      .setDesc(
+        "Render hyperedges (◇) as transient enclosures. An encounter records that notes came together as one irreducible whole, without asserting any pair within it.",
+      )
+      .addToggle((toggle) => {
+        toggle.setValue(this.plugin.settings.showHyperedges);
+        toggle.onChange(async (value) => {
+          this.plugin.settings.showHyperedges = value;
+          await this.plugin.saveSettings();
+          this.plugin.renderer.render();
+        });
+      });
+
+    new Setting(containerEl)
+      .setName("Discover possible encounters")
+      .setDesc(
+        "Propose in-memory ◇ candidates from coherent fields and cross-field junctions. Suggestions are never written to notes or history until you confirm them.",
+      )
+      .addToggle((toggle) => {
+        toggle.setValue(this.plugin.settings.enableEncounterSuggestions);
+        toggle.onChange(async (value) => {
+          this.plugin.settings.enableEncounterSuggestions = value;
+          await this.plugin.saveSettings();
+          this.plugin.scheduleFullScan("encounter-suggestions-changed", 0);
+        });
+      });
+
+    {
+      const setting = new Setting(containerEl)
+        .setName("Encounter suggestion confidence")
+        .setDesc("Minimum structural/evidence score for showing a possible encounter.");
+      this.addNumberSlider(
+        setting,
+        this.plugin.settings.encounterSuggestionThreshold,
+        0.4,
+        0.95,
+        0.01,
+        async (value) => {
+          this.plugin.settings.encounterSuggestionThreshold = value;
+          await this.plugin.saveSettings();
+          this.plugin.scheduleFullScan("encounter-suggestion-threshold", 0);
+        },
+      );
+    }
+
+    {
+      const setting = new Setting(containerEl)
+        .setName("Encounter opacity")
+        .setDesc("How present encounter enclosures are against the simplicial fields.");
+      this.addNumberSlider(setting, this.plugin.settings.hyperedgeOpacity, 0.1, 1, 0.05, async (value) => {
+        this.plugin.settings.hyperedgeOpacity = value;
+        await this.plugin.saveSettings();
+        this.plugin.renderer.render();
+      });
+    }
+
+    new Setting(containerEl)
+      .setName("Pulse focused encounters")
+      .setDesc(
+        "Breathe the participants of a focused encounter in phase — a temporary alignment of attention, not a permanent connection. Turned off automatically when your system asks for reduced motion.",
+      )
+      .addToggle((toggle) => {
+        toggle.setValue(this.plugin.settings.enableHyperedgePulse);
+        toggle.onChange(async (value) => {
+          this.plugin.settings.enableHyperedgePulse = value;
+          await this.plugin.saveSettings();
+          this.plugin.renderer.render();
+        });
+      });
+
+    {
+      const setting = new Setting(containerEl)
+        .setName("Recurrence threshold")
+        .setDesc(
+          "How many recorded encounters over the same notes mark a configuration as recurring. Recurrence enables crystallization; it never promotes anything on its own.",
+        );
+      this.addNumberSlider(setting, this.plugin.settings.encounterRecurrenceThreshold, 2, 10, 1, async (value) => {
+        this.plugin.settings.encounterRecurrenceThreshold = value;
+        await this.plugin.saveSettings();
+      });
+    }
+
+    new Setting(containerEl)
+      .setName("Crystallize folder")
+      .setDesc("Where notes created by 'crystallize concept' are placed. Leave empty for the vault root.")
+      .addText((text) => {
+        text.setPlaceholder("Concepts");
+        text.setValue(this.plugin.settings.crystallizeFolder);
+        text.onChange(async (value) => {
+          this.plugin.settings.crystallizeFolder = value.trim();
+          await this.plugin.saveSettings();
+        });
+      });
+
+    new Setting(containerEl)
+      .setName("Record relation history")
+      .setDesc(
+        "Keep an append-only log of how relations came to be — encountered, promoted, relaxed, crystallized, dissolved. Turning this off stops new entries; it never deletes existing ones.",
+      )
+      .addToggle((toggle) => {
+        toggle.setValue(this.plugin.settings.enableRelationHistory);
+        toggle.onChange(async (value) => {
+          this.plugin.settings.enableRelationHistory = value;
+          await this.plugin.saveSettings();
+          new Notice(value ? "History resumes on next reload." : "History paused. Existing entries are kept.");
+        });
+      });
+
+    new Setting(containerEl)
+      .setName("History file")
+      .setDesc("Vault path of the append-only relation history.")
+      .addText((text) => {
+        text.setPlaceholder("_simplicial-history.md");
+        text.setValue(this.plugin.settings.historyFile);
+        text.onChange(async (value) => {
+          this.plugin.settings.historyFile = value.trim() || "_simplicial-history.md";
+          this.plugin.historyStore.setPath(this.plugin.settings.historyFile);
+          await this.plugin.saveSettings();
+        });
+      });
+  }
+
+  private renderDynamicsSettings(containerEl: HTMLElement): void {
+    new Setting(containerEl).setName("Dynamics").setHeading();
+
+    new Setting(containerEl)
+      .setName("Enable dynamics lab")
+      .setDesc(
+        "Adds a view that runs your vault under three models of how attention spreads — pairwise, simplicial and hypergraph — and reports where they disagree. Experimental. Requires a reload.",
+      )
+      .addToggle((toggle) => {
+        toggle.setValue(this.plugin.settings.enableDynamicsLab);
+        toggle.onChange(async (value) => {
+          this.plugin.settings.enableDynamicsLab = value;
+          await this.plugin.saveSettings();
+          new Notice(value ? "Dynamics lab appears after a reload." : "Dynamics lab removed after a reload.");
+        });
+      });
+
+    {
+      const setting = new Setting(containerEl)
+        .setName("Attention half-life (minutes)")
+        .setDesc(
+          "How long a note stays visibly in play after you leave it. Attention is never written to a note — it exists only while the plugin is running.",
+        );
+      this.addNumberSlider(setting, this.plugin.settings.activationDecayHalfLifeMinutes, 1, 240, 1, async (value) => {
+        this.plugin.settings.activationDecayHalfLifeMinutes = value;
+        await this.plugin.saveSettings();
+      });
+    }
+  }
+
+  private renderSheafSettings(containerEl: HTMLElement): void {
+    new Setting(containerEl).setName("Contextuality").setHeading();
+    new Setting(containerEl)
+      .setName("Contextuality lab")
+      .setDesc(
+        "Define overlapping contexts, assign local roles, and detect gluing obstructions. Contexts live in plugin settings and never alter note content.",
+      )
+      .addButton((button) => {
+        button.setButtonText("Open lab");
+        button.onClick(() => void this.plugin.activateSheafView());
+      });
+  }
+
   private renderInferenceSettings(containerEl: HTMLElement): void {
+    new Setting(containerEl)
+      .setName("Higher-order inference output")
+      .setDesc(
+        "Keep inferred groups of three or more as encounter suggestions until you promote them. Pairwise links remain simplices.",
+      )
+      .addDropdown((dropdown) => {
+        dropdown.addOption("simplex", "Simplex (compatible default)");
+        dropdown.addOption("hyperedge", "Encounter suggestion (safer)");
+        dropdown.setValue(this.plugin.settings.inferenceEmits);
+        dropdown.onChange(async (value) => {
+          this.plugin.settings.inferenceEmits = value as "simplex" | "hyperedge";
+          await this.plugin.saveSettings();
+        });
+      });
+
     new Setting(containerEl)
       .setName("Link graph baseline")
       .setDesc("Always show note-to-note vault links as 1-simplices, even without higher-order structure.")
@@ -315,8 +502,10 @@ export class SimplicialSettingTab extends PluginSettingTab {
 
   private renderBettiSettings(containerEl: HTMLElement): void {
     new Setting(containerEl)
-      .setName("Enable betti computation")
-      .setDesc("Calculate topological invariants (β₀, β₁, β₂) to detect holes and voids.")
+      .setName("Compute holes (advanced, slow)")
+      .setDesc(
+        "Explicitly calculate β₀, β₁, and β₂ holes. This can make large canvases slow or unresponsive, is never enabled by automatic discovery, and does not control links or encounters.",
+      )
       .addToggle((toggle) => {
         toggle.setValue(this.plugin.settings.enableBettiComputation);
         toggle.onChange(async (value) => {
@@ -324,6 +513,7 @@ export class SimplicialSettingTab extends PluginSettingTab {
           await this.plugin.saveSettings();
           this.plugin.simplicialView?.refreshSettings();
           this.plugin.renderer.render();
+          if (!value) this.plugin.scheduleFullScan("hole-analysis-disabled", 0);
           new Notice(value ? "Betti computation enabled" : "Betti computation disabled");
         });
       });

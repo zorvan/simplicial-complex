@@ -8,5 +8,5 @@
     "noEmit": false,
     "outDir": "tests-dist"
   },
-  "include": ["core/**/*.ts", "data/**/*.ts", "tests/**/*.ts"]
+  "include": ["core/**/*.ts", "data/**/*.ts", "layout/**/*.ts", "render/encounter-style.ts", "tests/**/*.ts"]
 }

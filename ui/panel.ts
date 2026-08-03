@@ -1,19 +1,42 @@
 /* global window -- Allow window for setTimeout/clearTimeout in Obsidian/Electron environment (ESLint browser globals) */
 import { ItemView, Notice, Setting, TFile, WorkspaceLeaf, type App } from "obsidian";
 import { SimplicialModel } from "../core/model";
-import type { PluginSettings, Simplex, SimplexKey } from "../core/types";
+import { encounterDiagnostics, type EncounterDiagnostics, type SubsetScorer } from "../core/diagnostics";
+import type { RelationHistory } from "../core/history";
+import { relationKey } from "../core/normalize";
+import type { PluginSettings, RelationKey, RelationSelection, Simplex, SimplexKey } from "../core/types";
 import { VIEW_TYPE_SIMPLICIAL_PANEL } from "../core/types";
 import { effectiveColorForSimplex } from "../render/palette";
-import { explainSimplex } from "../data/explainer";
+import { explainEncounter, explainSimplex } from "../data/explainer";
 import type { NoteProfile } from "../data/inference/types";
+
+export interface RelationPanelActions {
+  saveMetadata: (_simplexKey: string, _updates: { label?: string; weight?: number }) => Promise<void>;
+  promoteSimplex: (_simplexKey: string) => Promise<void>;
+  dissolveSimplex: (_simplexKey: string) => Promise<void>;
+  relaxSimplex: (_simplexKey: string) => Promise<void>;
+  saveHyperedgeMetadata: (
+    _key: RelationKey,
+    _updates: { label?: string; weight?: number; mode?: string },
+  ) => Promise<void>;
+  promoteEncounter: (_key: RelationKey) => void;
+  crystallizeEncounter: (_key: RelationKey) => Promise<void>;
+  dissolveHyperedge: (_key: RelationKey) => Promise<void>;
+  confirmSuggestedEncounter: (_key: RelationKey) => Promise<void>;
+}
 
 export class MetadataPanel extends ItemView {
   private simplexKey: SimplexKey | null = null;
+  private selection: RelationSelection | null = null;
+  private actions: RelationPanelActions | null = null;
+  private history: RelationHistory | null = null;
   private saveMetadata?: (_simplexKey: string, _updates: { label?: string; weight?: number }) => Promise<void>;
   private promoteSimplex?: (_simplexKey: string) => Promise<void>;
   private dissolveSimplex?: (_simplexKey: string) => Promise<void>;
   private settings: PluginSettings | null = null;
   private nodeProfiles: NoteProfile[] = [];
+  /** Supplied by the plugin once the vault has been indexed; absent until then. */
+  private subsetScorer: SubsetScorer | null = null;
 
   constructor(
     _leaf: WorkspaceLeaf,
@@ -30,6 +53,10 @@ export class MetadataPanel extends ItemView {
     this.nodeProfiles = profiles;
   }
 
+  setSubsetScorer(scorer: SubsetScorer | null): void {
+    this.subsetScorer = scorer;
+  }
+
   getViewType(): string {
     return VIEW_TYPE_SIMPLICIAL_PANEL;
   }
@@ -38,18 +65,22 @@ export class MetadataPanel extends ItemView {
     return "Simplicial metadata";
   }
 
-  setActions(actions: {
-    saveMetadata: (_simplexKey: string, _updates: { label?: string; weight?: number }) => Promise<void>;
-    promoteSimplex: (_simplexKey: string) => Promise<void>;
-    dissolveSimplex: (_simplexKey: string) => Promise<void>;
-  }): void {
+  setActions(actions: RelationPanelActions): void {
+    this.actions = actions;
     this.saveMetadata = actions.saveMetadata;
     this.promoteSimplex = actions.promoteSimplex;
     this.dissolveSimplex = actions.dissolveSimplex;
   }
 
-  setSelection(simplexKey: string | null): void {
-    this.simplexKey = simplexKey;
+  setHistory(history: RelationHistory): void {
+    this.history = history;
+  }
+
+  setSelection(selection: RelationSelection | string | null): void {
+    const normalized: RelationSelection | null =
+      typeof selection === "string" ? { kind: "simplex", key: selection } : selection;
+    this.selection = normalized;
+    this.simplexKey = normalized?.kind === "simplex" ? normalized.key : null;
     this.renderPanel();
   }
 
@@ -61,10 +92,16 @@ export class MetadataPanel extends ItemView {
   private renderPanel(): void {
     const { contentEl } = this;
     contentEl.empty();
+
+    if (this.selection?.kind === "hyperedge") {
+      this.renderHyperedgePanel(contentEl, this.selection.key);
+      return;
+    }
+
     const simplex = this.simplexKey ? this.model.getSimplex(this.simplexKey) : null;
     contentEl.createEl("div", { cls: "simplicial-panel-title", text: "Simplex" });
     if (!simplex) {
-      contentEl.createEl("div", { text: "Select a simplex or click a node cluster." });
+      contentEl.createEl("div", { text: "Select a simplex or an encounter." });
       return;
     }
 
@@ -85,6 +122,7 @@ export class MetadataPanel extends ItemView {
     ]);
     this.renderBadge(badges, `dim ${simplex.nodes.length - 1}`, [r, g, b]);
     if (simplex.sourcePath) this.renderBadge(badges, simplex.sourcePath.replace(/\.md$/, ""), [r, g, b], true);
+    this.renderJourney(contentEl, simplex.nodes, relationKey("simplex", simplex.nodes));
 
     if (simplex.inferred) {
       contentEl.createEl("div", {
@@ -165,6 +203,19 @@ export class MetadataPanel extends ItemView {
       });
 
     new Setting(contentEl)
+      .setName("Relax to encounter")
+      .setDesc(
+        "Withdraw the claim that this group's sub-relations are meaningful, while keeping the group relation itself.",
+      )
+      .addButton((button) => {
+        button.setButtonText("Relax");
+        button.onClick(async () => {
+          if (!this.simplexKey) return;
+          await this.actions?.relaxSimplex(this.simplexKey);
+        });
+      });
+
+    new Setting(contentEl)
       .addButton((button) => {
         button.setButtonText("Promote to note");
         button.onClick(async () => {
@@ -187,6 +238,238 @@ export class MetadataPanel extends ItemView {
       cls: "simplicial-panel-footer",
       text: `dim: ${simplex.nodes.length - 1} · auto: ${simplex.autoGenerated ? "yes" : "no"} · inferred: ${simplex.inferred ? "yes" : "no"}`,
     });
+  }
+
+  private renderHyperedgePanel(contentEl: HTMLElement, key: RelationKey): void {
+    contentEl.createEl("div", { cls: "simplicial-panel-title", text: "Encounter" });
+    const hyperedge = this.model.getHyperedge(key);
+    if (!hyperedge) {
+      contentEl.createEl("div", { text: "This encounter is no longer in the graph." });
+      return;
+    }
+
+    const threshold = this.settings?.encounterRecurrenceThreshold ?? 3;
+    const occurrences = this.history?.occurrencesOf(hyperedge.nodes) ?? [];
+    const diagnostics = encounterDiagnostics(this.model, key, {
+      ...(this.subsetScorer ? { score: this.subsetScorer } : {}),
+      occurrences,
+      halfLifeDays: this.settings?.decayHalfLifeDays ?? 90,
+    });
+
+    if (hyperedge.suggested) {
+      contentEl.createEl("div", {
+        cls: "simplicial-explanation-tension",
+        text: `Probabilistic suggestion · ${Math.round((hyperedge.confidence ?? 0) * 100)}% confidence. Nothing has been recorded in your notes or history.`,
+      });
+      new Setting(contentEl)
+        .setName("Record this encounter")
+        .setDesc("Confirm that these notes genuinely came together as one irreducible whole.")
+        .addButton((button) => {
+          button.setButtonText("Confirm encounter").setCta();
+          button.onClick(async () => this.actions?.confirmSuggestedEncounter(key));
+        });
+    }
+
+    contentEl.createEl("div", {
+      cls: "simplicial-explanation-tension",
+      text: "These notes came together as one irreducible whole. No pair among them is asserted to be meaningful on its own.",
+    });
+
+    contentEl.createEl("div", { cls: "simplicial-panel-section-label", text: "Participants" });
+    contentEl.createEl("div", { cls: "simplicial-panel-value", text: hyperedge.nodes.join(" · ") });
+
+    const badges = contentEl.createDiv({ cls: "simplicial-panel-badges" });
+    const color: [number, number, number] = [127, 119, 221];
+    this.renderBadge(badges, `order ${hyperedge.nodes.length}`, color);
+    if (hyperedge.suggested) this.renderBadge(badges, "Suggested", color);
+    this.renderBadge(badges, hyperedge.persistence === "recurring" ? "Recurring" : "Momentary", color);
+    if (hyperedge.mode) this.renderBadge(badges, hyperedge.mode, color, true);
+    if (hyperedge.promotedTo) this.renderBadge(badges, "promoted", color, true);
+    if (hyperedge.sourcePath) this.renderBadge(badges, hyperedge.sourcePath.replace(/\.md$/, ""), color, true);
+
+    if (occurrences.length > 0) {
+      contentEl.createEl("div", {
+        cls: "simplicial-panel-value",
+        text: `First encountered ${new Date(occurrences[0]).toLocaleDateString()}`,
+      });
+    }
+
+    this.renderJourney(contentEl, hyperedge.nodes, key);
+
+    if (diagnostics) this.renderEncounterDiagnostics(contentEl, diagnostics, threshold);
+
+    if (hyperedge.crystallizedInto) {
+      contentEl.createEl("div", {
+        cls: "simplicial-panel-value",
+        text: `Crystallized into ${hyperedge.crystallizedInto.replace(/\.md$/, "")}`,
+      });
+    }
+
+    new Setting(contentEl).setName("Label").addText((text) => {
+      text.setPlaceholder("Unnamed");
+      text.setValue(hyperedge.label ?? "");
+      text.onChange((value) => {
+        window.clearTimeout((text.inputEl as HTMLInputElement & { _simplicialTimer?: number })._simplicialTimer);
+        (text.inputEl as HTMLInputElement & { _simplicialTimer?: number })._simplicialTimer = window.setTimeout(() => {
+          void this.actions?.saveHyperedgeMetadata(key, { label: value });
+        }, 500);
+      });
+    });
+
+    new Setting(contentEl)
+      .setName("Weight")
+      .setDesc(String(hyperedge.weight ?? 1))
+      .addSlider((slider) => {
+        let latestValue = hyperedge.weight ?? 1;
+        slider.setLimits(0.1, 1, 0.1);
+        slider.setValue(hyperedge.weight ?? 1);
+        slider.onChange((value) => {
+          latestValue = value;
+          this.model.updateHyperedge(key, { weight: value });
+        });
+        slider.sliderEl.addEventListener("mouseup", () => {
+          void this.actions?.saveHyperedgeMetadata(key, { weight: latestValue });
+        });
+      });
+
+    new Setting(contentEl)
+      .setName("Promote to simplex")
+      .setDesc("Assert that the sub-relations within this group are meaningful too. You will see the exact list first.")
+      .addButton((button) => {
+        button.setButtonText("Promote");
+        button.setDisabled(Boolean(hyperedge.promotedTo) || Boolean(hyperedge.suggested));
+        button.onClick(() => this.actions?.promoteEncounter(key));
+      });
+
+    const isRecurring = hyperedge.persistence === "recurring" && !hyperedge.suggested;
+    new Setting(contentEl)
+      .setName("Crystallize concept")
+      .setDesc(
+        isRecurring
+          ? "Precipitate a new note naming what keeps emerging here. The encounter stays unpromoted."
+          : `Available once this configuration has recurred ${threshold} times.`,
+      )
+      .addButton((button) => {
+        button.setButtonText("Crystallize");
+        button.setDisabled(!isRecurring);
+        button.onClick(async () => {
+          await this.actions?.crystallizeEncounter(key);
+        });
+      });
+
+    new Setting(contentEl).addExtraButton((button) => {
+      button.setIcon("trash");
+      button.setTooltip("Dissolve encounter");
+      button.onClick(async () => {
+        await this.actions?.dissolveHyperedge(key);
+      });
+    });
+
+    contentEl.createEl("div", {
+      cls: "simplicial-panel-footer",
+      text: `order: ${hyperedge.nodes.length} · faces: none · kind: encounter`,
+    });
+  }
+
+  /**
+   * HG-15. Four measures, each with the figure and the sentence that reads it.
+   *
+   * The sentence is the point. A user has no way to know what "closure deficit 0.83"
+   * means for their notes; "its meaning exists only at order three" they can act on.
+   */
+  private renderEncounterDiagnostics(
+    contentEl: HTMLElement,
+    diagnostics: EncounterDiagnostics,
+    recurrenceThreshold: number,
+  ): void {
+    const readings = explainEncounter(diagnostics, recurrenceThreshold);
+    const section = contentEl.createDiv({ cls: "simplicial-diagnostics" });
+    section.createEl("div", { cls: "simplicial-panel-section-label", text: "Diagnostics" });
+
+    const closure = diagnostics.closure;
+    this.renderMeasure(
+      section,
+      "Closure deficit",
+      closure === null || closure.deficit === null ? "unbounded" : closure.deficit.toFixed(2),
+      readings.closure,
+      closure?.deficit ?? null,
+    );
+
+    const independence = diagnostics.independence;
+    this.renderMeasure(
+      section,
+      "Face independence",
+      independence === null
+        ? "not measured"
+        : independence.independence === null
+          ? "n/a"
+          : `${independence.independence.toFixed(2)} · group evidence ${independence.fullSetScore.toFixed(2)}`,
+      readings.independence,
+      independence?.independence ?? null,
+    );
+
+    this.renderMeasure(
+      section,
+      "Persistence",
+      `${diagnostics.occurrences.length || 1}× · vitality ${diagnostics.vitality.toFixed(1)}`,
+      readings.persistence,
+      null,
+    );
+
+    const overlap = diagnostics.peakOverlap;
+    this.renderMeasure(
+      section,
+      "Overlap pressure",
+      overlap ? overlap.pressure.toFixed(2) : "0.00",
+      readings.overlap,
+      overlap?.pressure ?? null,
+    );
+  }
+
+  private renderJourney(contentEl: HTMLElement, nodes: string[], key: RelationKey): void {
+    if (!this.history) return;
+    const events = this.history.forNodes(nodes).sort((a, b) => a.timestamp - b.timestamp);
+    const lineage = this.history.lineageFor(key);
+    if (events.length === 0 && lineage.length === 0) return;
+
+    const section = contentEl.createDiv({ cls: "simplicial-journey" });
+    section.createEl("div", { cls: "simplicial-panel-section-label", text: "Journey" });
+    events.forEach((event) => {
+      const row = section.createDiv({ cls: "simplicial-journey-event" });
+      row.createSpan({ cls: "simplicial-journey-time", text: new Date(event.timestamp).toLocaleString() });
+      row.createSpan({ cls: "simplicial-journey-action", text: `${event.type} · ${event.actor}` });
+      if (event.type === "promoted" && typeof event.detail?.createdFaceCount === "number") {
+        row.createSpan({ text: `${event.detail.createdFaceCount} faces asserted` });
+      }
+    });
+    lineage.forEach((link) => {
+      const target = link.target.startsWith("n:") ? link.target.slice(2) : "simplex over the same participants";
+      section.createEl("div", {
+        cls: "simplicial-journey-lineage",
+        text: link.type === "crystallization" ? `Produced ${target}` : `Produced ${target}`,
+      });
+    });
+  }
+
+  private renderMeasure(
+    container: HTMLElement,
+    name: string,
+    figure: string,
+    reading: string | null,
+    fill: number | null,
+  ): void {
+    const row = container.createDiv({ cls: "simplicial-measure" });
+    const head = row.createDiv({ cls: "simplicial-measure-head" });
+    head.createEl("span", { cls: "simplicial-measure-name", text: name });
+    head.createEl("span", { cls: "simplicial-measure-figure", text: figure });
+    if (fill !== null) {
+      const track = row.createDiv({ cls: "simplicial-measure-track" });
+      track.createDiv({
+        cls: "simplicial-measure-bar",
+        attr: { style: `width: ${Math.round(Math.max(0, Math.min(1, fill)) * 100)}%;` },
+      });
+    }
+    if (reading) row.createEl("div", { cls: "simplicial-measure-reading", text: reading });
   }
 
   private renderExplanationCard(contentEl: HTMLElement, simplex: Simplex): void {

@@ -4,6 +4,13 @@ import type { PluginSettings, RenderFilterMetric } from "../core/types";
 import { VIEW_TYPE_SIMPLICIAL } from "../core/types";
 import { Renderer } from "../render/renderer";
 import { computeFiltrationEvents, getEventThresholds, type FiltrationEvent } from "../core/filtration";
+import type { RelationHistory } from "../core/history";
+
+export interface SimplicialViewActions {
+  recordEncounter: () => void;
+  openContextuality: () => void;
+  findExpressiveView: () => Promise<void>;
+}
 
 export class SimplicialView extends ItemView {
   private filtrationEvents: FiltrationEvent[] = [];
@@ -18,6 +25,8 @@ export class SimplicialView extends ItemView {
     private settings: PluginSettings,
     private onSettingsChanged: () => void,
     onRescan?: (_reason: string, _delayMs: number) => void,
+    private actions?: SimplicialViewActions,
+    private history?: RelationHistory,
   ) {
     super(leaf);
     this.onRescan = onRescan;
@@ -91,12 +100,95 @@ export class SimplicialView extends ItemView {
 
     // Add floating canvas controls
     this.renderFloatingControls(contentEl);
+    this.renderExploreActions(contentEl);
 
     this.renderer.init(canvasWrap);
   }
 
+  private renderExploreActions(container: HTMLElement): void {
+    if (!this.actions) return;
+
+    const explore = container.createDiv({ cls: "simplicial-explore" });
+    const copy = explore.createDiv({ cls: "simplicial-explore-copy" });
+    copy.createSpan({ cls: "simplicial-explore-title", text: "Explore" });
+    copy.createSpan({
+      cls: "simplicial-explore-hint",
+      text: "Discover groups, then review what the plugin suggests",
+    });
+
+    const discover = explore.createEl("button", {
+      cls: "simplicial-explore-action mod-cta",
+      text: "Find expressive view",
+    });
+    discover.title =
+      "Turn on all evidence sources, choose balanced discovery thresholds, and reveal suggested links, groups, and encounters. Hole computation stays off. Nothing is confirmed or written to notes.";
+    discover.setAttr("aria-label", discover.title);
+    discover.addEventListener("click", async () => {
+      discover.disabled = true;
+      discover.setText("Discovering…");
+      try {
+        await this.actions?.findExpressiveView();
+      } finally {
+        discover.disabled = false;
+        discover.setText("Find expressive view");
+      }
+    });
+
+    const encounter = explore.createEl("button", {
+      cls: "simplicial-explore-action",
+      text: "◇ Record encounter",
+    });
+    encounter.title = "Record several notes as one meaningful group; this does not imply pairwise links.";
+    encounter.setAttr("aria-label", encounter.title);
+    encounter.addEventListener("click", () => this.actions?.recordEncounter());
+
+    const contextuality = explore.createEl("button", {
+      cls: "simplicial-explore-action",
+      text: "Contextuality",
+    });
+    contextuality.title = "Compare overlapping groups to find interpretations that cannot be reconciled globally.";
+    contextuality.setAttr("aria-label", contextuality.title);
+    contextuality.addEventListener("click", () => this.actions?.openContextuality());
+
+    this.renderJourneyReplay(explore);
+  }
+
+  private renderJourneyReplay(container: HTMLElement): void {
+    const events = this.history?.all().sort((a, b) => a.timestamp - b.timestamp) ?? [];
+    if (events.length === 0) return;
+    const wrap = container.createDiv({ cls: "simplicial-replay" });
+    const label = wrap.createSpan({ cls: "simplicial-replay-label", text: "Now" });
+    const slider = wrap.createEl("input", { type: "range" });
+    slider.min = "0";
+    slider.max = String(events.length);
+    slider.step = "1";
+    slider.value = String(events.length);
+    slider.title = "Replay relational history";
+    const update = (): void => {
+      const index = Number(slider.value);
+      if (index === events.length) {
+        this.renderer.setReplayState(null);
+        label.setText("Now");
+        return;
+      }
+      const event = events[index];
+      const state = this.history!.replayAt(event.timestamp);
+      this.renderer.setReplayState(state);
+      label.setText(
+        `${new Date(event.timestamp).toLocaleDateString()} · ${state.simplices.size} simplex · ${state.hyperedges.size} encounter`,
+      );
+    };
+    slider.addEventListener("input", update);
+    const live = wrap.createEl("button", { text: "Live" });
+    live.addEventListener("click", () => {
+      slider.value = String(events.length);
+      update();
+    });
+  }
+
   async onClose(): Promise<void> {
     await Promise.resolve();
+    this.renderer.setReplayState(null);
     this.renderer.destroy();
   }
 
@@ -227,20 +319,33 @@ export class SimplicialView extends ItemView {
 
     // Toggle button
     const toggleBtn = controlsWrap.createDiv({ cls: "simplicial-controls-toggle" });
-    toggleBtn.setText("⚙️");
-    toggleBtn.title = "Canvas settings";
+    toggleBtn.setText("⚙");
+    toggleBtn.title = "Open organized canvas settings";
 
     // Controls panel
     const panel = controlsWrap.createDiv({ cls: "simplicial-controls-panel" });
 
-    // === INFERENCE CONTROLS ===
-    const inferenceHeader = panel.createDiv({ cls: "simplicial-control-header" });
-    inferenceHeader.setText("Inference");
+    panel.createDiv({ cls: "simplicial-controls-title", text: "Canvas settings" });
+    panel.createDiv({
+      cls: "simplicial-controls-help",
+      text: "Changes apply immediately. Suggested relations remain unconfirmed until you accept them.",
+    });
+
+    const guide = panel.createEl("details", { cls: "simplicial-control-guide" });
+    guide.createEl("summary", { text: "How to read encounters and contextuality" });
+    guide.createEl("p", {
+      text: "An encounter is a dashed enclosure around notes you want to treat as one group. It does not claim that every pair is linked. Record one yourself, or enable encounter suggestions and click a proposed enclosure to review it.",
+    });
+    guide.createEl("p", {
+      text: "Contextuality compares overlapping groups as different viewpoints. Open the lab, add suggested context seeds, assign local roles, and read the report. It may find agreement, a direct disagreement, or a contradiction that appears only when all viewpoints are combined.",
+    });
+
+    const discovery = this.addControlSection(panel, "Discovery", true);
 
     // Link Threshold - Dual slider (coarse + fine) with configurable bounds
     this.addDualSlider(
-      panel,
-      "Link Threshold",
+      discovery,
+      "Link selectivity",
       this.settings.linkStrengthThreshold,
       (value) => {
         this.settings.linkStrengthThreshold = value;
@@ -257,61 +362,111 @@ export class SimplicialView extends ItemView {
     );
 
     // Insight Threshold
-    this.addCanvasSlider(panel, "Insight Threshold", this.settings.insightThreshold, 0, 1, 0.05, (value) => {
+    this.addCanvasSlider(discovery, "Group confidence", this.settings.insightThreshold, 0, 1, 0.05, (value) => {
       this.settings.insightThreshold = value;
       this.onSettingsChanged();
       this.onRescan?.("canvas-insight-threshold-changed", 100);
     });
 
     // Suggestion Threshold
-    this.addCanvasSlider(panel, "Suggestion Min", this.settings.suggestionThreshold, 0.2, 0.95, 0.05, (value) => {
-      this.settings.suggestionThreshold = value;
-      this.onSettingsChanged();
-      this.renderer.render();
-    });
+    this.addCanvasSlider(
+      discovery,
+      "Visible suggestion",
+      this.settings.suggestionThreshold,
+      0.2,
+      0.95,
+      0.05,
+      (value) => {
+        this.settings.suggestionThreshold = value;
+        this.onSettingsChanged();
+        this.renderer.render();
+      },
+    );
 
-    // === VISIBILITY CONTROLS ===
-    const visibilityHeader = panel.createDiv({ cls: "simplicial-control-header" });
-    visibilityHeader.setText("Visibility");
+    this.addCanvasToggle(discovery, "Infer links", this.settings.enableLinkInference, (value) => {
+      this.settings.enableLinkInference = value;
+      this.onSettingsChanged();
+      this.onRescan?.("canvas-link-inference-changed", 100);
+    });
+    this.addCanvasToggle(discovery, "Suggest encounters", this.settings.enableEncounterSuggestions, (value) => {
+      this.settings.enableEncounterSuggestions = value;
+      this.onSettingsChanged();
+      this.onRescan?.("canvas-encounter-discovery-changed", 100);
+    });
+    this.addCanvasSlider(
+      discovery,
+      "Encounter confidence",
+      this.settings.encounterSuggestionThreshold,
+      0.4,
+      0.95,
+      0.05,
+      (value) => {
+        this.settings.encounterSuggestionThreshold = value;
+        this.onSettingsChanged();
+        this.onRescan?.("canvas-encounter-threshold-changed", 100);
+      },
+    );
+
+    const visibility = this.addControlSection(panel, "What is shown", true);
 
     // Betti Toggle
-    this.addCanvasToggle(panel, "Show Holes", this.settings.enableBettiComputation, (value) => {
+    this.addCanvasToggle(visibility, "Compute holes (slow)", this.settings.enableBettiComputation, (value) => {
       this.settings.enableBettiComputation = value;
       this.onSettingsChanged();
       this.renderer.render();
+      if (!value) this.onRescan?.("hole-analysis-disabled", 0);
     });
 
     // Show Suggestions Toggle
-    this.addCanvasToggle(panel, "Suggestions", this.settings.showSuggestions, (value) => {
+    this.addCanvasToggle(visibility, "Suggested relations", this.settings.showSuggestions, (value) => {
       this.settings.showSuggestions = value;
       this.onSettingsChanged();
       this.renderer.render();
     });
 
-    // === PHYSICS CONTROLS ===
-    const physicsHeader = panel.createDiv({ cls: "simplicial-control-header" });
-    physicsHeader.setText("Physics");
+    this.addCanvasToggle(visibility, "Encounter enclosures", this.settings.showHyperedges, (value) => {
+      this.settings.showHyperedges = value;
+      this.onSettingsChanged();
+      this.renderer.render();
+    });
+
+    const physics = this.addControlSection(panel, "Layout", false);
 
     // Repulsion Strength
-    this.addCanvasSlider(panel, "Repulsion", this.settings.repulsionStrength, 100, 2000, 100, (value) => {
+    this.addCanvasSlider(physics, "Node spacing", this.settings.repulsionStrength, 200, 6000, 100, (value) => {
       this.settings.repulsionStrength = value;
       this.onSettingsChanged();
       // Physics changes need engine reconfigure
     });
 
     // Gravity Strength (very small values, 0.0001 to 0.02)
-    this.addCanvasSlider(panel, "Gravity", this.settings.gravityStrength, 0.0001, 0.02, 0.0001, (value) => {
+    this.addCanvasSlider(physics, "Center pull", this.settings.gravityStrength, 0.0001, 0.02, 0.0001, (value) => {
       this.settings.gravityStrength = value;
       this.onSettingsChanged();
     });
 
-    // === ACTIONS ===
-    const actionsHeader = panel.createDiv({ cls: "simplicial-control-header" });
-    actionsHeader.setText("Actions");
+    const actions = this.addControlSection(panel, "Actions", true);
+
+    const expressiveRow = actions.createDiv({ cls: "simplicial-control-row" });
+    const expressiveBtn = expressiveRow.createEl("button", {
+      cls: "simplicial-control-button",
+      text: "Find expressive view",
+    });
+    expressiveBtn.title = "Reveal a balanced, suggestion-only view using all available evidence.";
+    expressiveBtn.addEventListener("click", async () => {
+      expressiveBtn.disabled = true;
+      expressiveBtn.setText("Discovering…");
+      try {
+        await this.actions?.findExpressiveView();
+      } finally {
+        expressiveBtn.disabled = false;
+        expressiveBtn.setText("Find expressive view");
+      }
+    });
 
     // Rescan button
-    const rescanRow = panel.createDiv({ cls: "simplicial-control-row" });
-    const rescanBtn = rescanRow.createEl("button", { cls: "simplicial-control-button", text: "🔄 rescan vault" });
+    const rescanRow = actions.createDiv({ cls: "simplicial-control-row" });
+    const rescanBtn = rescanRow.createEl("button", { cls: "simplicial-control-button", text: "Rescan vault" });
     rescanBtn.addEventListener("click", () => {
       this.onRescan?.("manual-rescan", 0);
     });
@@ -323,6 +478,13 @@ export class SimplicialView extends ItemView {
 
     // Start hidden
     panel.addClass("simplicial-hidden");
+  }
+
+  private addControlSection(container: HTMLElement, label: string, open: boolean): HTMLElement {
+    const details = container.createEl("details", { cls: "simplicial-control-section" });
+    details.open = open;
+    details.createEl("summary", { text: label });
+    return details.createDiv({ cls: "simplicial-control-section-body" });
   }
 
   private addCanvasToggle(

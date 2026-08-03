@@ -24,6 +24,97 @@
   gap: 6px;
 }
 
+.simplicial-explore {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100% - 28px);
+  padding: 8px;
+  backdrop-filter: blur(12px);
+  background: color-mix(in srgb, var(--background-primary) 86%, transparent);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.simplicial-explore-copy {
+  display: grid;
+  gap: 1px;
+  padding: 0 4px;
+}
+
+.simplicial-explore-title {
+  color: var(--text-normal);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.simplicial-explore-hint {
+  color: var(--text-muted);
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.simplicial-explore-action {
+  white-space: nowrap;
+}
+
+.simplicial-replay {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-left: 8px;
+  border-left: 1px solid var(--background-modifier-border);
+}
+
+.simplicial-replay-label {
+  min-width: 90px;
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.simplicial-replay input[type="range"] {
+  width: 110px;
+}
+
+.simplicial-journey {
+  display: grid;
+  gap: 6px;
+  margin: 14px 0;
+}
+
+.simplicial-journey-event {
+  display: grid;
+  grid-template-columns: minmax(100px, auto) 1fr;
+  gap: 2px 8px;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.simplicial-journey-action {
+  color: var(--text-normal);
+  font-weight: 600;
+}
+
+.simplicial-journey-lineage {
+  color: var(--text-accent);
+  font-size: 11px;
+}
+
+@media (max-width: 700px) {
+  .simplicial-explore-copy {
+    display: none;
+  }
+
+  .simplicial-explore {
+    bottom: 54px;
+  }
+}
+
 .simplicial-hud {
   position: absolute;
   top: 14px;
@@ -194,13 +285,84 @@
   position: absolute;
   top: 44px;
   right: 0;
-  width: 220px;
+  width: min(340px, calc(100vw - 42px));
+  max-height: calc(100vh - 130px);
+  overflow-y: auto;
   background: color-mix(in srgb, var(--background-primary) 95%, transparent);
   border: 1px solid var(--background-modifier-border);
   border-radius: 12px;
   padding: 12px;
   backdrop-filter: blur(12px);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.simplicial-controls-title {
+  color: var(--text-normal);
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.simplicial-controls-help {
+  margin: 4px 0 10px;
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.simplicial-control-guide {
+  margin-bottom: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--interactive-accent) 8%, var(--background-secondary));
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.simplicial-control-guide summary {
+  cursor: pointer;
+  color: var(--text-normal);
+  font-weight: 600;
+}
+
+.simplicial-control-guide p {
+  margin: 7px 0 0;
+}
+
+.simplicial-control-section {
+  border-top: 1px solid var(--background-modifier-border);
+  padding: 7px 0;
+}
+
+.simplicial-control-section > summary {
+  cursor: pointer;
+  color: var(--text-normal);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.simplicial-control-section-body {
+  padding-top: 4px;
+}
+
+.simplicial-sheaf-guide {
+  margin: 10px 0 16px;
+  padding: 10px 12px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 10px;
+  background: var(--background-secondary);
+  color: var(--text-muted);
+}
+
+.simplicial-sheaf-guide summary {
+  cursor: pointer;
+  color: var(--text-normal);
+  font-weight: 600;
+}
+
+.simplicial-sheaf-guide p {
+  margin: 8px 0 0;
+  line-height: 1.5;
 }
 
 .simplicial-control-row {
@@ -453,7 +615,240 @@
   white-space: nowrap;
 }
 
+/* Promotion confirmation: the faces the user is about to assert */
+.simplicial-promote-faces {
+  margin: 4px 0 12px;
+  padding-left: 20px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-normal);
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.simplicial-promote-note {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
 /* Utility classes for hiding/showing elements */
 .simplicial-hidden {
   display: none;
+}
+
+/* Hypergraph diagnostics: a figure and the sentence that reads it */
+.simplicial-diagnostics {
+  border-top: 1px solid var(--background-modifier-border);
+  padding-top: 12px;
+  margin: 4px 0 16px;
+}
+
+.simplicial-measure {
+  margin-bottom: 14px;
+}
+
+.simplicial-measure-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.simplicial-measure-name {
+  font-size: 12px;
+  color: var(--text-normal);
+}
+
+.simplicial-measure-figure {
+  font-family: var(--font-monospace);
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.simplicial-measure-track {
+  height: 3px;
+  border-radius: 999px;
+  background: var(--background-modifier-border);
+  margin: 6px 0 6px;
+  overflow: hidden;
+}
+
+.simplicial-measure-bar {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--interactive-accent);
+}
+
+.simplicial-measure-reading {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+/* Dynamics lab: three kernels, one vault */
+.simplicial-kernel-legend {
+  margin: 12px 0 18px;
+}
+
+.simplicial-kernel-legend-row {
+  display: grid;
+  grid-template-columns: 10px 90px 1fr;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.simplicial-kernel-swatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  display: inline-block;
+}
+
+.simplicial-kernel-swatch.is-pairwise,
+.simplicial-kernel-name.is-pairwise,
+.simplicial-trace-bar.is-pairwise {
+  background: var(--color-blue, #4c8dff);
+}
+
+.simplicial-kernel-swatch.is-simplicial,
+.simplicial-kernel-name.is-simplicial,
+.simplicial-trace-bar.is-simplicial {
+  background: var(--color-purple, #7f77dd);
+}
+
+.simplicial-kernel-swatch.is-hypergraph,
+.simplicial-kernel-name.is-hypergraph,
+.simplicial-trace-bar.is-hypergraph {
+  background: var(--color-orange, #e08a4b);
+}
+
+.simplicial-kernel-name {
+  font-size: 12px;
+  color: var(--text-normal);
+}
+
+.simplicial-kernel-name.is-pairwise,
+.simplicial-kernel-name.is-simplicial,
+.simplicial-kernel-name.is-hypergraph {
+  background: none;
+}
+
+.simplicial-kernel-claim {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.simplicial-dynamics-card {
+  border-top: 1px solid var(--background-modifier-border);
+  padding-top: 12px;
+  margin-bottom: 18px;
+}
+
+.simplicial-dynamics-row {
+  margin-bottom: 10px;
+}
+
+.simplicial-trace {
+  display: flex;
+  align-items: flex-end;
+  gap: 1px;
+  height: 34px;
+  margin-top: 5px;
+}
+
+.simplicial-trace-bar {
+  flex: 1 1 auto;
+  min-width: 1px;
+  border-radius: 1px 1px 0 0;
+  opacity: 0.75;
+}
+
+/* Phase 7: explicit contexts and failed-gluing seams. */
+.simplicial-sheaf-create,
+.simplicial-sheaf-report,
+.simplicial-sheaf-context {
+  border-top: 1px solid var(--background-modifier-border);
+  margin-top: 16px;
+  padding-top: 12px;
+}
+
+.simplicial-sheaf-relations {
+  max-height: 220px;
+  overflow-y: auto;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  padding: 4px 10px;
+}
+
+.simplicial-sheaf-context-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.simplicial-sheaf-context-head span,
+.simplicial-context-overlap {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.simplicial-context-overlap {
+  border-left: 2px solid var(--interactive-accent);
+  margin: 5px 0;
+  padding-left: 8px;
+}
+
+.simplicial-obstruction-reading {
+  color: var(--text-error);
+  border-left: 3px solid var(--text-error);
+  margin: 8px 0;
+  padding-left: 9px;
+  line-height: 1.45;
+}
+
+/* Optional, static instructions for user-operated external AI readers. */
+.simplicial-agent-help {
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  margin: 16px 0;
+  padding: 12px;
+}
+
+.simplicial-agent-help p {
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 6px 0 10px;
+}
+
+.simplicial-agent-help-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.simplicial-agent-guide {
+  max-width: 780px;
+}
+
+.simplicial-agent-guide details {
+  border-top: 1px solid var(--background-modifier-border);
+  margin-top: 14px;
+  padding-top: 12px;
+}
+
+.simplicial-agent-guide summary {
+  cursor: pointer;
+  font-weight: var(--font-semibold);
+}
+
+.simplicial-agent-guide pre {
+  max-height: 320px;
+  overflow: auto;
+  white-space: pre-wrap;
 }

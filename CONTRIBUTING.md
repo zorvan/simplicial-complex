@@ -63,6 +63,29 @@ npm run format:check # Verify formatting
 npm test             # Compile and run tests
 ```
 
+### Run CI locally
+
+Before pushing, run everything `.github/workflows/ci.yml` runs:
+
+```bash
+npm run verify
+```
+
+This executes the same four jobs in the same order — Lint & Format, Type Check, Build, Test — plus a release preflight that checks `manifest.json`, `package.json` and `versions.json` agree on the version. It takes seconds, needs no Docker, and exits non-zero if any job fails.
+
+For true workflow-level fidelity — the actual runner image, action versions and step wiring — use [`act`](https://github.com/nektos/act):
+
+```bash
+npm run ci:act:list  # list the jobs act sees
+npm run ci:act       # run ci.yml in a container
+```
+
+`act` needs Docker and network access (it runs `npm ci` inside the container), so it is slower and heavier. `npm run verify` is the one to run habitually; reach for `act` when you have changed a workflow file itself.
+
+`release.yml` is not runnable locally in any meaningful way — it needs a real tag, `GITHUB_TOKEN`, and Sigstore attestation. The parts that _are_ checkable locally (build output present, version consistency) are covered by `npm run verify`.
+
+> **Keep them in step.** `scripts/verify.mjs` mirrors `ci.yml` by hand. If you add a job to the workflow, add it there too, or the script stops being the thing it claims to be.
+
 ---
 
 ## Where Contributions Are Most Useful
@@ -147,9 +170,17 @@ Include:
 
 ## Design Philosophy
 
-### Why Simlicial Complexes and Not Hypergraphs?
+### Why Both Simplicial Complexes and Hypergraphs?
 
-Hypergraphs are more general but harder to visualize and reason about. Simplicial complexes are mathematically well-behaved: they carry built-in hierarchy (every face of a simplex is also in the complex), support rigorous topological analysis (Betti numbers, persistent homology), and can be rendered elegantly as organic regions rather than geometric clutter.
+_Revised in v0.4.0. Earlier versions modelled only simplicial complexes._
+
+Simplicial complexes are the mathematically better-behaved object: they carry built-in hierarchy (every face of a simplex is also in the complex), support rigorous topological analysis (Betti numbers, persistent homology), and render elegantly as organic regions rather than geometric clutter. All of that still holds.
+
+But it answered the wrong question. Downward closure is a _claim_, and generating faces makes it on the user's behalf. When three notes appeared together during one insight, that says nothing about whether any two of them mean something apart. Emergence that cannot be reduced to proper subgroups belongs first to the hypergraph; simplicial structure is what a relation becomes once its coherence is supported across its faces.
+
+So both layers exist, kept structurally separate, with explicit user-driven transformations between them.
+
+**The invariant every contributor must preserve:** a hyperedge never passes through `generateFaces()`, never enters `model.simplices`, and never contributes to boundary or Betti computation. `tests/hypergraph.test.ts` asserts this after every public mutation; if you add a mutation, add it there too.
 
 ### Why Organic Blobs and Not Crisp Triangles?
 

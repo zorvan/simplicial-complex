@@ -1,8 +1,35 @@
 import esbuild from "esbuild";
+import { spawnSync } from "node:child_process";
+import { createRequire } from "node:module";
 import process from "node:process";
 
 const production = process.argv[2] === "production";
 const watch = process.argv.includes("--watch");
+
+/**
+ * Format the bundle until Prettier stops changing it.
+ *
+ * One pass is not enough. Prettier is not idempotent on the single enormous line
+ * esbuild emits under `minify`: the first pass breaks it up, the second settles the
+ * result, and `prettier --check` fails in between. The committed `main.js` only
+ * looked clean because the extra pass had been run by hand, which meant CI's
+ * format check was one build away from failing at any time.
+ */
+function prettifyBundle(file, maxPasses = 4) {
+  // Invoked through node against the resolved binary rather than through a shell,
+  // so this behaves the same on every platform and escapes nothing.
+  const prettier = createRequire(import.meta.url).resolve("prettier/bin/prettier.cjs");
+  const run = (args) => spawnSync(process.execPath, [prettier, ...args, file], { stdio: "ignore" }).status === 0;
+  for (let pass = 1; pass <= maxPasses; pass++) {
+    run(["--write"]);
+    if (run(["--check"])) {
+      console.log(`[simplicial-complex] ${file} formatted in ${pass} pass${pass === 1 ? "" : "es"}`);
+      return;
+    }
+  }
+  console.error(`[simplicial-complex] ${file} did not reach a stable format in ${maxPasses} passes`);
+  process.exit(1);
+}
 
 const context = await esbuild.context({
   entryPoints: ["main.ts"],
@@ -43,4 +70,5 @@ if (watch) {
 } else {
   await context.rebuild();
   await context.dispose();
+  if (production) prettifyBundle("main.js");
 }

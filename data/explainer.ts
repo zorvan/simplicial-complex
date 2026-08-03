@@ -1,4 +1,5 @@
 import type { Simplex, Hole, NodeID } from "../core/types";
+import type { EncounterDiagnostics } from "../core/diagnostics";
 import type { InferenceContext, NoteProfile } from "./inference/types";
 
 export interface SimplexExplanation {
@@ -6,6 +7,111 @@ export interface SimplexExplanation {
   tension: string;
   prompt: string;
   signals: string[];
+}
+
+/**
+ * One plain-language line per diagnostic. The register is deliberate: these are
+ * readings offered to a person, not metrics reported to an operator, and each one
+ * should be a sentence someone would actually say about their own notes.
+ */
+export interface EncounterReadings {
+  headline: string;
+  closure: string | null;
+  independence: string | null;
+  persistence: string;
+  overlap: string | null;
+}
+
+function shortName(nodeId: NodeID): string {
+  return nodeId.split("/").pop()?.replace(/\.md$/, "") ?? nodeId;
+}
+
+function readClosure(diagnostics: EncounterDiagnostics): string | null {
+  const closure = diagnostics.closure;
+  if (!closure) return null;
+  if (closure.unbounded) {
+    return "Too large to enumerate what it implies. The closure deficit here is unmeasured, not zero.";
+  }
+  if (closure.missingCount === 0) {
+    return "Every relation this encounter implies already exists in the complex. Promoting it would assert nothing new.";
+  }
+  const order = diagnostics.nodes.length;
+  const deficit = closure.deficit ?? 0;
+  if (deficit >= 0.8) {
+    return `This cluster looks visually coherent, but its meaning exists only at order ${order} — ${closure.missingCount} of the ${closure.impliedFaceCount} relations it implies are absent.`;
+  }
+  if (deficit >= 0.4) {
+    return `${closure.missingCount} of the ${closure.impliedFaceCount} implied relations are absent. Part of this group is already understood; part of it is not.`;
+  }
+  return `Most of what this encounter implies already exists — ${closure.missingCount} implied relation${closure.missingCount === 1 ? " is" : "s are"} still absent.`;
+}
+
+function readIndependence(diagnostics: EncounterDiagnostics): string | null {
+  const independence = diagnostics.independence;
+  if (!independence) return null;
+  if (independence.unbounded) return "Too large to test its subgroups against the vault.";
+  if (independence.independence === null) {
+    return "A two-note encounter has no proper subgroup, so there is nothing for it to be irreducible to.";
+  }
+  const subset = independence.strongestSubset?.map(shortName).join(" · ");
+  if (independence.independence >= 0.75) {
+    return independence.fullSetScore >= 0.3
+      ? "The group is evidenced by the vault; no subgroup inside it is. That is what irreducible looks like."
+      : "Neither the group nor any subgroup inside it is evidenced by the vault. This encounter rests on your assertion alone — which is a reason to keep it, not to promote it.";
+  }
+  if (independence.independence >= 0.4) {
+    return `Some of this group stands on its own${subset ? ` — ${subset} most of all` : ""}, but not all of it.`;
+  }
+  return `${subset ?? "A subgroup"} is already well evidenced without the rest. This may be a simplex you have not asserted yet.`;
+}
+
+function readPersistence(diagnostics: EncounterDiagnostics, threshold: number): string {
+  const count = Math.max(1, diagnostics.occurrences.length);
+  const times = `${count}×`;
+  if (diagnostics.persistence !== "recurring") {
+    return `Encountered ${times}. Recurring at ${threshold} — repetition is evidence, never proof.`;
+  }
+  if (diagnostics.vitality >= count * 0.7) {
+    return `Recurring and still warm: ${times}, most of it recent.`;
+  }
+  if (diagnostics.vitality < 1) {
+    return `Recurring, but cooled: ${times}, none of it lately.`;
+  }
+  return `Recurring: ${times}, some of it a while ago.`;
+}
+
+function readOverlap(diagnostics: EncounterDiagnostics): string | null {
+  const peak = diagnostics.peakOverlap;
+  if (!peak || peak.pressure < 0.4) return null;
+  return `${shortName(peak.nodeId)} sits in ${peak.incidentEncounters} encounters that barely overlap each other. It may be carrying contexts that do not belong together.`;
+}
+
+/**
+ * HG-15. The four hypergraph measures, each as one line a reader can act on.
+ */
+export function explainEncounter(diagnostics: EncounterDiagnostics, recurrenceThreshold: number): EncounterReadings {
+  return {
+    headline:
+      "These notes came together as one irreducible whole. No pair among them is asserted to be meaningful on its own.",
+    closure: readClosure(diagnostics),
+    independence: readIndependence(diagnostics),
+    persistence: readPersistence(diagnostics, recurrenceThreshold),
+    overlap: readOverlap(diagnostics),
+  };
+}
+
+/**
+ * The vault-level reading behind the HUD figure. `null` when nothing is measurable.
+ */
+export function explainSimpliciality(value: number | null, encounterCount: number): string | null {
+  if (value === null || encounterCount === 0) return null;
+  if (value >= 0.9) {
+    return "Nearly everything your encounters imply already exists as a relation. The hypergraph is barely saying anything the complex does not.";
+  }
+  if (value >= 0.5) {
+    return "Your encounters sit on a partly filled-in neighbourhood: some of what they imply exists, much of it does not.";
+  }
+  return "Your encounters imply far more than the complex asserts. Most of this vault's higher-order meaning has not been decomposed — and may not decompose.";
 }
 
 /**

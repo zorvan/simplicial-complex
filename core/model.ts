@@ -1,8 +1,20 @@
-import { generateFaces } from "./faces.js";
+import { generateFaces, plannedFaces } from "./faces.js";
 import { hashLabel } from "./hash.js";
-import { normalizeKey, normalizeNodes, uniqueNodes } from "./normalize.js";
-import type { AnalysisSummary, LayoutNode, NodeID, Rect, Simplex, SimplexKey, BettiResult } from "./types.js";
+import { normalizeKey, normalizeNodes, relationKey, uniqueNodes } from "./normalize.js";
+import type {
+  AnalysisSummary,
+  BettiResult,
+  HigherOrderRelation,
+  Hyperedge,
+  LayoutNode,
+  NodeID,
+  Rect,
+  RelationKey,
+  Simplex,
+  SimplexKey,
+} from "./types.js";
 import { computeBetti } from "./betti.js";
+import { logger } from "./logger.js";
 
 function randomInRange(min: number, max: number): number {
   return min + Math.random() * (max - min);
@@ -60,6 +72,11 @@ type Listener = () => void;
 export class SimplicialModel {
   readonly nodes = new Map<NodeID, LayoutNode>();
   readonly simplices = new Map<SimplexKey, Simplex>();
+  /**
+   * The hypergraph layer. Structurally separate from `simplices`: nothing in here
+   * ever reaches `generateFaces()` or `computeBetti()`.
+   */
+  readonly hyperedges = new Map<RelationKey, Hyperedge>();
   private listeners = new Set<Listener>();
   private batchDepth = 0;
   private hasPendingEmit = false;
@@ -67,6 +84,8 @@ export class SimplicialModel {
   // Analysis cache - invalidated on model mutation
   private _analysisCache: AnalysisSummary | null = null;
   private _analysisDirty = true;
+  /** Cross-layer map cache (see core/incidence.ts). Invalidated with the analysis cache. */
+  private _crossLayerCache: unknown = null;
 
   subscribe(listener: Listener): () => void {
     this.listeners.add(listener);
@@ -121,6 +140,10 @@ export class SimplicialModel {
       if (!simplex.nodes.includes(id)) continue;
       this.simplices.delete(key);
     }
+    for (const [key, hyperedge] of [...this.hyperedges]) {
+      if (!hyperedge.nodes.includes(id)) continue;
+      this.hyperedges.delete(key);
+    }
     this.invalidateAnalysisCache();
     this.emitChange();
   }
@@ -142,11 +165,26 @@ export class SimplicialModel {
       this.simplices.delete(key);
       this.simplices.set(normalizeKey(updated.nodes), updated);
     }
+    for (const [key, hyperedge] of [...this.hyperedges]) {
+      if (!hyperedge.nodes.includes(oldId)) continue;
+      const updated: Hyperedge = {
+        ...hyperedge,
+        nodes: normalizeNodes(hyperedge.nodes.map((node) => (node === oldId ? newId : node))),
+      };
+      this.hyperedges.delete(key);
+      this.hyperedges.set(relationKey("hyperedge", updated.nodes), updated);
+    }
     this.invalidateAnalysisCache();
     this.emitChange();
   }
 
   addSimplex(simplex: Simplex): string {
+    if ((simplex as Partial<HigherOrderRelation>).kind === "hyperedge") {
+      // The invariant this whole layer exists to protect: a hyperedge asserts nothing
+      // about its subgroups, so it must never reach generateFaces().
+      logger.error("model", "Refused to add a hyperedge through addSimplex", { nodes: simplex.nodes });
+      return "";
+    }
     const nodes = uniqueNodes(simplex.nodes);
     if (nodes.length < 2) return "";
 
@@ -186,6 +224,171 @@ export class SimplicialModel {
     this.emitChange();
   }
 
+  /**
+   * Add an irreducible encounter. Deliberately does *not* call `generateFaces()`
+   * and never touches `this.simplices`.
+   */
+  addHyperedge(hyperedge: Hyperedge): RelationKey {
+    const nodes = uniqueNodes(hyperedge.nodes);
+    if (nodes.length < 2) return "";
+
+    nodes.forEach((id) => {
+      if (!this.nodes.has(id)) this.setNode(id, { isVirtual: false });
+    });
+    const normalizedNodes = normalizeNodes(nodes);
+    const key = relationKey("hyperedge", normalizedNodes);
+    const existing = this.hyperedges.get(key);
+    const base = existing?.suggested && !hyperedge.suggested ? undefined : existing;
+    const normalized: Hyperedge = {
+      ...base,
+      ...hyperedge,
+      nodes: normalizedNodes,
+      weight: clampWeight(hyperedge.weight ?? base?.weight),
+      colorKey: hyperedge.colorKey ?? base?.colorKey ?? hashLabel(hyperedge.label),
+      ...(!hyperedge.suggested ? { occurredAt: base?.occurredAt ?? hyperedge.occurredAt ?? Date.now() } : {}),
+    };
+    this.hyperedges.set(key, normalized);
+    this.invalidateAnalysisCache();
+    this.emitChange();
+    return key;
+  }
+
+  removeHyperedge(key: RelationKey): boolean {
+    if (!this.hyperedges.delete(key)) return false;
+    this.invalidateAnalysisCache();
+    this.emitChange();
+    return true;
+  }
+
+  getHyperedge(key: RelationKey): Hyperedge | undefined {
+    return this.hyperedges.get(key);
+  }
+
+  getHyperedgesForNode(id: NodeID): Hyperedge[] {
+    return [...this.hyperedges.values()].filter((hyperedge) => hyperedge.nodes.includes(id));
+  }
+
+  updateHyperedge(key: RelationKey, updates: Partial<Hyperedge>): Hyperedge | undefined {
+    const existing = this.hyperedges.get(key);
+    if (!existing) return undefined;
+    const updated: Hyperedge = { ...existing, ...updates, nodes: existing.nodes };
+    if (updates.label !== undefined) updated.colorKey = hashLabel(updates.label);
+    if (updates.weight !== undefined) updated.weight = clampWeight(updates.weight);
+    this.hyperedges.set(key, updated);
+    this.invalidateAnalysisCache();
+    this.emitChange();
+    return updated;
+  }
+
+  /**
+   * Exactly the faces promoting this encounter would create. Shown to the user
+   * before the assertion is made — promotion is a claim about meaning, not a
+   * bookkeeping step.
+   */
+  facesImpliedByPromotion(hyperedgeKey: RelationKey): NodeID[][] {
+    const hyperedge = this.hyperedges.get(hyperedgeKey);
+    if (!hyperedge) return [];
+    return plannedFaces(this, { nodes: hyperedge.nodes });
+  }
+
+  /**
+   * HG-08. The user asserts the lower-dimensional faces are meaningful.
+   *
+   * The encounter is retained by default and marked `promotedTo`: discarding it
+   * would rewrite the history the persistence layer exists to protect, and it is
+   * what makes `relaxToHyperedge` reversible.
+   */
+  promoteToSimplex(
+    hyperedgeKey: RelationKey,
+    options: { retainEncounter?: boolean } = {},
+  ): { simplexKey: SimplexKey; createdFaces: NodeID[][] } | null {
+    const hyperedge = this.hyperedges.get(hyperedgeKey);
+    if (!hyperedge) return null;
+
+    const createdFaces = this.facesImpliedByPromotion(hyperedgeKey);
+    let simplexKey = "";
+    this.batch(() => {
+      simplexKey = this.addSimplex({
+        nodes: hyperedge.nodes,
+        label: hyperedge.label,
+        weight: hyperedge.weight,
+        sourcePath: hyperedge.sourcePath,
+        userDefined: true,
+        autoGenerated: false,
+      });
+      if (options.retainEncounter === false) {
+        this.hyperedges.delete(hyperedgeKey);
+      } else {
+        this.hyperedges.set(hyperedgeKey, { ...hyperedge, promotedTo: simplexKey });
+      }
+      this.invalidateAnalysisCache();
+      this.emitChange();
+    });
+    if (!simplexKey) return null;
+    return { simplexKey, createdFaces };
+  }
+
+  /**
+   * HG-09. Withdraw the downward-closure claim while preserving the group relation.
+   *
+   * `removeSimplex` already sweeps auto-generated faces that lost their last
+   * non-auto parent, and correctly leaves faces that some unrelated simplex still
+   * asserts — this reuses that rather than duplicating the rule.
+   */
+  relaxToHyperedge(simplexKey: SimplexKey): RelationKey | null {
+    const simplex = this.simplices.get(simplexKey);
+    if (!simplex || simplex.autoGenerated) return null;
+
+    const key = relationKey("hyperedge", simplex.nodes);
+    const existing = this.hyperedges.get(key);
+    let result = "";
+    this.batch(() => {
+      result = this.addHyperedge({
+        ...existing,
+        nodes: simplex.nodes,
+        label: existing?.label ?? simplex.label,
+        weight: existing?.weight ?? simplex.weight,
+        sourcePath: existing?.sourcePath ?? simplex.sourcePath,
+        // Keep the original encounter time; relaxing is not a new encounter.
+        occurredAt: existing?.occurredAt,
+        promotedTo: undefined,
+      });
+      this.removeSimplex(simplexKey);
+    });
+    return result || null;
+  }
+
+  /**
+   * HG-10. Record that an encounter precipitated a new concept note.
+   *
+   * Deliberately does not promote: repetition is evidence, not proof, of
+   * simplicial coherence.
+   */
+  crystallizeHyperedge(hyperedgeKey: RelationKey, conceptNodeId: NodeID): boolean {
+    const hyperedge = this.hyperedges.get(hyperedgeKey);
+    if (!hyperedge) return false;
+    this.batch(() => {
+      if (!this.nodes.has(conceptNodeId)) this.setNode(conceptNodeId, { isVirtual: false });
+      this.hyperedges.set(hyperedgeKey, { ...hyperedge, crystallizedInto: conceptNodeId });
+      this.invalidateAnalysisCache();
+      this.emitChange();
+    });
+    return true;
+  }
+
+  /** Both layers, each tagged with its kind, keyed as in `relationKey`. */
+  getAllRelations(): Array<{ key: RelationKey; relation: HigherOrderRelation }> {
+    const relations: Array<{ key: RelationKey; relation: HigherOrderRelation }> = [];
+    this.simplices.forEach((simplex, key) => {
+      relations.push({ key: relationKey("simplex", simplex.nodes), relation: { kind: "simplex", ...simplex } });
+      void key;
+    });
+    this.hyperedges.forEach((hyperedge, key) => {
+      relations.push({ key, relation: { kind: "hyperedge", ...hyperedge } });
+    });
+    return relations;
+  }
+
   replaceInferredSimplices(simplices: Simplex[]): void {
     this.batch(() => {
       for (const [key, simplex] of [...this.simplices]) {
@@ -204,11 +407,38 @@ export class SimplicialModel {
     });
   }
 
-  replaceSourceSimplices(sourcePath: string, simplices: Simplex[]): void {
+  /** Replace inference-engine encounters without touching authored or discovery encounters. */
+  replaceInferredHyperedges(hyperedges: Hyperedge[]): void {
+    this.batch(() => {
+      for (const [key, hyperedge] of this.hyperedges) {
+        // Unmarked suggestions are legacy inference output. Discovery suggestions
+        // have their own lifecycle and must survive ordinary parameter changes.
+        if (hyperedge.inferred && hyperedge.suggested && hyperedge.suggestionSource !== "encounter-discovery") {
+          this.hyperedges.delete(key);
+        }
+      }
+      hyperedges.forEach((hyperedge) =>
+        this.addHyperedge({ ...hyperedge, inferred: true, suggested: true, suggestionSource: "inference" }),
+      );
+      this.invalidateAnalysisCache();
+      this.emitChange();
+    });
+  }
+
+  /**
+   * Re-seat everything a single file owns. A rescan must clear *both* layers for
+   * that path, otherwise a hyperedge deleted from a note would linger forever.
+   */
+  replaceSourceRelations(sourcePath: string, simplices: Simplex[], hyperedges: Hyperedge[]): void {
     this.batch(() => {
       for (const [key, simplex] of [...this.simplices]) {
         if (simplex.sourcePath === sourcePath && !simplex.autoGenerated) {
           this.simplices.delete(key);
+        }
+      }
+      for (const [key, hyperedge] of [...this.hyperedges]) {
+        if (hyperedge.sourcePath === sourcePath) {
+          this.hyperedges.delete(key);
         }
       }
       simplices.forEach((simplex) => {
@@ -217,9 +447,19 @@ export class SimplicialModel {
         });
         this.addSimplex({ ...simplex, sourcePath });
       });
+      hyperedges.forEach((hyperedge) => {
+        hyperedge.nodes.forEach((id) => {
+          if (!this.nodes.has(id)) this.setNode(id, { isVirtual: true });
+        });
+        this.addHyperedge({ ...hyperedge, sourcePath });
+      });
       this.invalidateAnalysisCache();
       this.emitChange();
     });
+  }
+
+  replaceSourceSimplices(sourcePath: string, simplices: Simplex[]): void {
+    this.replaceSourceRelations(sourcePath, simplices, []);
   }
 
   updateMetadata(key: string, meta: Partial<Pick<Simplex, "label" | "weight">>): void {
@@ -273,6 +513,17 @@ export class SimplicialModel {
    */
   private invalidateAnalysisCache(): void {
     this._analysisDirty = true;
+    this._crossLayerCache = null;
+  }
+
+  /** Backing store for the cross-layer map in core/incidence.ts. */
+  readCrossLayerCache<T>(): T | null {
+    return this._crossLayerCache as T | null;
+  }
+
+  writeCrossLayerCache<T>(value: T): T {
+    this._crossLayerCache = value;
+    return value;
   }
 
   /**
@@ -359,9 +610,13 @@ export class SimplicialModel {
     const betti = computeBetti(this, 2);
     const holeCount = betti.holes.length;
 
+    const hyperedges = [...this.hyperedges.values()];
+
     return {
       nodeCount: this.nodes.size,
       simplexCount: simplices.length,
+      hyperedgeCount: hyperedges.length,
+      recurringEncounterCount: hyperedges.filter((hyperedge) => hyperedge.persistence === "recurring").length,
       edgeCount: edgeSimplices.length,
       clusterCount: simplices.filter((simplex) => simplex.nodes.length === 3).length,
       coreCount: simplices.filter((simplex) => simplex.nodes.length >= 4).length,

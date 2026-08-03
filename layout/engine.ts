@@ -1,6 +1,14 @@
-/* global cancelAnimationFrame, window -- Allow window for setTimeout/clearTimeout in browser environment (ESLint browser globals) */
-import { HOLD_REPULSION } from "../core/types";
-import type { LayoutNode, Rect, Simplex } from "../core/types";
+/* global window -- Allow window for animation-frame scheduling in browser environment (ESLint browser globals) */
+import { HOLD_REPULSION } from "../core/types.js";
+import type { Hyperedge, LayoutNode, Rect, Simplex } from "../core/types.js";
+
+export interface LayoutState {
+  nodes: LayoutNode[];
+  simplices: Simplex[];
+  hyperedges: Hyperedge[];
+  bounds: Rect;
+  holdNode: string | null;
+}
 
 function pairKey(a: string, b: string): string {
   return a < b ? `${a}|${b}` : `${b}|${a}`;
@@ -161,11 +169,10 @@ export class LayoutEngine {
   private MAX_VELOCITY = 30;
   private USE_BARNES_HUT = true;
   private isAsleep = false;
+  private animationHold = false;
   private animFrame: number | null = null;
   private renderFn: (() => void) | null = null;
-  private getState:
-    | (() => { nodes: LayoutNode[]; simplices: Simplex[]; bounds: Rect; holdNode: string | null })
-    | null = null;
+  private getState: (() => LayoutState) | null = null;
 
   configure(opts: {
     noiseAmount?: number;
@@ -189,16 +196,13 @@ export class LayoutEngine {
     if (opts.sparseGravityBoost !== undefined) this.SPARSE_GRAVITY_BOOST = opts.sparseGravityBoost;
   }
 
-  start(
-    renderFn: () => void,
-    getState: () => { nodes: LayoutNode[]; simplices: Simplex[]; bounds: Rect; holdNode: string | null },
-  ): void {
+  start(renderFn: () => void, getState: () => LayoutState): void {
     this.renderFn = renderFn;
     this.getState = getState;
-    if (this.animFrame !== null) cancelAnimationFrame(this.animFrame);
+    if (this.animFrame !== null) window.cancelAnimationFrame(this.animFrame);
     const loop = () => {
-      const { nodes, simplices, bounds, holdNode } = getState();
-      this.tick(nodes, simplices, bounds, holdNode);
+      const { nodes, simplices, hyperedges, bounds, holdNode } = getState();
+      this.tick(nodes, simplices, bounds, holdNode, hyperedges);
       renderFn();
       if (!this.isAsleep) {
         this.animFrame = window.requestAnimationFrame(loop);
@@ -209,7 +213,7 @@ export class LayoutEngine {
   }
 
   stop(): void {
-    if (this.animFrame !== null) cancelAnimationFrame(this.animFrame);
+    if (this.animFrame !== null) window.cancelAnimationFrame(this.animFrame);
     this.animFrame = null;
     this.isAsleep = true;
   }
@@ -220,10 +224,36 @@ export class LayoutEngine {
     this.start(this.renderFn, this.getState);
   }
 
-  tick(nodes: LayoutNode[], simplices: Simplex[], bounds: Rect, holdNode: string | null): void {
+  /**
+   * Keep ticking even once the layout has settled.
+   *
+   * The engine sleeps on low kinetic energy, which is right for a force layout and
+   * wrong for anything animating on its own clock — a focused encounter's pulse has
+   * no kinetic energy at all and would stop on the first still frame.
+   */
+  setAnimationHold(active: boolean): void {
+    this.animationHold = active;
+    if (active) this.wake();
+  }
+
+  get isAnimationHeld(): boolean {
+    return this.animationHold;
+  }
+
+  tick(
+    nodes: LayoutNode[],
+    simplices: Simplex[],
+    bounds: Rect,
+    holdNode: string | null,
+    hyperedges: Hyperedge[] = [],
+  ): void {
     const edgeLikeSimplices = simplices.filter((simplex) => simplex.nodes.length === 2);
     const sparseGraph =
-      edgeLikeSimplices.length > 0 && simplices.every((simplex) => simplex.nodes.length <= 2 || simplex.inferred);
+      edgeLikeSimplices.length > 0 &&
+      simplices.every((simplex) => simplex.nodes.length <= 2 || simplex.inferred) &&
+      // A vault full of higher-order encounters is not a sparse graph, even if its
+      // simplicial layer is all edges.
+      !hyperedges.some((hyperedge) => hyperedge.nodes.length >= 3);
     const nodeById = new Map(nodes.map((node) => [node.id, node]));
     const connectionStrengths = new Map<string, number>();
     const nodeConnectivity = new Map<string, { edgeCount: number; clusterCount: number; maxDim: number }>();
@@ -328,6 +358,22 @@ export class LayoutEngine {
       });
     });
 
+    // Encounters pull their members toward a shared centroid but contribute nothing
+    // to `connectionStrengths` — that map drives pairwise springs, and an encounter
+    // makes no claim about any pair. The group is drawn together as a group.
+    hyperedges.forEach((hyperedge) => {
+      const ns = hyperedge.nodes.map((id) => nodeById.get(id)).filter(Boolean) as LayoutNode[];
+      if (ns.length < 2) return;
+      const cx = ns.reduce((sum, node) => sum + node.px, 0) / ns.length;
+      const cy = ns.reduce((sum, node) => sum + node.py, 0) / ns.length;
+      const weight = hyperedge.weight ?? 1;
+      ns.forEach((node) => {
+        if (node.isPinned) return;
+        node.vx += (cx - node.px) * this.COHESION * weight * 0.5;
+        node.vy += (cy - node.py) * this.COHESION * weight * 0.5;
+      });
+    });
+
     if (holdNode) {
       const held = nodeById.get(holdNode);
       if (held) {
@@ -391,7 +437,7 @@ export class LayoutEngine {
 
     const kineticEnergy = nodes.reduce((sum, node) => sum + node.vx * node.vx + node.vy * node.vy, 0);
     const averageKineticEnergy = nodes.length > 0 ? kineticEnergy / nodes.length : 0;
-    if (averageKineticEnergy < this.SLEEP_THRESHOLD) {
+    if (averageKineticEnergy < this.SLEEP_THRESHOLD && !this.animationHold) {
       this.isAsleep = true;
     }
   }

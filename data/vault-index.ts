@@ -3,9 +3,9 @@ import { debounce, TFile, type App, type TAbstractFile } from "obsidian";
 import { djb2Hash } from "../core/hash.js";
 import { logger } from "../core/logger.js";
 import { SimplicialModel } from "../core/model.js";
-import type { PluginSettings } from "../core/types.js";
-import { buildInferenceContext, inferSimplices, inferSimplicesLegacy, type InferenceContext } from "./inference.js";
-import { runEmergentInferenceWithHoles } from "./inference/engine.js";
+import { invalidateAliasIndex } from "../core/normalize.js";
+import type { Hyperedge, PluginSettings } from "../core/types.js";
+import { buildInferenceContext, inferSimplices, type InferenceContext } from "./inference.js";
 import { parseSimplices } from "./parser.js";
 
 export class VaultIndex {
@@ -25,6 +25,8 @@ export class VaultIndex {
     private model: SimplicialModel,
     private settings: PluginSettings,
     private onExternalChange?: () => void,
+    /** Fires for every encounter read out of a note, so the event log can record recurrence. */
+    private onEncounterParsed?: (_hyperedge: Hyperedge) => void,
   ) {
     this.debouncedChange = debounce(
       (file: TFile) => {
@@ -34,12 +36,33 @@ export class VaultIndex {
       true,
     );
 
-    this.app.vault.on("modify", (file) => file instanceof TFile && this.debouncedChange(file));
-    this.app.vault.on("create", (file) => file instanceof TFile && this.debouncedChange(file));
-    this.app.vault.on("delete", (file) => this.onFileDelete(file));
+    // Any note change can add, remove or move an alias, so the alias index is
+    // dropped alongside the model update rather than being re-derived per lookup.
+    this.app.vault.on("modify", (file) => {
+      invalidateAliasIndex();
+      if (file instanceof TFile) this.debouncedChange(file);
+    });
+    this.app.vault.on("create", (file) => {
+      invalidateAliasIndex();
+      if (file instanceof TFile) this.debouncedChange(file);
+    });
+    this.app.vault.on("delete", (file) => {
+      invalidateAliasIndex();
+      this.onFileDelete(file);
+    });
     this.app.vault.on("rename", (file, oldPath) => {
+      invalidateAliasIndex();
       if (file instanceof TFile) this.onFileRename(file, oldPath);
     });
+  }
+
+  /**
+   * The per-note signal contexts the inference engine runs on. Exposed so the
+   * hypergraph diagnostics can score encounter subgroups against exactly the same
+   * evidence the simplicial layer is built from, rather than a second set of signals.
+   */
+  getInferenceContexts(): InferenceContext[] {
+    return [...this.inferenceContexts.values()];
   }
 
   recordWrite(path: string, content: string): void {
@@ -55,8 +78,18 @@ export class VaultIndex {
     this.rebuildInferredSimplices();
   }
 
+  /**
+   * The relation history is machine-written, append-only and unbounded. Indexing it
+   * would put a growing wall of JSON through the inference engine and add a node
+   * nobody wrote. The central file is different — it holds real definitions.
+   */
+  private isPluginInternalFile(path: string): boolean {
+    return path === this.settings.historyFile;
+  }
+
   async fullScan(): Promise<void> {
-    const files = this.app.vault.getMarkdownFiles();
+    invalidateAliasIndex();
+    const files = this.app.vault.getMarkdownFiles().filter((file) => !this.isPluginInternalFile(file.path));
     logger.info("vault-index", "Starting full vault scan", {
       fileCount: files.length,
     });
@@ -84,6 +117,7 @@ export class VaultIndex {
 
   private async onFileChange(file: TFile): Promise<void> {
     if (file.extension !== "md") return;
+    if (this.isPluginInternalFile(file.path)) return;
     const content = await this.app.vault.read(file);
     const currentHash = djb2Hash(content);
     if (this.lastWrittenHash.get(file.path) === currentHash) {
@@ -107,7 +141,7 @@ export class VaultIndex {
     logger.info("vault-index", "File deleted", { path: file.path });
     this.inferenceContexts.delete(file.path);
     this.model.removeNode(file.path);
-    this.model.replaceSourceSimplices(file.path, []);
+    this.model.replaceSourceRelations(file.path, [], []);
     void this.scheduleInferenceRebuild().then(() => this.onExternalChange?.());
   }
 
@@ -133,15 +167,18 @@ export class VaultIndex {
   private processFile(file: TFile, content: string): void {
     this.model.setNode(file.path, { isVirtual: false });
     const parsed = parseSimplices(content, file.path, this.app);
-    this.model.replaceSourceSimplices(file.path, parsed.simplices);
+    this.model.replaceSourceRelations(file.path, parsed.simplices, parsed.hyperedges);
     this.fileSimplexKeys.set(file.path, new Set(parsed.simplices.map((simplex) => simplex.nodes.join("|"))));
     this.inferenceContexts.set(file.path, buildInferenceContext(this.app, file, content));
+    parsed.hyperedges.forEach((hyperedge) => this.onEncounterParsed?.(hyperedge));
     logger.info("vault-index", "Indexed file", {
       path: file.path,
       parsedSimplexCount: parsed.simplices.length,
+      parsedHyperedgeCount: parsed.hyperedges.length,
       parsedNodeCount: parsed.nodeIds.size,
       totalNodeCount: this.model.nodes.size,
       totalSimplexCount: this.model.simplices.size,
+      totalHyperedgeCount: this.model.hyperedges.size,
     });
   }
 
@@ -181,31 +218,31 @@ export class VaultIndex {
   }
 
   private rebuildInferredSimplices(): void {
-    let inferred: import("../core/types").Simplex[];
+    // Hole analysis is an optional visualization and must never change the graph.
+    // In particular, toggling it must not select a different inference algorithm.
+    const inferred = inferSimplices([...this.inferenceContexts.values()], this.settings);
 
-    // Use optimized path with cached Betti holes when enabled
-    if (
-      this.settings.enableBettiComputation &&
-      (this.settings.inferenceMode === "emergent" || this.settings.inferenceMode === "hybrid")
-    ) {
-      const holes = this.model.getCachedBetti().holes;
-      inferred = runEmergentInferenceWithHoles([...this.inferenceContexts.values()], this.settings, holes);
-
-      // Add legacy inferences if in hybrid mode (only taxonomic/legacy, NOT emergent)
-      if (this.settings.inferenceMode === "hybrid") {
-        const legacy = inferSimplicesLegacy([...this.inferenceContexts.values()], this.settings);
-        // Deduplicate by key
-        const existingKeys = new Set(inferred.map((s) => s.nodes.sort().join("|")));
-        const uniqueLegacy = legacy.filter((s) => !existingKeys.has(s.nodes.sort().join("|")));
-        inferred.push(...uniqueLegacy);
-      }
-    } else {
-      inferred = inferSimplices([...this.inferenceContexts.values()], this.settings);
-    }
-
-    this.model.replaceInferredSimplices(inferred);
+    const inferredEncounters: Hyperedge[] =
+      this.settings.inferenceEmits === "hyperedge"
+        ? inferred
+            .filter((simplex) => simplex.nodes.length > 2)
+            .map((simplex) => ({
+              nodes: simplex.nodes,
+              label: simplex.label,
+              weight: simplex.weight,
+              confidence: simplex.confidence,
+              inferred: true,
+              suggested: true,
+              suggestionSource: "inference",
+            }))
+        : [];
+    const inferredSimplices =
+      this.settings.inferenceEmits === "hyperedge" ? inferred.filter((simplex) => simplex.nodes.length <= 2) : inferred;
+    this.model.replaceInferredSimplices(inferredSimplices);
+    this.model.replaceInferredHyperedges(inferredEncounters);
     const snapshot = JSON.stringify({
-      inferredSimplexCount: inferred.length,
+      inferredSimplexCount: inferredSimplices.length,
+      inferredEncounterCount: inferredEncounters.length,
       totalSimplexCount: this.model.simplices.size,
       totalNodeCount: this.model.nodes.size,
       enabled: this.settings.enableInferredEdges,
