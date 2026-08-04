@@ -3,6 +3,7 @@ node_modules/
 
 # Build output
 #main.js
+.main.build.js
 *.js.map
 tests-dist/
 
