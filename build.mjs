@@ -33,6 +33,43 @@ function prettifyBundle(file, maxPasses = 4) {
   process.exit(1);
 }
 
+/**
+ * Bundle the topology worker into a string.
+ *
+ * Obsidian's community-plugin installer downloads only `manifest.json`, `main.js` and
+ * `styles.css`. A sibling `workers/topology.js` would never exist in an installed vault,
+ * so the worker is compiled separately, inlined as a string constant, and started from a
+ * `Blob` URL at runtime. This emits no second file by design.
+ */
+async function buildWorkerSource() {
+  const result = await esbuild.build({
+    entryPoints: ["core/topology/worker-entry.ts"],
+    bundle: true,
+    write: false,
+    format: "iife",
+    platform: "browser",
+    target: "es2020",
+    minify: production,
+    legalComments: "none",
+    treeShaking: true,
+    logLevel: "warning",
+    define: {
+      "process.env.NODE_ENV": JSON.stringify(production ? "production" : "development"),
+    },
+  });
+  const source = result.outputFiles[0].text;
+  // A worker that silently bundled to nothing would fail only at runtime, in an
+  // installed vault, on a machine that is not this one.
+  if (!source.includes("persistence-result")) {
+    console.error("[simplicial-complex] worker bundle is missing its response protocol");
+    process.exit(1);
+  }
+  console.log(`[simplicial-complex] topology worker inlined (${(source.length / 1024).toFixed(1)} KB)`);
+  return source;
+}
+
+const workerSource = await buildWorkerSource();
+
 const context = await esbuild.context({
   entryPoints: ["main.ts"],
   bundle: true,
@@ -63,6 +100,7 @@ const context = await esbuild.context({
   ],
   define: {
     "process.env.NODE_ENV": JSON.stringify(production ? "production" : "development"),
+    __TOPOLOGY_WORKER_SOURCE__: JSON.stringify(workerSource),
   },
 });
 

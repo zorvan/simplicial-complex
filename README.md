@@ -70,6 +70,12 @@ On first scan the plugin also proposes lightweight, in-memory `◇` candidates f
 
 **Topological Analysis (v3):** Actual static homology over F₂ (β₀, β₁, β₂), a live Betti HUD, and separately named missing-face completion opportunities. The HUD records the analyzed skeleton; a dashed orange motif is local evidence, not necessarily an independent homology class.
 
+**Persistent topology (v0.5.0):** The Persistence X-ray shows which topological features survive as the evidence threshold moves, as a barcode or a persistence diagram. Every bar above dimension 0 can expose one verified representative cycle — the concrete notes and relations carrying the class — which brush-links onto the canvas. Persistent 1-dimensional gaps are ranked as writing prompts, each with its interval, witness, provenance, uncertainty, and a score shown term by term rather than as one unexplained number.
+
+Optional empirical stability re-runs the analysis on seeded resamples to report how often a feature reappears. It is off by default because it multiplies the computation by the resample count, and it reports bootstrap support, which is not a confidence band.
+
+The reduction runs off the main thread. Read [How topology is computed](docs/how-topology-is-computed.md) for what the plugin actually does, and [What this does not prove](docs/what-this-does-not-prove.md) for what the results do not establish.
+
 **Contextuality (v3):** Define overlapping contexts and give the same note a different local role in each. The Contextuality Lab reports a global baseline dimension, obstruction rank, inspectable holonomy cycles, and contextual fraction. This is a language-context gluing instrument inspired by sheaf methods, not an Abramsky–Brandenburger empirical model. A crimson failed seam is distinct from an orange missing-face opportunity.
 
 **Optional external-agent help:** Encounter creation and the Contextuality Lab include provider-neutral, copyable prompts for a file-capable agent. The plugin itself never invokes an AI service or sends vault content anywhere. Agents prepare cited proposals; the user reviews and records every meaning-changing intervention. See [AI-assisted discovery](docs/AI-assisted-discovery.md).

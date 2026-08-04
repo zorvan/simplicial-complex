@@ -16,7 +16,7 @@ const JOBS = [
   { name: "Lint & Format", steps: ["npm run lint", "npm run format:check"] },
   { name: "Type Check", steps: ["npm run check"] },
   { name: "Build", steps: ["npm run build"], after: verifyBuildOutput },
-  { name: "Test", steps: ["npm test", "npm run benchmark:topology"] },
+  { name: "Test", steps: ["npm test", "npm run benchmark:topology", "npm run benchmark:persistence"] },
   { name: "Release preflight", steps: [], after: verifyVersions },
 ];
 
@@ -24,7 +24,29 @@ const JOBS = [
 function verifyBuildOutput() {
   const missing = ["main.js", "styles.css", "manifest.json"].filter((asset) => !existsSync(asset));
   if (missing.length > 0) throw new Error(`missing release asset(s): ${missing.join(", ")}`);
-  return "main.js, styles.css and manifest.json present";
+  return `${verifyWorkerPayload()}; main.js, styles.css and manifest.json present`;
+}
+
+/**
+ * WORKER-00. Obsidian installs only main.js, styles.css and manifest.json, so the topology
+ * worker has to be inlined in the bundle and started from a Blob URL. A build that dropped
+ * the payload would still pass every other check and then fail at runtime, in an installed
+ * vault, on someone else's machine.
+ */
+function verifyWorkerPayload() {
+  const bundle = readFileSync("main.js", "utf8");
+  if (bundle.includes("__TOPOLOGY_WORKER_SOURCE__")) {
+    throw new Error("main.js still contains the __TOPOLOGY_WORKER_SOURCE__ placeholder: the define did not run");
+  }
+  // The worker source is embedded as a string literal, so its protocol markers appear
+  // escaped alongside the main bundle's own copies. Requiring more than one occurrence
+  // distinguishes "worker inlined" from "only the main-thread fallback is present".
+  const occurrences = bundle.split("persistence-result").length - 1;
+  if (occurrences < 2) {
+    throw new Error(`main.js does not contain the inlined topology worker (found ${occurrences} protocol markers)`);
+  }
+  const kb = (Buffer.byteLength(bundle) / 1024).toFixed(0);
+  return `inlined topology worker present in main.js (${kb} KB bundle)`;
 }
 
 /**

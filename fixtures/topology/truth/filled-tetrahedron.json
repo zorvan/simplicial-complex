@@ -1,0 +1,13 @@
+{
+  "notes": "Filling the shell kills the void. Contractible.",
+  "nodes": ["a", "b", "c", "d"],
+  "simplices": [
+    {
+      "nodes": ["a", "b", "c", "d"],
+      "weight": 1
+    }
+  ],
+  "hyperedges": [],
+  "betti": [1, 0, 0],
+  "intervals": [[0, 0, null]]
+}

@@ -166,7 +166,7 @@ test("filtration converts superlevel score and orders faces before tied cofaces"
 
 test("sparse backend agrees with the independent dense checker", async () => {
   for (const [, model] of truth) {
-    const input = createTopologyInput(model, "conformance", 2);
+    const input = createTopologyInput(model, "conformance", { maxHomologyDimension: 2 });
     const sparse = await new TsTopologyBackend().computeStatic(input);
     const dense = await new NaiveTopologyChecker().computeStatic(input);
     assert.deepEqual(sparse.betti, dense.betti);

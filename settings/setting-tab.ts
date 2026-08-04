@@ -45,6 +45,11 @@ export class SimplicialSettingTab extends PluginSettingTab {
       ),
       this.settingSection("Contextuality", ["Contextuality lab"], (el) => this.renderSheafSettings(el)),
       this.settingSection(
+        "Persistent topology",
+        ["Enable persistence X-ray", "Compute empirical stability", "Resample count", "Maximum simplices"],
+        (el) => this.renderPersistenceTopologySettings(el),
+      ),
+      this.settingSection(
         "Layout",
         [
           "Max rendered dimension",
@@ -150,6 +155,9 @@ export class SimplicialSettingTab extends PluginSettingTab {
     this.renderDisplaySection(containerEl, "Hypergraph", (section) => this.renderHypergraphSettings(section));
     this.renderDisplaySection(containerEl, "Dynamics", (section) => this.renderDynamicsSettings(section));
     this.renderDisplaySection(containerEl, "Contextuality", (section) => this.renderSheafSettings(section));
+    this.renderDisplaySection(containerEl, "Persistent topology", (section) =>
+      this.renderPersistenceTopologySettings(section),
+    );
     this.renderDisplaySection(containerEl, "Layout", (section) => this.renderLayoutSettings(section));
     this.renderDisplaySection(containerEl, "Inference", (section) => this.renderInferenceSettings(section));
     this.renderDisplaySection(containerEl, "Commands and display", (section) => this.renderCommandUiSettings(section));
@@ -431,6 +439,57 @@ export class SimplicialSettingTab extends PluginSettingTab {
         );
       this.addNumberSlider(setting, this.plugin.settings.activationDecayHalfLifeMinutes, 1, 240, 1, async (value) => {
         this.plugin.settings.activationDecayHalfLifeMinutes = value;
+        await this.plugin.saveSettings();
+      });
+    }
+  }
+
+  private renderPersistenceTopologySettings(containerEl: HTMLElement): void {
+    new Setting(containerEl)
+      .setName("Enable persistence X-ray")
+      .setDesc(
+        "Adds a view showing which topological features survive as the evidence threshold moves, with an inspectable representative cycle for each one. Requires a reload.",
+      )
+      .addToggle((toggle) => {
+        toggle.setValue(this.plugin.settings.enablePersistenceView);
+        toggle.onChange(async (value) => {
+          this.plugin.settings.enablePersistenceView = value;
+          await this.plugin.saveSettings();
+          new Notice(value ? "Persistence X-ray appears after a reload." : "Persistence X-ray removed after a reload.");
+        });
+      });
+
+    new Setting(containerEl)
+      .setName("Compute empirical stability")
+      .setDesc(
+        "Re-runs the whole analysis on seeded subsamples to see which features reappear. This multiplies the computation by the resample count, so it is off unless you ask for it. Bootstrap support is not a confidence band.",
+      )
+      .addToggle((toggle) => {
+        toggle.setValue(this.plugin.settings.enableBootstrapUncertainty);
+        toggle.onChange(async (value) => {
+          this.plugin.settings.enableBootstrapUncertainty = value;
+          await this.plugin.saveSettings();
+        });
+      });
+
+    {
+      const setting = new Setting(containerEl)
+        .setName("Resample count")
+        .setDesc("How many seeded resamples empirical stability runs. Each one is a full reduction.");
+      this.addNumberSlider(setting, this.plugin.settings.bootstrapSampleCount, 5, 100, 5, async (value) => {
+        this.plugin.settings.bootstrapSampleCount = value;
+        await this.plugin.saveSettings();
+      });
+    }
+
+    {
+      const setting = new Setting(containerEl)
+        .setName("Maximum simplices")
+        .setDesc(
+          "Ceiling on how much structure is sent to the topology engine. Sized for mobile, which is the tighter limit; above this the analysis reports what it could not do rather than freezing.",
+        );
+      this.addNumberSlider(setting, this.plugin.settings.topologyMaxSimplices, 5_000, 200_000, 5_000, async (value) => {
+        this.plugin.settings.topologyMaxSimplices = value;
         await this.plugin.saveSettings();
       });
     }

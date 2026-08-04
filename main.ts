@@ -14,6 +14,7 @@ import {
   VIEW_TYPE_SIMPLICIAL,
   VIEW_TYPE_SIMPLICIAL_DYNAMICS,
   VIEW_TYPE_SIMPLICIAL_PANEL,
+  VIEW_TYPE_SIMPLICIAL_PERSISTENCE,
   VIEW_TYPE_SIMPLICIAL_SHEAF,
 } from "./core/types";
 import { analyzeSheaf } from "./core/sheaf";
@@ -35,10 +36,14 @@ import { VaultIndex } from "./data/vault-index";
 import { InteractionController } from "./interaction/controller";
 import { LayoutEngine } from "./layout/engine";
 import { Renderer } from "./render/renderer";
+import { CycleHighlightBus } from "./render/cycle-highlight";
+import { computePersistenceEvents } from "./core/filtration";
+import { TopologyAnalysisService } from "./core/topology/analysis-service";
 import { CreateSimplexModal, type RelationDraft } from "./ui/create-simplex-modal";
 import { PromoteEncounterModal } from "./ui/promote-encounter-modal";
 import { createPromotedNote, MetadataPanel } from "./ui/panel";
 import { DynamicsLabView } from "./ui/dynamics-view";
+import { PersistenceView } from "./ui/persistence-view";
 import { SheafView } from "./ui/sheaf-view";
 import { SimplicialView } from "./ui/view";
 import { SimplicialSettingTab } from "./settings/setting-tab";
@@ -55,6 +60,11 @@ export default class SimplicialPlugin extends Plugin {
   panelView: MetadataPanel | null = null;
   simplicialView: SimplicialView | null = null;
   sheafView: SheafView | null = null;
+  persistenceView: PersistenceView | null = null;
+  /** The one seam between the barcode and whatever surface draws representative cycles. */
+  readonly cycleHighlightBus = new CycleHighlightBus();
+  topologyAnalysis!: TopologyAnalysisService;
+  private releaseCycleHighlightTarget: (() => void) | null = null;
   private saveTimer: number | null = null;
   private rescanTimer: number | null = null;
   /**
@@ -146,6 +156,16 @@ export default class SimplicialPlugin extends Plugin {
       (hyperedge) => this.recordEncounter(hyperedge, "parser"),
     );
 
+    this.topologyAnalysis = new TopologyAnalysisService(this.model);
+    // The slider's birth/death lane is fed from the same pairing the barcode draws, so
+    // the two surfaces cannot disagree. Until a reduction has run there are no markers,
+    // rather than markers guessed from local simplex appearances.
+    this.topologyAnalysis.subscribe((state) => {
+      if (state.status !== "ready" || !state.result) return;
+      this.simplicialView?.setPersistenceEvents(computePersistenceEvents(state.result.intervals));
+    });
+    this.releaseCycleHighlightTarget = this.cycleHighlightBus.registerTarget(this.renderer);
+
     this.restorePinnedNodes();
 
     this.registerView(VIEW_TYPE_SIMPLICIAL, (leaf) => {
@@ -201,6 +221,25 @@ export default class SimplicialPlugin extends Plugin {
       name: "Open contextuality lab",
       callback: () => void this.activateSheafView(),
     });
+
+    if (this.settings.enablePersistenceView) {
+      this.registerView(VIEW_TYPE_SIMPLICIAL_PERSISTENCE, (leaf) => {
+        const view = new PersistenceView(
+          leaf,
+          this.model,
+          this.settings,
+          this.topologyAnalysis,
+          this.cycleHighlightBus,
+        );
+        this.persistenceView = view;
+        return view;
+      });
+      this.addCommand({
+        id: "open-persistence-xray",
+        name: "Open persistence X-ray",
+        callback: () => void this.activatePersistenceView(),
+      });
+    }
 
     if (this.settings.enableDynamicsLab) {
       this.registerView(VIEW_TYPE_SIMPLICIAL_DYNAMICS, (leaf) => new DynamicsLabView(leaf, this.model));
@@ -355,6 +394,10 @@ export default class SimplicialPlugin extends Plugin {
     });
     this.renderer.destroy();
     this.index.destroy();
+    // Terminates the topology worker and revokes its blob URL. A plugin disable, reload
+    // or vault switch must not leave one running.
+    this.releaseCycleHighlightTarget?.();
+    this.topologyAnalysis.dispose();
   }
 
   private restorePinnedNodes(): void {
@@ -454,6 +497,10 @@ export default class SimplicialPlugin extends Plugin {
     if (right) {
       await right.setViewState({ type: VIEW_TYPE_SIMPLICIAL_PANEL, active: false });
     }
+  }
+
+  async activatePersistenceView(): Promise<void> {
+    await this.app.workspace.getLeaf(true).setViewState({ type: VIEW_TYPE_SIMPLICIAL_PERSISTENCE, active: true });
   }
 
   async activateDynamicsLab(): Promise<void> {

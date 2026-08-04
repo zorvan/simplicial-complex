@@ -1,0 +1,28 @@
+{
+  "notes": "One unfilled loop that never closes: an essential H1 class.",
+  "nodes": ["a", "b", "c", "d"],
+  "simplices": [
+    {
+      "nodes": ["a", "b"],
+      "weight": 1
+    },
+    {
+      "nodes": ["b", "c"],
+      "weight": 1
+    },
+    {
+      "nodes": ["c", "d"],
+      "weight": 1
+    },
+    {
+      "nodes": ["d", "a"],
+      "weight": 1
+    }
+  ],
+  "hyperedges": [],
+  "betti": [1, 1, 0],
+  "intervals": [
+    [0, 0, null],
+    [1, 0, null]
+  ]
+}

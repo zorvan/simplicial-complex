@@ -1,0 +1,17 @@
+{
+  "notes": "An encounter asserts nothing about its subgroups and must never enter the boundary matrices. Identical to isolated vertices.",
+  "nodes": ["a", "b", "c"],
+  "simplices": [],
+  "hyperedges": [
+    {
+      "nodes": ["a", "b", "c"],
+      "weight": 1
+    }
+  ],
+  "betti": [3, 0, 0],
+  "intervals": [
+    [0, 0, null],
+    [0, 0, null],
+    [0, 0, null]
+  ]
+}

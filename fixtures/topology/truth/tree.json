@@ -1,0 +1,21 @@
+{
+  "notes": "A tree is contractible: one component, no loops, no voids.",
+  "nodes": ["a", "b", "c", "d"],
+  "simplices": [
+    {
+      "nodes": ["a", "b"],
+      "weight": 1
+    },
+    {
+      "nodes": ["b", "c"],
+      "weight": 1
+    },
+    {
+      "nodes": ["c", "d"],
+      "weight": 1
+    }
+  ],
+  "hyperedges": [],
+  "betti": [1, 0, 0],
+  "intervals": [[0, 0, null]]
+}

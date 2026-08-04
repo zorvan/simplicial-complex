@@ -1,0 +1,20 @@
+{
+  "notes": "Disconnected input must report two essential H0 classes, not one.",
+  "nodes": ["a", "b", "c", "d"],
+  "simplices": [
+    {
+      "nodes": ["a", "b"],
+      "weight": 1
+    },
+    {
+      "nodes": ["c", "d"],
+      "weight": 1
+    }
+  ],
+  "hyperedges": [],
+  "betti": [2, 0, 0],
+  "intervals": [
+    [0, 0, null],
+    [0, 0, null]
+  ]
+}

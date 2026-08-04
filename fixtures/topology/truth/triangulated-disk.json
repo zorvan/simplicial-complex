@@ -1,0 +1,17 @@
+{
+  "notes": "Two triangles glued along an edge: filled, so no loop survives.",
+  "nodes": ["a", "b", "c", "d"],
+  "simplices": [
+    {
+      "nodes": ["a", "b", "c"],
+      "weight": 1
+    },
+    {
+      "nodes": ["a", "c", "d"],
+      "weight": 1
+    }
+  ],
+  "hyperedges": [],
+  "betti": [1, 0, 0],
+  "intervals": [[0, 0, null]]
+}

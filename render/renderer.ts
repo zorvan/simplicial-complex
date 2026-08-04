@@ -9,7 +9,7 @@ import type {
   Simplex,
   MissingFaceBoundary,
 } from "../core/types";
-import { normalizeKey, relationKey } from "../core/normalize";
+import { normalizeKey, normalizeNodeToken, relationKey } from "../core/normalize";
 import type { RelationReplayState } from "../core/history";
 import { SimplicialModel } from "../core/model";
 import { LayoutEngine } from "../layout/engine";
@@ -27,6 +27,7 @@ import type { SheafReport } from "../core/sheaf";
 import { explainHole, type SimplexExplanation } from "../data/explainer";
 import { findMissingFaces } from "../core/missing-faces";
 import type { InferenceContext } from "../data/inference/types";
+import type { CycleHighlight } from "./cycle-highlight";
 
 interface RendererCallbacks {
   onContextMenu?: (target: { nodeId?: string; simplexKey?: string; hyperedgeKey?: string }, event: MouseEvent) => void;
@@ -117,6 +118,7 @@ export class Renderer {
    */
   private activation: ActivationField = new Map();
   private sheafReport: SheafReport | null = null;
+  private cycleHighlight: CycleHighlight | null = null;
   private replayState: RelationReplayState | null = null;
 
   setReplayState(state: RelationReplayState | null): void {
@@ -140,6 +142,56 @@ export class Renderer {
   setSheafReport(report: SheafReport | null): void {
     this.sheafReport = report;
     this.render();
+  }
+
+  /**
+   * `CycleHighlightTarget`. The barcode reaches this only through `CycleHighlightBus`,
+   * so the persistence view holds no reference to the canvas and a later projection view
+   * can take over by implementing the same one-method interface.
+   */
+  setCycleHighlight(highlight: CycleHighlight | null): void {
+    this.cycleHighlight = highlight;
+    this.render();
+  }
+
+  /**
+   * Draw the chain of a representative cycle.
+   *
+   * Only the 1-simplices are stroked: they are what a loop reads as. The witness is one
+   * valid representative among many, so it is drawn as an emphasis over existing
+   * relations rather than as a new object that might be mistaken for asserted structure.
+   */
+  private drawCycleHighlight(ctx: CanvasRenderingContext2D, allNodes: LayoutNode[]): void {
+    const highlight = this.cycleHighlight;
+    if (!highlight) return;
+    const byToken = new Map(allNodes.map((node) => [normalizeNodeToken(node.id), node]));
+    const accent = this.isDark ? "255,214,102" : "196,120,0";
+
+    ctx.save();
+    ctx.lineCap = "round";
+    for (const key of highlight.simplexKeys) {
+      const tokens = key.split("|");
+      if (tokens.length !== 2) continue;
+      const from = byToken.get(tokens[0]);
+      const to = byToken.get(tokens[1]);
+      if (!from || !to) continue;
+      ctx.beginPath();
+      ctx.moveTo(from.px, from.py);
+      ctx.lineTo(to.px, to.py);
+      ctx.strokeStyle = `rgba(${accent},0.85)`;
+      ctx.lineWidth = 3.5;
+      ctx.stroke();
+    }
+    for (const nodeId of highlight.nodeIds) {
+      const node = byToken.get(normalizeNodeToken(nodeId));
+      if (!node) continue;
+      ctx.beginPath();
+      ctx.arc(node.px, node.py, 9, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(${accent},0.95)`;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+    ctx.restore();
   }
 
   // Cached text measurement for performance
@@ -1039,6 +1091,10 @@ export class Renderer {
         }),
       );
     });
+
+    // A representative cycle is evidence for a bar in the barcode, drawn over the
+    // relations that carry it so the reader can see which notes the class runs through.
+    this.drawCycleHighlight(ctx, allNodes);
 
     // Unlike a missing face, this is not an absent filler. Existing fields fail to meet
     // along an open seam, so it is drawn over relations and never closed or filled.

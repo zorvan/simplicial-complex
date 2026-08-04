@@ -1,0 +1,41 @@
+{
+  "notes": "Two loops at time 0, each filled at a distinct later threshold. The finite-bar fixture.",
+  "nodes": ["a", "b", "c", "d"],
+  "simplices": [
+    {
+      "nodes": ["a", "b"],
+      "weight": 1
+    },
+    {
+      "nodes": ["b", "c"],
+      "weight": 1
+    },
+    {
+      "nodes": ["c", "d"],
+      "weight": 1
+    },
+    {
+      "nodes": ["d", "a"],
+      "weight": 1
+    },
+    {
+      "nodes": ["a", "c"],
+      "weight": 1
+    },
+    {
+      "nodes": ["a", "b", "c"],
+      "weight": 0.6
+    },
+    {
+      "nodes": ["a", "c", "d"],
+      "weight": 0.4
+    }
+  ],
+  "hyperedges": [],
+  "betti": [1, 0, 0],
+  "intervals": [
+    [0, 0, null],
+    [1, 0, 0.6],
+    [1, 0, 0.4]
+  ]
+}

@@ -287,5 +287,10 @@ export function getDefaultSettings(): PluginSettings {
     discoveryNoticeShown: false,
     topologyCorrectionNoticeShown: false,
     performanceDefaultsV045Applied: false,
+    enablePersistenceView: true,
+    enableBootstrapUncertainty: false,
+    bootstrapSampleCount: 20,
+    topologyMaxSimplices: 50_000,
+    persistenceReleaseNoticeShown: false,
   };
 }

@@ -75,6 +75,21 @@ jobs:
           fi
           echo "Build successful: main.js exists"
 
+      # Obsidian installs only main.js, styles.css and manifest.json, so the topology
+      # worker is inlined into the bundle. A build that dropped the payload would pass
+      # every other check and fail at runtime in an installed vault.
+      - name: Verify the topology worker is inlined
+        run: |
+          if grep -q "__TOPOLOGY_WORKER_SOURCE__" main.js; then
+            echo "main.js still contains the worker placeholder: the esbuild define did not run"
+            exit 1
+          fi
+          if [ "$(grep -c "persistence-result" main.js)" -lt 2 ]; then
+            echo "main.js does not contain the inlined topology worker"
+            exit 1
+          fi
+          echo "Inlined topology worker present"
+
   test:
     name: Test
     runs-on: ubuntu-latest
@@ -92,3 +107,11 @@ jobs:
 
       - name: Run tests
         run: npm test
+
+      # These gate the documented performance budgets. scripts/verify.mjs runs them too,
+      # and claims to mirror this file step for step, so they belong here as well.
+      - name: Static topology benchmark
+        run: npm run benchmark:topology
+
+      - name: Persistence benchmark
+        run: npm run benchmark:persistence
