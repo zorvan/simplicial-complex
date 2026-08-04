@@ -7881,7 +7881,7 @@ var et = class extends x.PluginSettingTab {
       render: (s) => {
         (s.settingEl.empty(),
           s.settingEl.addClass("simplicial-settings-section"),
-          s.settingEl.createEl("h3", { text: e }),
+          new x.Setting(s.settingEl).setName(e).setHeading(),
           i(s.settingEl),
           this.refreshSettingVisibility());
       },
@@ -7904,7 +7904,7 @@ var et = class extends x.PluginSettingTab {
   }
   renderDisplaySection(e, n, i) {
     let s = e.createDiv({ cls: "simplicial-settings-section" });
-    (s.createEl("h3", { text: n }), i(s));
+    (new x.Setting(s).setName(n).setHeading(), i(s));
   }
   renderPersistenceSettings(e) {
     (new x.Setting(e)

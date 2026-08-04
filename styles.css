@@ -857,7 +857,7 @@
    legacy display() path. The outer searchable Setting is normally a flex row;
    reset it before nesting real setting rows inside. */
 .simplicial-settings-section {
-  display: block !important;
+  display: block;
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
@@ -865,7 +865,7 @@
   padding: 0;
 }
 
-.simplicial-settings-section > h3 {
+.simplicial-settings-section > .setting-item-heading {
   margin: 0;
   padding: 0 0 10px;
   border-bottom: 1px solid var(--background-modifier-border);
@@ -878,7 +878,7 @@
 .simplicial-settings-section > .emergent-settings > .setting-item {
   display: grid;
   grid-template-columns: minmax(220px, 1fr) minmax(240px, 300px);
-  column-gap: 24px;
+  gap: 0 24px;
   align-items: center;
   width: 100%;
   min-width: 0;

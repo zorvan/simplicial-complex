@@ -135,7 +135,7 @@ export class SimplicialSettingTab extends PluginSettingTab {
       render: (setting) => {
         setting.settingEl.empty();
         setting.settingEl.addClass("simplicial-settings-section");
-        setting.settingEl.createEl("h3", { text: name });
+        new Setting(setting.settingEl).setName(name).setHeading();
         render(setting.settingEl);
         this.refreshSettingVisibility();
       },
@@ -162,7 +162,7 @@ export class SimplicialSettingTab extends PluginSettingTab {
 
   private renderDisplaySection(containerEl: HTMLElement, name: string, render: (sectionEl: HTMLElement) => void): void {
     const sectionEl = containerEl.createDiv({ cls: "simplicial-settings-section" });
-    sectionEl.createEl("h3", { text: name });
+    new Setting(sectionEl).setName(name).setHeading();
     render(sectionEl);
   }
 
