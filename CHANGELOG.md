@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.5.1]
+
+Community-plugin review fixes. The review bot reports every `eslint-disable` of an `obsidianmd` rule as an error, regardless of the reason given, so the seven suppressions this repo carried are now resolved in the code instead of argued with in a comment.
+
+### Added
+
+- **The review bot's own checks now run locally** (`scripts/eslint-publisher-rules.mjs`). Two rules the `obsidianmd` plugin does not ship: suppressing an `obsidianmd` rule is an error however well the comment argues for it, and every disable directive needs a `-- reason`. Without them a suppression passed `npm run lint` and failed only after submission, which is exactly how 0.5.0 got there.
+- `reportUnusedDisableDirectives`, so a directive that no longer suppresses anything fails rather than lingering to be inherited by unrelated code.
+- The two locale rules (`ui/sentence-case-json`, `ui/sentence-case-locale-module`), which ship outside `recommended`. There are no locale files yet; they are wired now so adding one cannot quietly skip the check.
+
+### Changed
+
+- **Requires Obsidian 1.13.0** (`minAppVersion`). `ButtonComponent.setWarning()` is deprecated in favour of `setDestructive()`, which exists only from 1.13.0. The two destructive buttons in the Contextuality lab use the current API.
+- The topology reduction and the worker client bind the ambient timer once (`const scheduleMacrotask = setTimeout`) rather than suppressing `prefer-window-timers`. Both call sites run where there is no `window` — inside the worker, and in the Node tests that drive the main-thread fallback — so a window-scoped timer would throw on exactly the path it was applied to.
+- UI strings that tripped `ui/sentence-case` are reworded rather than suppressed: "over F₂ in the top-left HUD" → "mod 2 in the top-left overlay"; "AI-assisted discovery" → "Agent-assisted discovery"; "What should I expect to see?" → "What to expect here"; "query/MOC description" → "query or map-of-content description".
+- The ◇ on the Record encounter button is now a separate `aria-hidden` span rather than part of the label, so screen readers announce the action alone and the label is plain sentence case.
+
+### Removed
+
+- The settings tab's `display()` fallback. It existed for Obsidian before 1.13, which is no longer supported; from 1.13 the app renders settings through `getSettingDefinitions()` and never calls it.
+
 ## [0.5.0]
 
 Persistent topology. v0.4.5 made the numbers correct; this release makes them answerable. The question a reader can now ask is not "how many loops are there" but "which shapes survive as I move the evidence threshold, which notes carry one of them, how stable is that, and why was it ranked where it was".

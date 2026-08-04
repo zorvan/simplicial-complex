@@ -5,8 +5,8 @@ My blog post about the motivation and process of creating this plugin : [blog po
 
 ---
 
-![Version](https://img.shields.io/badge/version-0.5.0-green)
-![Obsidian](https://img.shields.io/badge/obsidian-%3E%3D1.5.0-blueviolet)
+![Version](https://img.shields.io/badge/version-0.5.1-green)
+![Obsidian](https://img.shields.io/badge/obsidian-%3E%3D1.13.0-blueviolet)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
 ---

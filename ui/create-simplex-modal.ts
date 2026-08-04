@@ -102,8 +102,7 @@ export class CreateSimplexModal extends Modal {
         .setName("Mode")
         .setDesc("What kind of encounter this was — free text, e.g. 'encounter', 'reading', 'argument'.")
         .addText((text) => {
-          // eslint-disable-next-line obsidianmd/ui/sentence-case -- Sample of the lowercase free-text value, not a label.
-          text.setPlaceholder("encounter");
+          text.setPlaceholder("Encounter");
           text.setValue(this.modeInput);
           text.onChange((value) => {
             this.modeInput = value;

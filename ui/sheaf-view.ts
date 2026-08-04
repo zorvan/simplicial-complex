@@ -77,8 +77,7 @@ export class SheafView extends ItemView {
       text: "Use this after you have overlapping groups. A context is one viewpoint (for example a project, folder, or theme). Give the same note a role in each viewpoint; the lab then shows whether those local readings agree when combined.",
     });
     const guide = contentEl.createEl("details", { cls: "simplicial-sheaf-guide" });
-    // eslint-disable-next-line obsidianmd/ui/sentence-case -- "I" is the pronoun; lowercasing it is not sentence case.
-    guide.createEl("summary", { text: "What should I expect to see?" });
+    guide.createEl("summary", { text: "What to expect here" });
     guide.createEl("p", {
       text: "Start by adding suggested context seeds. In each context, assign roles only where they make sense. The report will show either a compatible shared reading, a direct local disagreement, or contextuality: every overlap looks compatible on its own, but all viewpoints cannot be combined at once. Suggestions are hypotheses and never change your notes automatically.",
     });
@@ -173,8 +172,9 @@ export class SheafView extends ItemView {
     });
     new Setting(section)
       .setName("Definition")
-      // eslint-disable-next-line obsidianmd/ui/sentence-case -- MOC (map of content) is an acronym, not a word.
-      .setDesc("Folder path/tag for a derived seed, or a query/MOC description for an explicit selection.")
+      .setDesc(
+        "Folder path or tag for a derived seed, or a query or map-of-content description for an explicit selection.",
+      )
       .addText((text) => text.onChange((value) => (definition = value.trim())));
 
     const relations = allRelationKeys(this.model);
@@ -328,7 +328,7 @@ export class SheafView extends ItemView {
       .addButton((button) =>
         button
           .setButtonText("Discard scratch")
-          .setWarning()
+          .setDestructive()
           .onClick(() => {
             this.scratch.clear();
             this.render();
@@ -442,7 +442,7 @@ export class SheafView extends ItemView {
     }
     this.renderContextRestructuring(card, stored, context.id);
     new Setting(card).addButton((button) => {
-      button.setButtonText("Delete context").setWarning();
+      button.setButtonText("Delete context").setDestructive();
       button.onClick(async () => {
         appendSheafAudit(stored, {
           action: "context-deleted",

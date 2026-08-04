@@ -92,8 +92,7 @@ export function renderExternalAgentHelp(container: HTMLElement, app: App, compac
 class ExternalAgentGuideModal extends Modal {
   onOpen(): void {
     this.contentEl.addClass("simplicial-agent-guide");
-    // eslint-disable-next-line obsidianmd/ui/sentence-case -- AI is an acronym; "Ai-assisted" is not the correction.
-    this.contentEl.createEl("h2", { text: "AI-assisted discovery" });
+    this.contentEl.createEl("h2", { text: "Agent-assisted discovery" });
     this.contentEl.createEl("p", {
       text: "Optional and provider-neutral: the plugin does not invoke an agent, transmit notes, or accept proposals automatically. You choose the tool, its vault access, and every intervention.",
     });

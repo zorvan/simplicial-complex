@@ -155,11 +155,10 @@ export class SimplicialView extends ItemView {
         })(),
     );
 
-    const encounter = explore.createEl("button", {
-      cls: "simplicial-explore-action",
-      // eslint-disable-next-line obsidianmd/ui/sentence-case -- Already sentence case; the rule counts the ◇ glyph as the first word.
-      text: "◇ Record encounter",
-    });
+    const encounter = explore.createEl("button", { cls: "simplicial-explore-action" });
+    // The glyph is decoration, kept out of the label so screen readers announce the action alone.
+    encounter.createSpan({ cls: "simplicial-explore-glyph", text: "◇", attr: { "aria-hidden": "true" } });
+    encounter.createSpan({ text: "Record encounter" });
     encounter.title = "Record several notes as one meaningful group; this does not imply pairwise links.";
     encounter.setAttr("aria-label", encounter.title);
     encounter.addEventListener("click", () => this.actions?.recordEncounter());

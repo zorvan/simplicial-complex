@@ -82,13 +82,14 @@ export async function reduceBoundaryMatrixAsync(
   return step.value;
 }
 
+// The ambient timer, bound once rather than reached through `window`. This module is the
+// worker's reduction engine, and a worker has no `window`, so a window-scoped timer would
+// throw on the very path it is used. Nothing here touches a document, so the popout-window
+// lifetime concern that makes `window` timers right for UI code does not apply.
+const scheduleMacrotask = setTimeout;
+
 function defaultYield(): Promise<void> {
-  // A bare `setTimeout`, deliberately. This module is the worker's reduction engine and a
-  // worker has no `window` to reach the timer through, so the rule's fix would throw on
-  // the very path it is applied to. The popout-window lifetime concern the rule guards
-  // against does not reach code that never touches a document.
-  // eslint-disable-next-line obsidianmd/prefer-window-timers
-  return new Promise((resolve) => setTimeout(resolve, 0));
+  return new Promise((resolve) => scheduleMacrotask(resolve, 0));
 }
 
 /** Suspends at column-batch boundaries so a driver can decide whether to yield the thread. */

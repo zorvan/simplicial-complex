@@ -63,6 +63,10 @@
   white-space: nowrap;
 }
 
+.simplicial-explore-glyph {
+  margin-inline-end: 0.35em;
+}
+
 .simplicial-replay {
   display: flex;
   align-items: center;

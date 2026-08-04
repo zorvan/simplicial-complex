@@ -13,9 +13,9 @@ var Ds = (s, t) => {
     return s;
   };
 var Is = (s) => Ts(wt({}, "__esModule", { value: !0 }), s);
-var Ko = {};
-Ds(Ko, { default: () => bt });
-module.exports = Is(Ko);
+var _o = {};
+Ds(_o, { default: () => bt });
+module.exports = Is(_o);
 var E = require("obsidian");
 function ee(s) {
   let t = 5381;
@@ -6350,7 +6350,7 @@ function co(s, t = {}) {
   for (; !n.done;) n = e.next();
   return n.value;
 }
-async function uo(s, t = {}, e = po, n = 8) {
+async function uo(s, t = {}, e = ho, n = 8) {
   let i = Zi(s, t),
     r = () => (typeof performance > "u" ? Date.now() : performance.now()),
     o = r(),
@@ -6358,8 +6358,9 @@ async function uo(s, t = {}, e = po, n = 8) {
   for (; !a.done;) (r() - o >= n && (await e(), (o = r())), (a = i.next()));
   return a.value;
 }
-function po() {
-  return new Promise((s) => setTimeout(s, 0));
+var po = setTimeout;
+function ho() {
+  return new Promise((s) => po(s, 0));
 }
 function* Zi(s, t = {}) {
   let e = s.simplices.length,
@@ -6432,7 +6433,7 @@ function Qi(s, t, e) {
     let l = e.pairs.get(o),
       c = l === void 0 ? null : s.simplices[l];
     n.push({
-      id: ho(a.dimension, a.key),
+      id: mo(a.dimension, a.key),
       dimension: a.dimension,
       birth: a.value,
       death: c ? c.value : null,
@@ -6468,7 +6469,7 @@ function Qi(s, t, e) {
     diagnostics: r,
   };
 }
-function ho(s, t) {
+function mo(s, t) {
   return `H${s}:${t}`;
 }
 var ts = {
@@ -6483,7 +6484,7 @@ var ts = {
 function ns(s, t, e, n, i = {}) {
   let r = i.now ?? (() => Date.now()),
     o = r(),
-    a = Co(n.seed),
+    a = Eo(n.seed),
     l = [...new Set(e.intervals.map((g) => g.dimension))],
     c = new Map();
   e.intervals.forEach((g) => c.set(g.id, { births: [], deaths: [] }));
@@ -6497,14 +6498,14 @@ function ns(s, t, e, n, i = {}) {
       h = !0;
       break;
     }
-    let f = n.mode === "subsample" ? bo(s, n, a) : So(s, n, a);
+    let f = n.mode === "subsample" ? xo(s, n, a) : wo(s, n, a);
     if (f === null) continue;
     let v = Se(f),
       y = it(v, { metric: s.metric, modelRevision: s.modelRevision, computeRepresentatives: !1 });
     for (let b of l) {
       let x = e.intervals.filter((N) => N.dimension === b),
         R = y.intervals.filter((N) => N.dimension === b),
-        k = go(x.map(Zt), R.map(Zt));
+        k = fo(x.map(Zt), R.map(Zt));
       k.forEach((N, B) => {
         if (N === null) return;
         let W = c.get(x[B].id);
@@ -6535,11 +6536,11 @@ function ns(s, t, e, n, i = {}) {
     truncated: h,
     elapsedMs: r() - o,
     unmatchedRate: d === 0 ? 0 : p / d,
-    samplingScheme: mo(n),
+    samplingScheme: go(n),
     support: m,
   };
 }
-function mo(s) {
+function go(s) {
   if (s.mode === "subsample") {
     let t = s.strata?.length ? "within each configured stratum" : "across all notes";
     return `Stratified subsampling: ${Math.round(s.retainFraction * 100)}% of notes retained ${t}, ${s.sampleCount} seeded resamples (seed ${s.seed}).`;
@@ -6549,12 +6550,12 @@ function mo(s) {
 function Zt(s) {
   return { birth: s.birth, death: s.death ?? 1 / 0 };
 }
-function go(s, t) {
+function fo(s, t) {
   let e = s.map(() => null);
   if (s.length === 0 || t.length === 0) return e;
   let n = st(s, (a) => Number.isFinite(a.death)),
     i = st(t, (a) => Number.isFinite(a.death));
-  fo(
+  yo(
     n.map((a) => s[a]),
     i.map((a) => t[a]),
   ).forEach((a, l) => {
@@ -6563,7 +6564,7 @@ function go(s, t) {
   let r = st(s, (a) => !Number.isFinite(a.death)),
     o = st(t, (a) => !Number.isFinite(a.death));
   return (
-    yo(
+    vo(
       r.map((a) => s[a]),
       o.map((a) => t[a]),
     ).forEach((a, l) => {
@@ -6572,7 +6573,7 @@ function go(s, t) {
     e
   );
 }
-function fo(s, t) {
+function yo(s, t) {
   if (s.length === 0) return [];
   if (t.length === 0) return s.map(() => null);
   let e = new Set([0]);
@@ -6586,12 +6587,12 @@ function fo(s, t) {
     o = null;
   for (; i <= r;) {
     let a = (i + r) >> 1,
-      l = vo(s, t, n[a]);
+      l = bo(s, t, n[a]);
     l ? ((o = l), (r = a - 1)) : (i = a + 1);
   }
   return o ?? s.map(() => null);
 }
-function yo(s, t) {
+function vo(s, t) {
   let e = s.map((r, o) => o).sort((r, o) => s[r].birth - s[o].birth),
     n = t.map((r, o) => o).sort((r, o) => t[r].birth - t[o].birth),
     i = s.map(() => null);
@@ -6604,7 +6605,7 @@ function is(s, t) {
 function rt(s) {
   return (s.death - s.birth) / 2;
 }
-function vo(s, t, e) {
+function bo(s, t, e) {
   let n = s.length,
     i = t.length,
     r = [];
@@ -6645,7 +6646,7 @@ function st(s, t) {
     e
   );
 }
-function bo(s, t, e) {
+function xo(s, t, e) {
   let n = new Map();
   s.vertexKeys.forEach((r, o) => {
     let a = t.strata?.[o] ?? "all",
@@ -6654,13 +6655,13 @@ function bo(s, t, e) {
   });
   let i = new Set();
   for (let r of n.values()) {
-    let o = wo(r, e),
+    let o = Co(r, e),
       a = Math.max(1, Math.round(r.length * t.retainFraction));
     o.slice(0, a).forEach((l) => i.add(l));
   }
-  return i.size === 0 ? null : xo(s, i);
+  return i.size === 0 ? null : So(s, i);
 }
-function xo(s, t) {
+function So(s, t) {
   let e = new Map(),
     n = [];
   s.vertexKeys.forEach((c, u) => {
@@ -6691,14 +6692,14 @@ function xo(s, t) {
     computeRepresentatives: !1,
   };
 }
-function So(s, t, e) {
+function wo(s, t, e) {
   let n = Float64Array.from(s.filtrationValues, (i) => {
     let r = i + (e() * 2 - 1) * t.perturbationScale;
     return Math.min(1, Math.max(0, r));
   });
   return { ...s, filtrationValues: n, computeRepresentatives: !1 };
 }
-function wo(s, t) {
+function Co(s, t) {
   let e = [...s];
   for (let n = e.length - 1; n > 0; n--) {
     let i = Math.floor(t() * (n + 1));
@@ -6712,7 +6713,7 @@ function es(s) {
     e = (n) => t[Math.min(t.length - 1, Math.floor(n * t.length))];
   return { p05: e(0.05), p50: e(0.5), p95: e(0.95) };
 }
-function Co(s) {
+function Eo(s) {
   let t = s >>> 0;
   return () => {
     t = (t + 1831565813) >>> 0;
@@ -6823,14 +6824,14 @@ function Jt(s) {
           throw new _(h.simplices.length);
         s({ kind: "persistence-result", requestId: i, result: m });
       } catch (h) {
-        s({ kind: "failure", requestId: i, failure: Eo(h, c, a, l) });
+        s({ kind: "failure", requestId: i, failure: Mo(h, c, a, l) });
       } finally {
         t.delete(i);
       }
     })();
   };
 }
-function Eo(s, t, e, n) {
+function Mo(s, t, e, n) {
   return s instanceof _
     ? { reason: "cancelled", message: s.message, phase: t, simplexCount: e, vertexCount: n }
     : s instanceof we
@@ -6847,102 +6848,103 @@ if (typeof self < "u" && typeof self.postMessage == "function" && typeof documen
   let s = Jt((t) => self.postMessage(t));
   self.onmessage = (t) => s(t.data);
 }
-var at = class {
-  constructor() {
-    this.worker = null;
-    this.blobUrl = null;
-    this.inlineHandler = null;
-    this.handlers = new Map();
-    this.execution = "worker";
-    this.restartCount = 0;
-  }
-  get lastExecution() {
-    return this.execution;
-  }
-  get restarts() {
-    return this.restartCount;
-  }
-  send(t, e) {
-    this.handlers.set(t.requestId, e);
-    let n = this.ensureWorker();
-    if (n) {
-      ((this.execution = "worker"),
-        n.postMessage(t, [
-          t.input.simplexOffsets.buffer,
-          t.input.simplexVertices.buffer,
-          t.input.simplexDimensions.buffer,
-          t.input.filtrationValues.buffer,
-        ]));
-      return;
+var Ro = setTimeout,
+  at = class {
+    constructor() {
+      this.worker = null;
+      this.blobUrl = null;
+      this.inlineHandler = null;
+      this.handlers = new Map();
+      this.execution = "worker";
+      this.restartCount = 0;
     }
-    this.execution = "main-thread";
-    let i = this.ensureInlineHandler();
-    setTimeout(() => i(t), 0);
-  }
-  cancel(t) {
-    let e = { kind: "cancel", requestId: t };
-    this.worker ? this.worker.postMessage(e) : this.inlineHandler?.(e);
-  }
-  restart() {
-    (this.disposeWorker(), this.handlers.clear(), this.restartCount++);
-  }
-  dispose() {
-    (this.disposeWorker(), this.handlers.clear(), (this.inlineHandler = null));
-  }
-  ensureWorker() {
-    if (this.worker) return this.worker;
-    if (typeof Worker > "u" || typeof Blob > "u" || typeof URL > "u") return null;
-    try {
-      let t = new Blob(
-        [
-          '"use strict";(()=>{function K(n){return n.toLowerCase().trim()}function y(n){return[...n].map(K).sort().join("|")}var pe={simplex:"s",hyperedge:"h"};function D(n,e){return`${pe[n]}:${y(e)}`}function x(n){return[...n].sort((e,t)=>K(e).localeCompare(K(t)))}function z(n){let e=new Set,t=[];for(let r of x(n)){let i=K(r);e.has(i)||(e.add(i),t.push(r))}return t}var he="filtration-order-v1";function I(n){let e=n.maxHomologyDimension,t=e+1,r=new Map;n.vertexKeys.forEach((c,m)=>{let p=y([c]);r.set(p,{key:p,vertices:[m],dimension:0,raw:0,score:1})});for(let c=0;c<n.simplexDimensions.length;c++){let m=n.simplexDimensions[c];if(m>t)continue;let p=[...n.simplexVertices.slice(n.simplexOffsets[c],n.simplexOffsets[c+1])].sort((g,h)=>g-h),f=n.filtrationValues[c];if(!Number.isFinite(f))throw new Error(`Filtration value for ${n.stableKeys[c]} is not finite`);r.set(n.stableKeys[c],{key:n.stableKeys[c],vertices:p,dimension:m,raw:f,score:1-f})}let i=[...r.values()].sort((c,m)=>c.dimension-m.dimension||c.key.localeCompare(m.key)),o=new Map;for(let c of i){if(c.dimension===0){o.set(c.key,[]);continue}let m=c.vertices.map((p,f)=>y(c.vertices.filter((g,h)=>h!==f).map(g=>n.vertexKeys[g])));for(let p of m)if(!r.has(p))throw new Error(`Filtration input is not downward closed: ${c.key} lacks ${p}`);o.set(c.key,m)}let s=new Map,a=[];for(let c of i){let m=c.raw,p=null;for(let f of o.get(c.key)??[]){let g=s.get(f)??0;g>m&&(m=g,p=f)}s.set(c.key,m),p!==null&&a.push({simplexKey:c.key,faceKey:p,rawValue:c.raw,repairedValue:m})}let l=[...r.values()].sort((c,m)=>s.get(c.key)-s.get(m.key)||c.dimension-m.dimension||c.key.localeCompare(m.key)).map((c,m)=>({key:c.key,vertices:c.vertices,dimension:c.dimension,value:s.get(c.key),rawValue:c.raw,score:c.score,order:m})),u=new Map(l.map(c=>[c.key,c.order])),d=l.map(c=>{let p=(o.get(c.key)??[]).map(f=>{let g=u.get(f);if(g===void 0)throw new Error(`Face ${f} of ${c.key} is missing from the total order`);if(g>=c.order)throw new Error(`Face precedence violated: ${f} does not precede ${c.key}`);return g});return Uint32Array.from(p.sort((f,g)=>f-g))});return{simplices:l,order:u,boundaries:d,repairs:a,maxDimension:e,tiePolicy:he}}function fe(n,e=1/0){let t=new Map;t.set(0,x([...n.nodes.keys()]).map(s=>y([s])));for(let s of n.simplices.values()){let a=s.nodes.length-1;if(a>e)continue;let l=t.get(a)??[];l.push(y(s.nodes)),t.set(a,l)}let r=Math.max(0,...t.keys()),i=[];for(let s=0;s<=r;s++){let a=[...new Set(t.get(s)??[])].sort();i.push({dimension:s,simplices:a,index:new Map(a.map((l,u)=>[l,u]))})}let o=[];for(let s=1;s<=r;s++){let a=i[s-1],l=i[s],u=l.simplices.map(d=>{let c=d.split("|"),m=c.map((p,f)=>a.index.get(y(c.filter((g,h)=>h!==f))));if(m.some(p=>p===void 0))throw new Error(`Topology input is not downward closed: ${d} lacks a codimension-one face`);return Uint32Array.from(m.sort((p,f)=>p-f))});o.push({dimension:s,rows:a,columns:l,data:u})}return{bases:i,boundaries:o,maxDimension:r}}function P(n,e){let t=[],r=0,i=0;for(;r<n.length||i<e.length;)i>=e.length||r<n.length&&n[r]<e[i]?t.push(n[r++]):r>=n.length||e[i]<n[r]?t.push(e[i++]):(r++,i++);return Uint32Array.from(t)}function W(n){return n.length?n[n.length-1]:null}function ge(n){let e=new Map,t=0;for(let r of n){let i=Uint32Array.from(r);for(;;){let o=W(i);if(o===null)break;let s=e.get(o);if(!s){e.set(o,i),t++;break}i=P(i,s)}}return t}function E(n,e){let t=fe(n,e+1),r=Array.from({length:e+2},()=>0);for(let s of t.boundaries)r[s.dimension]=ge(s.data);let i=Array.from({length:e+2},(s,a)=>t.bases[a]?.simplices.length??0),o=Array.from({length:e+1},(s,a)=>i[a]-r[a]-r[a+1]);return{b0:o[0]??0,b1:o[1]??0,b2:o[2]??0,coefficientField:"F2",betti:o,chainDimensions:i.slice(0,e+2),boundaryRanks:r.slice(0,e+2),maxDimension:e,modelRevision:n.revision}}function Y(n){if(n.simplexOffsets.length!==n.simplexDimensions.length+1)throw new Error("Invalid simplex offsets");if(n.stableKeys.length!==n.simplexDimensions.length)throw new Error("Invalid stable-key table");if(n.filtrationValues.length!==n.simplexDimensions.length)throw new Error("Invalid filtration table");if([...n.filtrationValues].some(t=>!Number.isFinite(t)))throw new Error("Invalid filtration value");let e=[];for(let t=0;t<n.simplexDimensions.length;t++){let r=n.simplexOffsets[t],i=n.simplexOffsets[t+1];if(i<r||i>n.simplexVertices.length)throw new Error("Invalid simplex vertex range");let o=[...n.simplexVertices.slice(r,i)].map(s=>n.vertexKeys[s]);if(o.some(s=>s===void 0)||o.length!==n.simplexDimensions[t]+1)throw new Error("Invalid simplex dimension or vertex index");e.push(o)}return{nodes:n.vertexKeys,simplices:e}}function Q(n,e,t){if(!e.basis)return{representatives:[],rejected:0};let r=e.basis,i=[],o=0;for(let s of t){if(s.dimension!==1&&s.dimension!==2)continue;let a=n.order.get(s.birthSimplex);if(a===void 0)continue;let l=r[a];if(!(!l||l.length===0)){if(!ye(n,l)){o++;continue}if(s.deathSimplex!==void 0){let u=n.order.get(s.deathSimplex),d=u===void 0?void 0:e.reduced[u];if(!d||d.length===0||d[d.length-1]!==a){o++;continue}}i.push({intervalId:s.id,dimension:s.dimension,simplices:[...l].map(u=>n.simplices[u].key).sort(),boundaryIsZero:!0,canonical:!1})}}return{representatives:i,rejected:o}}function ye(n,e){let t=new Uint32Array(0);for(let r of e)t=P(t,n.boundaries[r]);return t.length===0}var S=class extends Error{constructor(t){super(`Persistence reduction cancelled after ${t} columns`);this.completedColumns=t;this.name="PersistenceCancelledError"}},k=class extends Error{constructor(t,r,i){super(`Reduction reached ${t.toLocaleString()} live column entries, above the ${r.toLocaleString()} ceiling, after ${i.toLocaleString()} columns`);this.peakColumnEntries=t;this.limit=r;this.completedColumns=i;this.name="PersistenceLimitExceededError"}};var be=256;function xe(n,e={}){let t=X(n,e),r=t.next();for(;!r.done;)r=t.next();return r.value}async function ve(n,e={},t=Se,r=8){let i=X(n,e),o=()=>typeof performance>"u"?Date.now():performance.now(),s=o(),a=i.next();for(;!a.done;)o()-s>=r&&(await t(),s=o()),a=i.next();return a.value}function Se(){return new Promise(n=>setTimeout(n,0))}function*X(n,e={}){let t=n.simplices.length,r=n.boundaries.map(d=>Uint32Array.from(d)),i=e.computeRepresentatives?n.boundaries.map((d,c)=>Uint32Array.of(c)):null,o=new Map,s=new Map,a=0,l=r.reduce((d,c)=>d+c.length,0)+(i?t:0),u=l;for(let d=0;d<t;d++){if(d%be===0){if(e.shouldCancel?.())throw new S(d);e.onProgress?.(t===0?1:d/t),yield d}let c=r[d],m=i?.[d];for(;;){let p=W(c);if(p===null)break;let f=o.get(p);if(f===void 0){o.set(p,d),s.set(p,d);break}if(l-=c.length+(m?.length??0),c=P(c,r[f]),i&&m&&(m=P(m,i[f])),l+=c.length+(m?.length??0),u=Math.max(u,l),a++,e.maxColumnEntries!==void 0&&u>e.maxColumnEntries)throw new k(u,e.maxColumnEntries,d)}r[d]=c,i&&m&&(i[d]=m)}return e.onProgress?.(1),{reduced:r,basis:i,pairs:s,diagnostics:{simplexCount:t,columnOperations:a,peakColumnEntries:u,zeroLengthIntervalCount:0,essentialIntervalCount:0,representativesRequested:!!e.computeRepresentatives,rejectedRepresentativeCount:0}}}function M(n,e,t={}){return J(n,e,xe(n,{...t,computeRepresentatives:e.computeRepresentatives}))}async function Z(n,e,t={}){let r=await ve(n,{...t,computeRepresentatives:e.computeRepresentatives});return J(n,e,r)}function J(n,e,t){let r=[];for(let s=0;s<n.simplices.length;s++){if(t.reduced[s].length>0)continue;let a=n.simplices[s];if(a.dimension>n.maxDimension)continue;let l=t.pairs.get(s),u=l===void 0?null:n.simplices[l];r.push({id:Ce(a.dimension,a.key),dimension:a.dimension,birth:a.value,death:u?u.value:null,birthSimplex:a.key,...u?{deathSimplex:u.key}:{},lifetime:u?u.value-a.value:null})}r.sort((s,a)=>s.dimension-a.dimension||s.birth-a.birth||(a.lifetime??1/0)-(s.lifetime??1/0)||s.birthSimplex.localeCompare(a.birthSimplex));let i=Q(n,t,r),o={...t.diagnostics,zeroLengthIntervalCount:r.filter(s=>s.lifetime===0).length,essentialIntervalCount:r.filter(s=>s.death===null).length,rejectedRepresentativeCount:i.rejected};return{intervals:r,representatives:i.representatives,repairs:n.repairs,metric:e.metric,direction:"increasing",coefficientField:"F2",maxDimension:n.maxDimension,tiePolicy:n.tiePolicy,modelRevision:e.modelRevision,diagnostics:o}}function Ce(n,e){return`H${n}:${e}`}function te(n,e,t,r,i={}){let o=i.now??(()=>Date.now()),s=o(),a=Ee(r.seed),l=[...new Set(t.intervals.map(g=>g.dimension))],u=new Map;t.intervals.forEach(g=>u.set(g.id,{births:[],deaths:[]}));let d=0,c=0,m=0,p=!1;for(let g=0;g<r.sampleCount;g++){if(i.shouldCancel?.())throw new S(d);if(o()-s>r.budgetMs){p=!0;break}let h=r.mode==="subsample"?Fe(n,r,a):Te(n,r,a);if(h===null)continue;let b=I(h),v=M(b,{metric:n.metric,modelRevision:n.modelRevision,computeRepresentatives:!1});for(let w of l){let F=t.intervals.filter(C=>C.dimension===w),T=v.intervals.filter(C=>C.dimension===w),U=we(F.map(q),T.map(q));U.forEach((C,me)=>{if(C===null)return;let $=u.get(F[me].id);if(!$)return;let V=q(T[C]);$.births.push(V.birth),Number.isFinite(V.death)&&$.deaths.push(V.death)});let de=new Set(U.filter(C=>C!==null));c+=T.length,m+=T.length-de.size}d++,i.onProgress?.((g+1)/r.sampleCount)}let f=t.intervals.map(g=>{let h=u.get(g.id)??{births:[],deaths:[]};return{intervalId:g.id,supportFrequency:d===0?0:h.births.length/d,matchedCount:h.births.length,birthQuantiles:ee(h.births),deathQuantiles:ee(h.deaths)}});return{mode:r.mode,seed:r.seed,requestedSamples:r.sampleCount,completedSamples:d,truncated:p,elapsedMs:o()-s,unmatchedRate:c===0?0:m/c,samplingScheme:Re(r),support:f}}function Re(n){if(n.mode==="subsample"){let e=n.strata?.length?"within each configured stratum":"across all notes";return`Stratified subsampling: ${Math.round(n.retainFraction*100)}% of notes retained ${e}, ${n.sampleCount} seeded resamples (seed ${n.seed}).`}return`Weight perturbation: filtration values moved by up to \\xB1${n.perturbationScale.toFixed(2)}, ${n.sampleCount} seeded resamples (seed ${n.seed}). This is not subsampling and the two must not be compared.`}function q(n){return{birth:n.birth,death:n.death??1/0}}function we(n,e){let t=n.map(()=>null);if(n.length===0||e.length===0)return t;let r=N(n,a=>Number.isFinite(a.death)),i=N(e,a=>Number.isFinite(a.death));Ie(r.map(a=>n[a]),i.map(a=>e[a])).forEach((a,l)=>{a!==null&&(t[r[l]]=i[a])});let o=N(n,a=>!Number.isFinite(a.death)),s=N(e,a=>!Number.isFinite(a.death));return Pe(o.map(a=>n[a]),s.map(a=>e[a])).forEach((a,l)=>{a!==null&&(t[o[l]]=s[a])}),t}function Ie(n,e){if(n.length===0)return[];if(e.length===0)return n.map(()=>null);let t=new Set([0]);n.forEach(a=>{t.add(A(a)),e.forEach(l=>t.add(ne(a,l)))}),e.forEach(a=>t.add(A(a)));let r=[...t].filter(a=>Number.isFinite(a)).sort((a,l)=>a-l),i=0,o=r.length-1,s=null;for(;i<=o;){let a=i+o>>1,l=ke(n,e,r[a]);l?(s=l,o=a-1):i=a+1}return s??n.map(()=>null)}function Pe(n,e){let t=n.map((o,s)=>s).sort((o,s)=>n[o].birth-n[s].birth),r=e.map((o,s)=>s).sort((o,s)=>e[o].birth-e[s].birth),i=n.map(()=>null);for(let o=0;o<Math.min(t.length,r.length);o++)i[t[o]]=r[o];return i}function ne(n,e){return Math.max(Math.abs(n.birth-e.birth),Math.abs(n.death-e.death))}function A(n){return(n.death-n.birth)/2}function ke(n,e,t){let r=n.length,i=e.length,o=[];for(let l=0;l<r;l++){let u=[];for(let d=0;d<i;d++)ne(n[l],e[d])<=t&&u.push(d);A(n[l])<=t&&u.push(i+l),o.push(u)}for(let l=0;l<i;l++){let u=[];A(e[l])<=t&&u.push(l);for(let d=0;d<r;d++)u.push(i+d);o.push(u)}let s=Array.from({length:r+i},()=>null),a=Array.from({length:r+i},()=>null);for(let l=0;l<r+i;l++)if(!re(l,o,s,a,new Set))return null;return Array.from({length:r},(l,u)=>{let d=s[u];return d!==null&&d<i?d:null})}function re(n,e,t,r,i){for(let o of e[n]){if(i.has(o))continue;i.add(o);let s=r[o];if(s===null||re(s,e,t,r,i))return r[o]=n,t[n]=o,!0}return!1}function N(n,e){let t=[];return n.forEach((r,i)=>{e(r)&&t.push(i)}),t}function Fe(n,e,t){let r=new Map;n.vertexKeys.forEach((o,s)=>{let a=e.strata?.[s]??"all",l=r.get(a)??[];l.push(s),r.set(a,l)});let i=new Set;for(let o of r.values()){let s=Ke(o,t),a=Math.max(1,Math.round(o.length*e.retainFraction));s.slice(0,a).forEach(l=>i.add(l))}return i.size===0?null:De(n,i)}function De(n,e){let t=new Map,r=[];n.vertexKeys.forEach((u,d)=>{e.has(d)&&(t.set(d,r.length),r.push(u))});let i=[0],o=[],s=[],a=[],l=[];for(let u=0;u<n.simplexDimensions.length;u++){let d=[...n.simplexVertices.slice(n.simplexOffsets[u],n.simplexOffsets[u+1])];d.every(c=>e.has(c))&&(d.forEach(c=>o.push(t.get(c))),i.push(o.length),s.push(n.simplexDimensions[u]),a.push(n.filtrationValues[u]),l.push(n.stableKeys[u]))}return{...n,vertexKeys:r,simplexOffsets:Uint32Array.from(i),simplexVertices:Uint32Array.from(o),simplexDimensions:Uint16Array.from(s),filtrationValues:Float64Array.from(a),stableKeys:l,computeRepresentatives:!1}}function Te(n,e,t){let r=Float64Array.from(n.filtrationValues,i=>{let o=i+(t()*2-1)*e.perturbationScale;return Math.min(1,Math.max(0,o))});return{...n,filtrationValues:r,computeRepresentatives:!1}}function Ke(n,e){let t=[...n];for(let r=t.length-1;r>0;r--){let i=Math.floor(e()*(r+1));[t[r],t[i]]=[t[i],t[r]]}return t}function ee(n){if(n.length===0)return null;let e=[...n].sort((r,i)=>r-i),t=r=>e[Math.min(e.length-1,Math.floor(r*e.length))];return{p05:t(.05),p50:t(.5),p95:t(.95)}}function Ee(n){let e=n>>>0;return()=>{e=e+1831565813>>>0;let t=e;return t=Math.imul(t^t>>>15,t|1),t^=t+Math.imul(t^t>>>7,t|61),((t^t>>>14)>>>0)/4294967296}}function Me(n){let e=5381;for(let t=0;t<n.length;t++)e=(e<<5)+e^n.charCodeAt(t),e=e>>>0;return e}function R(n){let e=["purple","teal","coral","pink","blue","amber"];return n?e[Me(n)%e.length]:"purple"}function oe(n){return n.nodes.length-1}function*se(n,e){if(e===0){yield[];return}for(let t=0;t<=n.length-e;t++)for(let r of se(n.slice(t+1),e-1))yield[n[t],...r]}function G(n,e){if(oe(e)>=4)return[];let r=x(e.nodes),i=[];for(let o=2;o<r.length;o++)for(let s of se(r,o))n.simplices.has(y(s))||i.push(x(s));return i}function ae(n,e){let t=oe(e);if(t>4){console.warn(`[Simplicial] Simplex dim=${t} exceeds cap. Faces not auto-generated.`);return}let r=y(e.nodes),i=e.colorKey??R(e.label);for(let o of G(n,e))n.simplices.set(y(o),{nodes:o,autoGenerated:!0,userDefined:!1,parentKey:r,colorKey:i})}function _(n,e=2){return E(n,e)}function le(n,e=2){let t=new Map;for(let i of n.simplices.values()){let o=i.nodes.length,s=t.get(o)??new Set;s.add(y(i.nodes)),t.set(o,s)}let r=[];return e>=1&&r.push(...Ne(n,t)),e>=2&&r.push(...Ae(t)),r}function Ne(n,e){let t=new Map([...n.nodes.keys()].map(s=>[s,new Set]));for(let s of n.simplices.values()){if(s.nodes.length!==2)continue;let[a,l]=s.nodes;t.get(a)?.add(l),t.get(l)?.add(a)}let r=e.get(3)??new Set,i=new Set,o=[];for(let[s,a]of t){let l=x([...a]);for(let u=0;u<l.length;u++)for(let d=u+1;d<l.length;d++){let c=l[u],m=l[d];if(!t.get(c)?.has(m))continue;let p=x([s,c,m]),f=y(p);r.has(f)||i.has(f)||(i.add(f),o.push({dimension:1,boundaryNodes:p,missingSimplex:[...p]}))}}return o.sort((s,a)=>y(s.missingSimplex).localeCompare(y(a.missingSimplex)))}function Ae(n){let e=n.get(3)??new Set,t=n.get(4)??new Set,r=new Map,i=[...e].map(s=>s.split("|"));for(let s=0;s<i.length;s++)for(let a=s+1;a<i.length;a++){let l=x([...new Set([...i[s],...i[a]])]);l.length===4&&r.set(y(l),l)}let o=[];for(let[s,a]of r){if(t.has(s))continue;a.every((u,d)=>e.has(y(a.filter((c,m)=>m!==d))))&&o.push({dimension:2,boundaryNodes:[...a],missingSimplex:[...a]})}return o.sort((s,a)=>y(s.missingSimplex).localeCompare(y(a.missingSimplex)))}function _e(n){if(!n)return"";try{return` ${JSON.stringify(n)}`}catch{return" [unserializable-details]"}}function L(n,e,t,r){let i=`[Simplicial:${e}] ${t}${_e(r)}`;if(n==="error"){console.error(i);return}if(n==="warn"){console.warn(i);return}if(n==="debug"){console.debug(i);return}console.debug(i)}var ce={debug(n,e,t){L("debug",n,e,t)},info(n,e,t){L("info",n,e,t)},warn(n,e,t){L("warn",n,e,t)},error(n,e,t){L("error",n,e,t)}};function B(n,e){return n+Math.random()*(e-n)}function Le(n,e,t){let r=n/2,i=e/2,o=Math.max(t+40,r-t),s=Math.max(t+40,i-t);switch(Math.floor(Math.random()*4)){case 0:return{px:B(-o,o),py:-s};case 1:return{px:o,py:B(-s,s)};case 2:return{px:B(-o,o),py:s};default:return{px:-o,py:B(-s,s)}}}function Be(n,e,t=!1){let r=e?.width??960,i=e?.height??640,{px:o,py:s}=Le(r,i,80);return{id:n,px:o,py:s,vx:0,vy:0,isVirtual:t,isPinned:!1,displayAlpha:1}}var H=class{constructor(){this.revision=0;this.nodes=new Map;this.simplices=new Map;this.hyperedges=new Map;this.listeners=new Set;this.batchDepth=0;this.hasPendingEmit=!1;this._analysisCache=null;this._analysisDirty=!0;this._crossLayerCache=null}subscribe(e){return this.listeners.add(e),()=>this.listeners.delete(e)}emitChange(){if(this.batchDepth>0){this.hasPendingEmit=!0;return}this.flushChange()}flushChange(){this.listeners.forEach(e=>e())}batch(e){this.batchDepth++;try{return e()}finally{this.batchDepth--,this.batchDepth===0&&this.hasPendingEmit&&(this.hasPendingEmit=!1,this.flushChange())}}setNode(e,t){let r=this.nodes.get(e);if(r){Object.assign(r,t??{}),t?.isVirtual===!1&&(r.isVirtual=!1),this.emitChange();return}let i=Be(e,void 0,t?.isVirtual??!1);t?.px!==void 0&&(i.px=t.px),t?.py!==void 0&&(i.py=t.py),t?.isPinned!==void 0&&(i.isPinned=t.isPinned),this.nodes.set(e,i),this.invalidateAnalysisCache(),this.emitChange()}removeNode(e){this.nodes.delete(e);for(let[t,r]of[...this.simplices])r.nodes.includes(e)&&this.simplices.delete(t);for(let[t,r]of[...this.hyperedges])r.nodes.includes(e)&&this.hyperedges.delete(t);this.invalidateAnalysisCache(),this.emitChange()}updateNodeId(e,t){if(e===t)return;let r=this.nodes.get(e);r&&(this.nodes.set(t,{...r,id:t}),this.nodes.delete(e));for(let[i,o]of[...this.simplices]){if(!o.nodes.includes(e))continue;let s={...o,nodes:x(o.nodes.map(a=>a===e?t:a))};this.simplices.delete(i),this.simplices.set(y(s.nodes),s)}for(let[i,o]of[...this.hyperedges]){if(!o.nodes.includes(e))continue;let s={...o,nodes:x(o.nodes.map(a=>a===e?t:a))};this.hyperedges.delete(i),this.hyperedges.set(D("hyperedge",s.nodes),s)}this.invalidateAnalysisCache(),this.emitChange()}addSimplex(e){if(e.kind==="hyperedge")return ce.error("model","Refused to add a hyperedge through addSimplex",{nodes:e.nodes}),"";let t=z(e.nodes);if(t.length<2)return"";t.forEach(o=>{this.nodes.has(o)||this.setNode(o,{isVirtual:!1})});let r={...e,nodes:x(t),weight:O(e.weight),autoGenerated:e.autoGenerated??!1,userDefined:e.userDefined??!e.autoGenerated,colorKey:e.autoGenerated?e.colorKey??"neutral":e.colorKey??R(e.label)},i=y(r.nodes);return this.simplices.set(i,r),ae(this,r),this.invalidateAnalysisCache(),this.emitChange(),i}removeSimplex(e){if(this.simplices.delete(e)){for(let[t,r]of[...this.simplices]){if(!r.autoGenerated)continue;[...this.simplices.entries()].some(([o,s])=>o===t||s.autoGenerated?!1:r.nodes.every(a=>s.nodes.includes(a)))||this.simplices.delete(t)}this.invalidateAnalysisCache(),this.emitChange()}}addHyperedge(e){let t=z(e.nodes);if(t.length<2)return"";t.forEach(l=>{this.nodes.has(l)||this.setNode(l,{isVirtual:!1})});let r=x(t),i=D("hyperedge",r),o=this.hyperedges.get(i),s=o?.suggested&&!e.suggested?void 0:o,a={...s,...e,nodes:r,weight:O(e.weight??s?.weight),colorKey:e.colorKey??s?.colorKey??R(e.label),...e.suggested?{}:{occurredAt:s?.occurredAt??e.occurredAt??Date.now()}};return this.hyperedges.set(i,a),this.invalidateAnalysisCache(!1),this.emitChange(),i}removeHyperedge(e){return this.hyperedges.delete(e)?(this.invalidateAnalysisCache(!1),this.emitChange(),!0):!1}getHyperedge(e){return this.hyperedges.get(e)}getHyperedgesForNode(e){return[...this.hyperedges.values()].filter(t=>t.nodes.includes(e))}updateHyperedge(e,t){let r=this.hyperedges.get(e);if(!r)return;let i={...r,...t,nodes:r.nodes};return t.label!==void 0&&(i.colorKey=R(t.label)),t.weight!==void 0&&(i.weight=O(t.weight)),this.hyperedges.set(e,i),this.invalidateAnalysisCache(!1),this.emitChange(),i}facesImpliedByPromotion(e){let t=this.hyperedges.get(e);return t?G(this,{nodes:t.nodes}):[]}promoteToSimplex(e,t={}){let r=this.hyperedges.get(e);if(!r)return null;let i=this.facesImpliedByPromotion(e),o="";return this.batch(()=>{o=this.addSimplex({nodes:r.nodes,label:r.label,weight:r.weight,sourcePath:r.sourcePath,userDefined:!0,autoGenerated:!1}),t.retainEncounter===!1?this.hyperedges.delete(e):this.hyperedges.set(e,{...r,promotedTo:o}),this.invalidateAnalysisCache(),this.emitChange()}),o?{simplexKey:o,createdFaces:i}:null}relaxToHyperedge(e){let t=this.simplices.get(e);if(!t||t.autoGenerated)return null;let r=D("hyperedge",t.nodes),i=this.hyperedges.get(r),o="";return this.batch(()=>{o=this.addHyperedge({...i,nodes:t.nodes,label:i?.label??t.label,weight:i?.weight??t.weight,sourcePath:i?.sourcePath??t.sourcePath,occurredAt:i?.occurredAt,promotedTo:void 0}),this.removeSimplex(e)}),o||null}crystallizeHyperedge(e,t){let r=this.hyperedges.get(e);return r?(this.batch(()=>{this.nodes.has(t)||this.setNode(t,{isVirtual:!1}),this.hyperedges.set(e,{...r,crystallizedInto:t}),this.invalidateAnalysisCache(),this.emitChange()}),!0):!1}getAllRelations(){let e=[];return this.simplices.forEach((t,r)=>{e.push({key:D("simplex",t.nodes),relation:{kind:"simplex",...t}})}),this.hyperedges.forEach((t,r)=>{e.push({key:r,relation:{kind:"hyperedge",...t}})}),e}replaceInferredSimplices(e){this.batch(()=>{for(let[t,r]of[...this.simplices])r.inferred&&this.simplices.delete(t);e.forEach(t=>{t.nodes.forEach(r=>{this.nodes.has(r)||this.setNode(r,{isVirtual:!1})}),this.addSimplex(t)}),this.invalidateAnalysisCache(),this.emitChange()})}replaceInferredHyperedges(e){this.batch(()=>{for(let[t,r]of this.hyperedges)r.inferred&&r.suggested&&r.suggestionSource!=="encounter-discovery"&&this.hyperedges.delete(t);e.forEach(t=>this.addHyperedge({...t,inferred:!0,suggested:!0,suggestionSource:"inference"})),this.invalidateAnalysisCache(!1),this.emitChange()})}replaceSourceRelations(e,t,r){this.batch(()=>{for(let[i,o]of[...this.simplices])o.sourcePath===e&&!o.autoGenerated&&this.simplices.delete(i);for(let[i,o]of[...this.hyperedges])o.sourcePath===e&&this.hyperedges.delete(i);t.forEach(i=>{i.nodes.forEach(o=>{this.nodes.has(o)||this.setNode(o,{isVirtual:!0})}),this.addSimplex({...i,sourcePath:e})}),r.forEach(i=>{i.nodes.forEach(o=>{this.nodes.has(o)||this.setNode(o,{isVirtual:!0})}),this.addHyperedge({...i,sourcePath:e})}),this.invalidateAnalysisCache(),this.emitChange()})}replaceSourceSimplices(e,t){this.replaceSourceRelations(e,t,[])}updateMetadata(e,t){let r=this.simplices.get(e);if(!r)return;let i={...r,...t};t.label!==void 0&&(i.colorKey=r.autoGenerated?"neutral":R(t.label)),t.weight!==void 0&&(i.weight=O(t.weight)),this.simplices.set(e,i),this.invalidateAnalysisCache(),this.emitChange()}setPinnedState(e,t,r,i){let o=this.nodes.get(e);o&&(o.isPinned=t,r!==void 0&&(o.px=r),i!==void 0&&(o.py=i),this.emitChange())}getSimplicesForNode(e){return[...this.simplices.values()].filter(t=>t.nodes.includes(e))}getNeighbors(e){let t=new Set;return this.getSimplicesForNode(e).forEach(r=>{r.nodes.forEach(i=>{i!==e&&t.add(i)})}),[...t]}getSimplicesByDim(e){return[...this.simplices.values()].filter(t=>t.nodes.length-1===e)}getAllNodes(){return[...this.nodes.values()]}getSimplex(e){return this.simplices.get(e)}invalidateAnalysisCache(e=!0){this._analysisDirty=!0,this._crossLayerCache=null,e&&this.revision++}readCrossLayerCache(){return this._crossLayerCache}writeCrossLayerCache(e){return this._crossLayerCache=e,e}getAnalysisSummary(){return!this._analysisDirty&&this._analysisCache?this._analysisCache:(this._analysisCache=this.computeAnalysisSummary(),this._analysisDirty=!1,this._analysisCache)}getCachedBetti(){return!this._analysisDirty&&this._analysisCache?this._analysisCache.betti??_(this,2):_(this,2)}computeAnalysisSummary(){let e=[...this.simplices.values()],t=e.filter(h=>h.nodes.length===2),r=new Map,i=new Map;this.nodes.forEach((h,b)=>r.set(b,new Set)),this.nodes.forEach((h,b)=>i.set(b,0)),t.forEach(h=>{let[b,v]=h.nodes;r.get(b)?.add(v),r.get(v)?.add(b)}),e.forEach(h=>{h.nodes.forEach(b=>{i.set(b,(i.get(b)??0)+1)})});let o=0,s=new Set;r.forEach((h,b)=>{if(s.has(b))return;o++;let v=[b];for(;v.length>0;){let w=v.pop();s.has(w)||(s.add(w),r.get(w)?.forEach(F=>{s.has(F)||v.push(F)}))}});let a=null,l=-1,u=0;r.forEach((h,b)=>{let v=h.size;u+=v,v>l&&(l=v,a=b)});let d=null,c=-1,m=0;i.forEach((h,b)=>{m+=h,h>c&&(c=h,d=b)});let p=_(this,2),f=le(this,2).length,g=[...this.hyperedges.values()];return{nodeCount:this.nodes.size,simplexCount:e.length,hyperedgeCount:g.length,recurringEncounterCount:g.filter(h=>h.persistence==="recurring").length,edgeCount:t.length,clusterCount:e.filter(h=>h.nodes.length===3).length,coreCount:e.filter(h=>h.nodes.length>=4).length,inferredCount:e.filter(h=>h.inferred).length,suggestedCount:e.filter(h=>h.suggested).length,connectedComponents:o,averageDegree:this.nodes.size?Number((u/this.nodes.size).toFixed(2)):0,maxDegreeNodeId:a,maxDegree:Math.max(0,l),maxSimplexCentralityNodeId:d,maxSimplexCentrality:Math.max(0,c),averageSimplexCentrality:this.nodes.size?Number((m/this.nodes.size).toFixed(2)):0,betti:p,missingFaceCount:f}}};function O(n){return n===void 0||Number.isNaN(n)?1:Math.max(.1,Math.min(1,n))}var j=class{constructor(){this.cancelled=new Set}capabilities(){return{coefficientFields:["F2"],maxHomologyDimension:2,persistence:!0}}async computeStatic(e){if(this.cancelled.delete(e.requestId))throw new Error(`Topology request cancelled: ${e.requestId}`);let t=Y(e),r=new H;return t.nodes.forEach(i=>r.setNode(i)),t.simplices.filter(i=>i.length>1).forEach(i=>r.addSimplex({nodes:i})),{...E(r,e.maxHomologyDimension),modelRevision:e.modelRevision}}async computePersistence(e,t={}){if(this.cancelled.delete(e.requestId))throw new Error(`Topology request cancelled: ${e.requestId}`);let r=I(e);return M(r,{metric:e.metric,modelRevision:e.modelRevision,computeRepresentatives:e.computeRepresentatives},{...t,shouldCancel:()=>this.cancelled.has(e.requestId)||!!t.shouldCancel?.()})}cancel(e){this.cancelled.add(e)}clearCancellation(e){this.cancelled.delete(e)}};function ue(n,e){let t=n.stableKeys.length+n.vertexKeys.length;return t<=e.maxSimplices?null:{reason:"limit-exceeded",message:`This vault produces ${t.toLocaleString()} simplices, above the ${e.maxSimplices.toLocaleString()} ceiling. Raise the limit in settings, or narrow the filtration metric, to analyze it.`,phase:"building",simplexCount:t,vertexCount:n.vertexKeys.length}}function Oe(n){let e=new Set;return function(r){if(r.kind==="cancel"){e.add(r.requestId);return}let{requestId:i,input:o,limits:s}=r,a=o.stableKeys.length+o.vertexKeys.length,l=o.vertexKeys.length,u="building",d=ue(o,s);if(d){n({kind:"failure",requestId:i,failure:d});return}let c=new j,m=()=>e.has(i);(async()=>{try{if(r.kind==="static"){let g=await c.computeStatic(o);if(m())throw new S(0);n({kind:"static-result",requestId:i,result:g});return}n({kind:"progress",requestId:i,phase:u,fraction:0});let p=I(o);u="reducing";let f=await Z(p,{metric:o.metric,modelRevision:o.modelRevision,computeRepresentatives:o.computeRepresentatives},{shouldCancel:m,maxColumnEntries:s.maxColumnEntries,onProgress:g=>n({kind:"progress",requestId:i,phase:"reducing",fraction:g})});if(o.computeRepresentatives&&(u="witnesses",n({kind:"progress",requestId:i,phase:u,fraction:1})),o.bootstrap?.enabled&&(u="uncertainty",n({kind:"progress",requestId:i,phase:u,fraction:0}),f.uncertainty=te(o,p,f,o.bootstrap,{shouldCancel:m,onProgress:g=>n({kind:"progress",requestId:i,phase:"uncertainty",fraction:g})})),m())throw new S(p.simplices.length);n({kind:"persistence-result",requestId:i,result:f})}catch(p){n({kind:"failure",requestId:i,failure:He(p,u,a,l)})}finally{e.delete(i)}})()}}function He(n,e,t,r){return n instanceof S?{reason:"cancelled",message:n.message,phase:e,simplexCount:t,vertexCount:r}:n instanceof k?{reason:"limit-exceeded",message:n.message,phase:e,simplexCount:t,vertexCount:r}:{reason:"engine-error",message:n instanceof Error?n.message:String(n),phase:e,simplexCount:t,vertexCount:r}}if(typeof self<"u"&&typeof self.postMessage=="function"&&typeof document>"u"){let n=Oe(e=>self.postMessage(e));self.onmessage=e=>n(e.data)}})();\n',
-        ],
-        { type: "text/javascript" },
-      );
-      this.blobUrl = URL.createObjectURL(t);
-      let e = new Worker(this.blobUrl);
-      return (
-        (e.onmessage = (n) => this.receive(n.data)),
-        (e.onerror = (n) => this.failAll(n instanceof ErrorEvent ? n.message : "Topology worker error")),
-        (this.worker = e),
-        e
-      );
-    } catch (t) {
-      return (
-        C.warn("topology", "Falling back to main-thread topology: worker start failed", {
-          error: t instanceof Error ? t.message : String(t),
-        }),
-        this.disposeWorker(),
-        null
-      );
+    get lastExecution() {
+      return this.execution;
     }
-  }
-  ensureInlineHandler() {
-    return (this.inlineHandler ?? (this.inlineHandler = Jt((t) => this.receive(t))), this.inlineHandler);
-  }
-  receive(t) {
-    let e = this.handlers.get(t.requestId);
-    e && (t.kind !== "progress" && this.handlers.delete(t.requestId), e.onMessage(t));
-  }
-  failAll(t) {
-    for (let [e, n] of [...this.handlers])
-      (this.handlers.delete(e),
-        n.onMessage({
-          kind: "failure",
-          requestId: e,
-          failure: { reason: "engine-error", message: t, phase: "reducing", simplexCount: 0, vertexCount: 0 },
-        }));
-    (this.disposeWorker(), this.restartCount++);
-  }
-  disposeWorker() {
-    (this.worker?.terminate(),
-      (this.worker = null),
-      this.blobUrl && URL.revokeObjectURL(this.blobUrl),
-      (this.blobUrl = null));
-  }
-};
-var Mo = 1,
-  Ro = 4,
+    get restarts() {
+      return this.restartCount;
+    }
+    send(t, e) {
+      this.handlers.set(t.requestId, e);
+      let n = this.ensureWorker();
+      if (n) {
+        ((this.execution = "worker"),
+          n.postMessage(t, [
+            t.input.simplexOffsets.buffer,
+            t.input.simplexVertices.buffer,
+            t.input.simplexDimensions.buffer,
+            t.input.filtrationValues.buffer,
+          ]));
+        return;
+      }
+      this.execution = "main-thread";
+      let i = this.ensureInlineHandler();
+      Ro(() => i(t), 0);
+    }
+    cancel(t) {
+      let e = { kind: "cancel", requestId: t };
+      this.worker ? this.worker.postMessage(e) : this.inlineHandler?.(e);
+    }
+    restart() {
+      (this.disposeWorker(), this.handlers.clear(), this.restartCount++);
+    }
+    dispose() {
+      (this.disposeWorker(), this.handlers.clear(), (this.inlineHandler = null));
+    }
+    ensureWorker() {
+      if (this.worker) return this.worker;
+      if (typeof Worker > "u" || typeof Blob > "u" || typeof URL > "u") return null;
+      try {
+        let t = new Blob(
+          [
+            '"use strict";(()=>{function K(n){return n.toLowerCase().trim()}function y(n){return[...n].map(K).sort().join("|")}var pe={simplex:"s",hyperedge:"h"};function D(n,e){return`${pe[n]}:${y(e)}`}function x(n){return[...n].sort((e,t)=>K(e).localeCompare(K(t)))}function z(n){let e=new Set,t=[];for(let r of x(n)){let i=K(r);e.has(i)||(e.add(i),t.push(r))}return t}var he="filtration-order-v1";function I(n){let e=n.maxHomologyDimension,t=e+1,r=new Map;n.vertexKeys.forEach((c,m)=>{let p=y([c]);r.set(p,{key:p,vertices:[m],dimension:0,raw:0,score:1})});for(let c=0;c<n.simplexDimensions.length;c++){let m=n.simplexDimensions[c];if(m>t)continue;let p=[...n.simplexVertices.slice(n.simplexOffsets[c],n.simplexOffsets[c+1])].sort((g,h)=>g-h),f=n.filtrationValues[c];if(!Number.isFinite(f))throw new Error(`Filtration value for ${n.stableKeys[c]} is not finite`);r.set(n.stableKeys[c],{key:n.stableKeys[c],vertices:p,dimension:m,raw:f,score:1-f})}let i=[...r.values()].sort((c,m)=>c.dimension-m.dimension||c.key.localeCompare(m.key)),o=new Map;for(let c of i){if(c.dimension===0){o.set(c.key,[]);continue}let m=c.vertices.map((p,f)=>y(c.vertices.filter((g,h)=>h!==f).map(g=>n.vertexKeys[g])));for(let p of m)if(!r.has(p))throw new Error(`Filtration input is not downward closed: ${c.key} lacks ${p}`);o.set(c.key,m)}let s=new Map,a=[];for(let c of i){let m=c.raw,p=null;for(let f of o.get(c.key)??[]){let g=s.get(f)??0;g>m&&(m=g,p=f)}s.set(c.key,m),p!==null&&a.push({simplexKey:c.key,faceKey:p,rawValue:c.raw,repairedValue:m})}let l=[...r.values()].sort((c,m)=>s.get(c.key)-s.get(m.key)||c.dimension-m.dimension||c.key.localeCompare(m.key)).map((c,m)=>({key:c.key,vertices:c.vertices,dimension:c.dimension,value:s.get(c.key),rawValue:c.raw,score:c.score,order:m})),u=new Map(l.map(c=>[c.key,c.order])),d=l.map(c=>{let p=(o.get(c.key)??[]).map(f=>{let g=u.get(f);if(g===void 0)throw new Error(`Face ${f} of ${c.key} is missing from the total order`);if(g>=c.order)throw new Error(`Face precedence violated: ${f} does not precede ${c.key}`);return g});return Uint32Array.from(p.sort((f,g)=>f-g))});return{simplices:l,order:u,boundaries:d,repairs:a,maxDimension:e,tiePolicy:he}}function fe(n,e=1/0){let t=new Map;t.set(0,x([...n.nodes.keys()]).map(s=>y([s])));for(let s of n.simplices.values()){let a=s.nodes.length-1;if(a>e)continue;let l=t.get(a)??[];l.push(y(s.nodes)),t.set(a,l)}let r=Math.max(0,...t.keys()),i=[];for(let s=0;s<=r;s++){let a=[...new Set(t.get(s)??[])].sort();i.push({dimension:s,simplices:a,index:new Map(a.map((l,u)=>[l,u]))})}let o=[];for(let s=1;s<=r;s++){let a=i[s-1],l=i[s],u=l.simplices.map(d=>{let c=d.split("|"),m=c.map((p,f)=>a.index.get(y(c.filter((g,h)=>h!==f))));if(m.some(p=>p===void 0))throw new Error(`Topology input is not downward closed: ${d} lacks a codimension-one face`);return Uint32Array.from(m.sort((p,f)=>p-f))});o.push({dimension:s,rows:a,columns:l,data:u})}return{bases:i,boundaries:o,maxDimension:r}}function P(n,e){let t=[],r=0,i=0;for(;r<n.length||i<e.length;)i>=e.length||r<n.length&&n[r]<e[i]?t.push(n[r++]):r>=n.length||e[i]<n[r]?t.push(e[i++]):(r++,i++);return Uint32Array.from(t)}function W(n){return n.length?n[n.length-1]:null}function ge(n){let e=new Map,t=0;for(let r of n){let i=Uint32Array.from(r);for(;;){let o=W(i);if(o===null)break;let s=e.get(o);if(!s){e.set(o,i),t++;break}i=P(i,s)}}return t}function E(n,e){let t=fe(n,e+1),r=Array.from({length:e+2},()=>0);for(let s of t.boundaries)r[s.dimension]=ge(s.data);let i=Array.from({length:e+2},(s,a)=>t.bases[a]?.simplices.length??0),o=Array.from({length:e+1},(s,a)=>i[a]-r[a]-r[a+1]);return{b0:o[0]??0,b1:o[1]??0,b2:o[2]??0,coefficientField:"F2",betti:o,chainDimensions:i.slice(0,e+2),boundaryRanks:r.slice(0,e+2),maxDimension:e,modelRevision:n.revision}}function Y(n){if(n.simplexOffsets.length!==n.simplexDimensions.length+1)throw new Error("Invalid simplex offsets");if(n.stableKeys.length!==n.simplexDimensions.length)throw new Error("Invalid stable-key table");if(n.filtrationValues.length!==n.simplexDimensions.length)throw new Error("Invalid filtration table");if([...n.filtrationValues].some(t=>!Number.isFinite(t)))throw new Error("Invalid filtration value");let e=[];for(let t=0;t<n.simplexDimensions.length;t++){let r=n.simplexOffsets[t],i=n.simplexOffsets[t+1];if(i<r||i>n.simplexVertices.length)throw new Error("Invalid simplex vertex range");let o=[...n.simplexVertices.slice(r,i)].map(s=>n.vertexKeys[s]);if(o.some(s=>s===void 0)||o.length!==n.simplexDimensions[t]+1)throw new Error("Invalid simplex dimension or vertex index");e.push(o)}return{nodes:n.vertexKeys,simplices:e}}function Q(n,e,t){if(!e.basis)return{representatives:[],rejected:0};let r=e.basis,i=[],o=0;for(let s of t){if(s.dimension!==1&&s.dimension!==2)continue;let a=n.order.get(s.birthSimplex);if(a===void 0)continue;let l=r[a];if(!(!l||l.length===0)){if(!ye(n,l)){o++;continue}if(s.deathSimplex!==void 0){let u=n.order.get(s.deathSimplex),d=u===void 0?void 0:e.reduced[u];if(!d||d.length===0||d[d.length-1]!==a){o++;continue}}i.push({intervalId:s.id,dimension:s.dimension,simplices:[...l].map(u=>n.simplices[u].key).sort(),boundaryIsZero:!0,canonical:!1})}}return{representatives:i,rejected:o}}function ye(n,e){let t=new Uint32Array(0);for(let r of e)t=P(t,n.boundaries[r]);return t.length===0}var S=class extends Error{constructor(t){super(`Persistence reduction cancelled after ${t} columns`);this.completedColumns=t;this.name="PersistenceCancelledError"}},k=class extends Error{constructor(t,r,i){super(`Reduction reached ${t.toLocaleString()} live column entries, above the ${r.toLocaleString()} ceiling, after ${i.toLocaleString()} columns`);this.peakColumnEntries=t;this.limit=r;this.completedColumns=i;this.name="PersistenceLimitExceededError"}};var be=256;function xe(n,e={}){let t=X(n,e),r=t.next();for(;!r.done;)r=t.next();return r.value}async function ve(n,e={},t=Ce,r=8){let i=X(n,e),o=()=>typeof performance>"u"?Date.now():performance.now(),s=o(),a=i.next();for(;!a.done;)o()-s>=r&&(await t(),s=o()),a=i.next();return a.value}var Se=setTimeout;function Ce(){return new Promise(n=>Se(n,0))}function*X(n,e={}){let t=n.simplices.length,r=n.boundaries.map(d=>Uint32Array.from(d)),i=e.computeRepresentatives?n.boundaries.map((d,c)=>Uint32Array.of(c)):null,o=new Map,s=new Map,a=0,l=r.reduce((d,c)=>d+c.length,0)+(i?t:0),u=l;for(let d=0;d<t;d++){if(d%be===0){if(e.shouldCancel?.())throw new S(d);e.onProgress?.(t===0?1:d/t),yield d}let c=r[d],m=i?.[d];for(;;){let p=W(c);if(p===null)break;let f=o.get(p);if(f===void 0){o.set(p,d),s.set(p,d);break}if(l-=c.length+(m?.length??0),c=P(c,r[f]),i&&m&&(m=P(m,i[f])),l+=c.length+(m?.length??0),u=Math.max(u,l),a++,e.maxColumnEntries!==void 0&&u>e.maxColumnEntries)throw new k(u,e.maxColumnEntries,d)}r[d]=c,i&&m&&(i[d]=m)}return e.onProgress?.(1),{reduced:r,basis:i,pairs:s,diagnostics:{simplexCount:t,columnOperations:a,peakColumnEntries:u,zeroLengthIntervalCount:0,essentialIntervalCount:0,representativesRequested:!!e.computeRepresentatives,rejectedRepresentativeCount:0}}}function M(n,e,t={}){return J(n,e,xe(n,{...t,computeRepresentatives:e.computeRepresentatives}))}async function Z(n,e,t={}){let r=await ve(n,{...t,computeRepresentatives:e.computeRepresentatives});return J(n,e,r)}function J(n,e,t){let r=[];for(let s=0;s<n.simplices.length;s++){if(t.reduced[s].length>0)continue;let a=n.simplices[s];if(a.dimension>n.maxDimension)continue;let l=t.pairs.get(s),u=l===void 0?null:n.simplices[l];r.push({id:Re(a.dimension,a.key),dimension:a.dimension,birth:a.value,death:u?u.value:null,birthSimplex:a.key,...u?{deathSimplex:u.key}:{},lifetime:u?u.value-a.value:null})}r.sort((s,a)=>s.dimension-a.dimension||s.birth-a.birth||(a.lifetime??1/0)-(s.lifetime??1/0)||s.birthSimplex.localeCompare(a.birthSimplex));let i=Q(n,t,r),o={...t.diagnostics,zeroLengthIntervalCount:r.filter(s=>s.lifetime===0).length,essentialIntervalCount:r.filter(s=>s.death===null).length,rejectedRepresentativeCount:i.rejected};return{intervals:r,representatives:i.representatives,repairs:n.repairs,metric:e.metric,direction:"increasing",coefficientField:"F2",maxDimension:n.maxDimension,tiePolicy:n.tiePolicy,modelRevision:e.modelRevision,diagnostics:o}}function Re(n,e){return`H${n}:${e}`}function te(n,e,t,r,i={}){let o=i.now??(()=>Date.now()),s=o(),a=Me(r.seed),l=[...new Set(t.intervals.map(g=>g.dimension))],u=new Map;t.intervals.forEach(g=>u.set(g.id,{births:[],deaths:[]}));let d=0,c=0,m=0,p=!1;for(let g=0;g<r.sampleCount;g++){if(i.shouldCancel?.())throw new S(d);if(o()-s>r.budgetMs){p=!0;break}let h=r.mode==="subsample"?De(n,r,a):Ke(n,r,a);if(h===null)continue;let b=I(h),v=M(b,{metric:n.metric,modelRevision:n.modelRevision,computeRepresentatives:!1});for(let w of l){let F=t.intervals.filter(C=>C.dimension===w),T=v.intervals.filter(C=>C.dimension===w),U=Ie(F.map(q),T.map(q));U.forEach((C,me)=>{if(C===null)return;let $=u.get(F[me].id);if(!$)return;let V=q(T[C]);$.births.push(V.birth),Number.isFinite(V.death)&&$.deaths.push(V.death)});let de=new Set(U.filter(C=>C!==null));c+=T.length,m+=T.length-de.size}d++,i.onProgress?.((g+1)/r.sampleCount)}let f=t.intervals.map(g=>{let h=u.get(g.id)??{births:[],deaths:[]};return{intervalId:g.id,supportFrequency:d===0?0:h.births.length/d,matchedCount:h.births.length,birthQuantiles:ee(h.births),deathQuantiles:ee(h.deaths)}});return{mode:r.mode,seed:r.seed,requestedSamples:r.sampleCount,completedSamples:d,truncated:p,elapsedMs:o()-s,unmatchedRate:c===0?0:m/c,samplingScheme:we(r),support:f}}function we(n){if(n.mode==="subsample"){let e=n.strata?.length?"within each configured stratum":"across all notes";return`Stratified subsampling: ${Math.round(n.retainFraction*100)}% of notes retained ${e}, ${n.sampleCount} seeded resamples (seed ${n.seed}).`}return`Weight perturbation: filtration values moved by up to \\xB1${n.perturbationScale.toFixed(2)}, ${n.sampleCount} seeded resamples (seed ${n.seed}). This is not subsampling and the two must not be compared.`}function q(n){return{birth:n.birth,death:n.death??1/0}}function Ie(n,e){let t=n.map(()=>null);if(n.length===0||e.length===0)return t;let r=N(n,a=>Number.isFinite(a.death)),i=N(e,a=>Number.isFinite(a.death));Pe(r.map(a=>n[a]),i.map(a=>e[a])).forEach((a,l)=>{a!==null&&(t[r[l]]=i[a])});let o=N(n,a=>!Number.isFinite(a.death)),s=N(e,a=>!Number.isFinite(a.death));return ke(o.map(a=>n[a]),s.map(a=>e[a])).forEach((a,l)=>{a!==null&&(t[o[l]]=s[a])}),t}function Pe(n,e){if(n.length===0)return[];if(e.length===0)return n.map(()=>null);let t=new Set([0]);n.forEach(a=>{t.add(A(a)),e.forEach(l=>t.add(ne(a,l)))}),e.forEach(a=>t.add(A(a)));let r=[...t].filter(a=>Number.isFinite(a)).sort((a,l)=>a-l),i=0,o=r.length-1,s=null;for(;i<=o;){let a=i+o>>1,l=Fe(n,e,r[a]);l?(s=l,o=a-1):i=a+1}return s??n.map(()=>null)}function ke(n,e){let t=n.map((o,s)=>s).sort((o,s)=>n[o].birth-n[s].birth),r=e.map((o,s)=>s).sort((o,s)=>e[o].birth-e[s].birth),i=n.map(()=>null);for(let o=0;o<Math.min(t.length,r.length);o++)i[t[o]]=r[o];return i}function ne(n,e){return Math.max(Math.abs(n.birth-e.birth),Math.abs(n.death-e.death))}function A(n){return(n.death-n.birth)/2}function Fe(n,e,t){let r=n.length,i=e.length,o=[];for(let l=0;l<r;l++){let u=[];for(let d=0;d<i;d++)ne(n[l],e[d])<=t&&u.push(d);A(n[l])<=t&&u.push(i+l),o.push(u)}for(let l=0;l<i;l++){let u=[];A(e[l])<=t&&u.push(l);for(let d=0;d<r;d++)u.push(i+d);o.push(u)}let s=Array.from({length:r+i},()=>null),a=Array.from({length:r+i},()=>null);for(let l=0;l<r+i;l++)if(!re(l,o,s,a,new Set))return null;return Array.from({length:r},(l,u)=>{let d=s[u];return d!==null&&d<i?d:null})}function re(n,e,t,r,i){for(let o of e[n]){if(i.has(o))continue;i.add(o);let s=r[o];if(s===null||re(s,e,t,r,i))return r[o]=n,t[n]=o,!0}return!1}function N(n,e){let t=[];return n.forEach((r,i)=>{e(r)&&t.push(i)}),t}function De(n,e,t){let r=new Map;n.vertexKeys.forEach((o,s)=>{let a=e.strata?.[s]??"all",l=r.get(a)??[];l.push(s),r.set(a,l)});let i=new Set;for(let o of r.values()){let s=Ee(o,t),a=Math.max(1,Math.round(o.length*e.retainFraction));s.slice(0,a).forEach(l=>i.add(l))}return i.size===0?null:Te(n,i)}function Te(n,e){let t=new Map,r=[];n.vertexKeys.forEach((u,d)=>{e.has(d)&&(t.set(d,r.length),r.push(u))});let i=[0],o=[],s=[],a=[],l=[];for(let u=0;u<n.simplexDimensions.length;u++){let d=[...n.simplexVertices.slice(n.simplexOffsets[u],n.simplexOffsets[u+1])];d.every(c=>e.has(c))&&(d.forEach(c=>o.push(t.get(c))),i.push(o.length),s.push(n.simplexDimensions[u]),a.push(n.filtrationValues[u]),l.push(n.stableKeys[u]))}return{...n,vertexKeys:r,simplexOffsets:Uint32Array.from(i),simplexVertices:Uint32Array.from(o),simplexDimensions:Uint16Array.from(s),filtrationValues:Float64Array.from(a),stableKeys:l,computeRepresentatives:!1}}function Ke(n,e,t){let r=Float64Array.from(n.filtrationValues,i=>{let o=i+(t()*2-1)*e.perturbationScale;return Math.min(1,Math.max(0,o))});return{...n,filtrationValues:r,computeRepresentatives:!1}}function Ee(n,e){let t=[...n];for(let r=t.length-1;r>0;r--){let i=Math.floor(e()*(r+1));[t[r],t[i]]=[t[i],t[r]]}return t}function ee(n){if(n.length===0)return null;let e=[...n].sort((r,i)=>r-i),t=r=>e[Math.min(e.length-1,Math.floor(r*e.length))];return{p05:t(.05),p50:t(.5),p95:t(.95)}}function Me(n){let e=n>>>0;return()=>{e=e+1831565813>>>0;let t=e;return t=Math.imul(t^t>>>15,t|1),t^=t+Math.imul(t^t>>>7,t|61),((t^t>>>14)>>>0)/4294967296}}function Ne(n){let e=5381;for(let t=0;t<n.length;t++)e=(e<<5)+e^n.charCodeAt(t),e=e>>>0;return e}function R(n){let e=["purple","teal","coral","pink","blue","amber"];return n?e[Ne(n)%e.length]:"purple"}function oe(n){return n.nodes.length-1}function*se(n,e){if(e===0){yield[];return}for(let t=0;t<=n.length-e;t++)for(let r of se(n.slice(t+1),e-1))yield[n[t],...r]}function G(n,e){if(oe(e)>=4)return[];let r=x(e.nodes),i=[];for(let o=2;o<r.length;o++)for(let s of se(r,o))n.simplices.has(y(s))||i.push(x(s));return i}function ae(n,e){let t=oe(e);if(t>4){console.warn(`[Simplicial] Simplex dim=${t} exceeds cap. Faces not auto-generated.`);return}let r=y(e.nodes),i=e.colorKey??R(e.label);for(let o of G(n,e))n.simplices.set(y(o),{nodes:o,autoGenerated:!0,userDefined:!1,parentKey:r,colorKey:i})}function _(n,e=2){return E(n,e)}function le(n,e=2){let t=new Map;for(let i of n.simplices.values()){let o=i.nodes.length,s=t.get(o)??new Set;s.add(y(i.nodes)),t.set(o,s)}let r=[];return e>=1&&r.push(...Ae(n,t)),e>=2&&r.push(..._e(t)),r}function Ae(n,e){let t=new Map([...n.nodes.keys()].map(s=>[s,new Set]));for(let s of n.simplices.values()){if(s.nodes.length!==2)continue;let[a,l]=s.nodes;t.get(a)?.add(l),t.get(l)?.add(a)}let r=e.get(3)??new Set,i=new Set,o=[];for(let[s,a]of t){let l=x([...a]);for(let u=0;u<l.length;u++)for(let d=u+1;d<l.length;d++){let c=l[u],m=l[d];if(!t.get(c)?.has(m))continue;let p=x([s,c,m]),f=y(p);r.has(f)||i.has(f)||(i.add(f),o.push({dimension:1,boundaryNodes:p,missingSimplex:[...p]}))}}return o.sort((s,a)=>y(s.missingSimplex).localeCompare(y(a.missingSimplex)))}function _e(n){let e=n.get(3)??new Set,t=n.get(4)??new Set,r=new Map,i=[...e].map(s=>s.split("|"));for(let s=0;s<i.length;s++)for(let a=s+1;a<i.length;a++){let l=x([...new Set([...i[s],...i[a]])]);l.length===4&&r.set(y(l),l)}let o=[];for(let[s,a]of r){if(t.has(s))continue;a.every((u,d)=>e.has(y(a.filter((c,m)=>m!==d))))&&o.push({dimension:2,boundaryNodes:[...a],missingSimplex:[...a]})}return o.sort((s,a)=>y(s.missingSimplex).localeCompare(y(a.missingSimplex)))}function Le(n){if(!n)return"";try{return` ${JSON.stringify(n)}`}catch{return" [unserializable-details]"}}function L(n,e,t,r){let i=`[Simplicial:${e}] ${t}${Le(r)}`;if(n==="error"){console.error(i);return}if(n==="warn"){console.warn(i);return}if(n==="debug"){console.debug(i);return}console.debug(i)}var ce={debug(n,e,t){L("debug",n,e,t)},info(n,e,t){L("info",n,e,t)},warn(n,e,t){L("warn",n,e,t)},error(n,e,t){L("error",n,e,t)}};function B(n,e){return n+Math.random()*(e-n)}function Be(n,e,t){let r=n/2,i=e/2,o=Math.max(t+40,r-t),s=Math.max(t+40,i-t);switch(Math.floor(Math.random()*4)){case 0:return{px:B(-o,o),py:-s};case 1:return{px:o,py:B(-s,s)};case 2:return{px:B(-o,o),py:s};default:return{px:-o,py:B(-s,s)}}}function Oe(n,e,t=!1){let r=e?.width??960,i=e?.height??640,{px:o,py:s}=Be(r,i,80);return{id:n,px:o,py:s,vx:0,vy:0,isVirtual:t,isPinned:!1,displayAlpha:1}}var H=class{constructor(){this.revision=0;this.nodes=new Map;this.simplices=new Map;this.hyperedges=new Map;this.listeners=new Set;this.batchDepth=0;this.hasPendingEmit=!1;this._analysisCache=null;this._analysisDirty=!0;this._crossLayerCache=null}subscribe(e){return this.listeners.add(e),()=>this.listeners.delete(e)}emitChange(){if(this.batchDepth>0){this.hasPendingEmit=!0;return}this.flushChange()}flushChange(){this.listeners.forEach(e=>e())}batch(e){this.batchDepth++;try{return e()}finally{this.batchDepth--,this.batchDepth===0&&this.hasPendingEmit&&(this.hasPendingEmit=!1,this.flushChange())}}setNode(e,t){let r=this.nodes.get(e);if(r){Object.assign(r,t??{}),t?.isVirtual===!1&&(r.isVirtual=!1),this.emitChange();return}let i=Oe(e,void 0,t?.isVirtual??!1);t?.px!==void 0&&(i.px=t.px),t?.py!==void 0&&(i.py=t.py),t?.isPinned!==void 0&&(i.isPinned=t.isPinned),this.nodes.set(e,i),this.invalidateAnalysisCache(),this.emitChange()}removeNode(e){this.nodes.delete(e);for(let[t,r]of[...this.simplices])r.nodes.includes(e)&&this.simplices.delete(t);for(let[t,r]of[...this.hyperedges])r.nodes.includes(e)&&this.hyperedges.delete(t);this.invalidateAnalysisCache(),this.emitChange()}updateNodeId(e,t){if(e===t)return;let r=this.nodes.get(e);r&&(this.nodes.set(t,{...r,id:t}),this.nodes.delete(e));for(let[i,o]of[...this.simplices]){if(!o.nodes.includes(e))continue;let s={...o,nodes:x(o.nodes.map(a=>a===e?t:a))};this.simplices.delete(i),this.simplices.set(y(s.nodes),s)}for(let[i,o]of[...this.hyperedges]){if(!o.nodes.includes(e))continue;let s={...o,nodes:x(o.nodes.map(a=>a===e?t:a))};this.hyperedges.delete(i),this.hyperedges.set(D("hyperedge",s.nodes),s)}this.invalidateAnalysisCache(),this.emitChange()}addSimplex(e){if(e.kind==="hyperedge")return ce.error("model","Refused to add a hyperedge through addSimplex",{nodes:e.nodes}),"";let t=z(e.nodes);if(t.length<2)return"";t.forEach(o=>{this.nodes.has(o)||this.setNode(o,{isVirtual:!1})});let r={...e,nodes:x(t),weight:O(e.weight),autoGenerated:e.autoGenerated??!1,userDefined:e.userDefined??!e.autoGenerated,colorKey:e.autoGenerated?e.colorKey??"neutral":e.colorKey??R(e.label)},i=y(r.nodes);return this.simplices.set(i,r),ae(this,r),this.invalidateAnalysisCache(),this.emitChange(),i}removeSimplex(e){if(this.simplices.delete(e)){for(let[t,r]of[...this.simplices]){if(!r.autoGenerated)continue;[...this.simplices.entries()].some(([o,s])=>o===t||s.autoGenerated?!1:r.nodes.every(a=>s.nodes.includes(a)))||this.simplices.delete(t)}this.invalidateAnalysisCache(),this.emitChange()}}addHyperedge(e){let t=z(e.nodes);if(t.length<2)return"";t.forEach(l=>{this.nodes.has(l)||this.setNode(l,{isVirtual:!1})});let r=x(t),i=D("hyperedge",r),o=this.hyperedges.get(i),s=o?.suggested&&!e.suggested?void 0:o,a={...s,...e,nodes:r,weight:O(e.weight??s?.weight),colorKey:e.colorKey??s?.colorKey??R(e.label),...e.suggested?{}:{occurredAt:s?.occurredAt??e.occurredAt??Date.now()}};return this.hyperedges.set(i,a),this.invalidateAnalysisCache(!1),this.emitChange(),i}removeHyperedge(e){return this.hyperedges.delete(e)?(this.invalidateAnalysisCache(!1),this.emitChange(),!0):!1}getHyperedge(e){return this.hyperedges.get(e)}getHyperedgesForNode(e){return[...this.hyperedges.values()].filter(t=>t.nodes.includes(e))}updateHyperedge(e,t){let r=this.hyperedges.get(e);if(!r)return;let i={...r,...t,nodes:r.nodes};return t.label!==void 0&&(i.colorKey=R(t.label)),t.weight!==void 0&&(i.weight=O(t.weight)),this.hyperedges.set(e,i),this.invalidateAnalysisCache(!1),this.emitChange(),i}facesImpliedByPromotion(e){let t=this.hyperedges.get(e);return t?G(this,{nodes:t.nodes}):[]}promoteToSimplex(e,t={}){let r=this.hyperedges.get(e);if(!r)return null;let i=this.facesImpliedByPromotion(e),o="";return this.batch(()=>{o=this.addSimplex({nodes:r.nodes,label:r.label,weight:r.weight,sourcePath:r.sourcePath,userDefined:!0,autoGenerated:!1}),t.retainEncounter===!1?this.hyperedges.delete(e):this.hyperedges.set(e,{...r,promotedTo:o}),this.invalidateAnalysisCache(),this.emitChange()}),o?{simplexKey:o,createdFaces:i}:null}relaxToHyperedge(e){let t=this.simplices.get(e);if(!t||t.autoGenerated)return null;let r=D("hyperedge",t.nodes),i=this.hyperedges.get(r),o="";return this.batch(()=>{o=this.addHyperedge({...i,nodes:t.nodes,label:i?.label??t.label,weight:i?.weight??t.weight,sourcePath:i?.sourcePath??t.sourcePath,occurredAt:i?.occurredAt,promotedTo:void 0}),this.removeSimplex(e)}),o||null}crystallizeHyperedge(e,t){let r=this.hyperedges.get(e);return r?(this.batch(()=>{this.nodes.has(t)||this.setNode(t,{isVirtual:!1}),this.hyperedges.set(e,{...r,crystallizedInto:t}),this.invalidateAnalysisCache(),this.emitChange()}),!0):!1}getAllRelations(){let e=[];return this.simplices.forEach((t,r)=>{e.push({key:D("simplex",t.nodes),relation:{kind:"simplex",...t}})}),this.hyperedges.forEach((t,r)=>{e.push({key:r,relation:{kind:"hyperedge",...t}})}),e}replaceInferredSimplices(e){this.batch(()=>{for(let[t,r]of[...this.simplices])r.inferred&&this.simplices.delete(t);e.forEach(t=>{t.nodes.forEach(r=>{this.nodes.has(r)||this.setNode(r,{isVirtual:!1})}),this.addSimplex(t)}),this.invalidateAnalysisCache(),this.emitChange()})}replaceInferredHyperedges(e){this.batch(()=>{for(let[t,r]of this.hyperedges)r.inferred&&r.suggested&&r.suggestionSource!=="encounter-discovery"&&this.hyperedges.delete(t);e.forEach(t=>this.addHyperedge({...t,inferred:!0,suggested:!0,suggestionSource:"inference"})),this.invalidateAnalysisCache(!1),this.emitChange()})}replaceSourceRelations(e,t,r){this.batch(()=>{for(let[i,o]of[...this.simplices])o.sourcePath===e&&!o.autoGenerated&&this.simplices.delete(i);for(let[i,o]of[...this.hyperedges])o.sourcePath===e&&this.hyperedges.delete(i);t.forEach(i=>{i.nodes.forEach(o=>{this.nodes.has(o)||this.setNode(o,{isVirtual:!0})}),this.addSimplex({...i,sourcePath:e})}),r.forEach(i=>{i.nodes.forEach(o=>{this.nodes.has(o)||this.setNode(o,{isVirtual:!0})}),this.addHyperedge({...i,sourcePath:e})}),this.invalidateAnalysisCache(),this.emitChange()})}replaceSourceSimplices(e,t){this.replaceSourceRelations(e,t,[])}updateMetadata(e,t){let r=this.simplices.get(e);if(!r)return;let i={...r,...t};t.label!==void 0&&(i.colorKey=r.autoGenerated?"neutral":R(t.label)),t.weight!==void 0&&(i.weight=O(t.weight)),this.simplices.set(e,i),this.invalidateAnalysisCache(),this.emitChange()}setPinnedState(e,t,r,i){let o=this.nodes.get(e);o&&(o.isPinned=t,r!==void 0&&(o.px=r),i!==void 0&&(o.py=i),this.emitChange())}getSimplicesForNode(e){return[...this.simplices.values()].filter(t=>t.nodes.includes(e))}getNeighbors(e){let t=new Set;return this.getSimplicesForNode(e).forEach(r=>{r.nodes.forEach(i=>{i!==e&&t.add(i)})}),[...t]}getSimplicesByDim(e){return[...this.simplices.values()].filter(t=>t.nodes.length-1===e)}getAllNodes(){return[...this.nodes.values()]}getSimplex(e){return this.simplices.get(e)}invalidateAnalysisCache(e=!0){this._analysisDirty=!0,this._crossLayerCache=null,e&&this.revision++}readCrossLayerCache(){return this._crossLayerCache}writeCrossLayerCache(e){return this._crossLayerCache=e,e}getAnalysisSummary(){return!this._analysisDirty&&this._analysisCache?this._analysisCache:(this._analysisCache=this.computeAnalysisSummary(),this._analysisDirty=!1,this._analysisCache)}getCachedBetti(){return!this._analysisDirty&&this._analysisCache?this._analysisCache.betti??_(this,2):_(this,2)}computeAnalysisSummary(){let e=[...this.simplices.values()],t=e.filter(h=>h.nodes.length===2),r=new Map,i=new Map;this.nodes.forEach((h,b)=>r.set(b,new Set)),this.nodes.forEach((h,b)=>i.set(b,0)),t.forEach(h=>{let[b,v]=h.nodes;r.get(b)?.add(v),r.get(v)?.add(b)}),e.forEach(h=>{h.nodes.forEach(b=>{i.set(b,(i.get(b)??0)+1)})});let o=0,s=new Set;r.forEach((h,b)=>{if(s.has(b))return;o++;let v=[b];for(;v.length>0;){let w=v.pop();s.has(w)||(s.add(w),r.get(w)?.forEach(F=>{s.has(F)||v.push(F)}))}});let a=null,l=-1,u=0;r.forEach((h,b)=>{let v=h.size;u+=v,v>l&&(l=v,a=b)});let d=null,c=-1,m=0;i.forEach((h,b)=>{m+=h,h>c&&(c=h,d=b)});let p=_(this,2),f=le(this,2).length,g=[...this.hyperedges.values()];return{nodeCount:this.nodes.size,simplexCount:e.length,hyperedgeCount:g.length,recurringEncounterCount:g.filter(h=>h.persistence==="recurring").length,edgeCount:t.length,clusterCount:e.filter(h=>h.nodes.length===3).length,coreCount:e.filter(h=>h.nodes.length>=4).length,inferredCount:e.filter(h=>h.inferred).length,suggestedCount:e.filter(h=>h.suggested).length,connectedComponents:o,averageDegree:this.nodes.size?Number((u/this.nodes.size).toFixed(2)):0,maxDegreeNodeId:a,maxDegree:Math.max(0,l),maxSimplexCentralityNodeId:d,maxSimplexCentrality:Math.max(0,c),averageSimplexCentrality:this.nodes.size?Number((m/this.nodes.size).toFixed(2)):0,betti:p,missingFaceCount:f}}};function O(n){return n===void 0||Number.isNaN(n)?1:Math.max(.1,Math.min(1,n))}var j=class{constructor(){this.cancelled=new Set}capabilities(){return{coefficientFields:["F2"],maxHomologyDimension:2,persistence:!0}}async computeStatic(e){if(this.cancelled.delete(e.requestId))throw new Error(`Topology request cancelled: ${e.requestId}`);let t=Y(e),r=new H;return t.nodes.forEach(i=>r.setNode(i)),t.simplices.filter(i=>i.length>1).forEach(i=>r.addSimplex({nodes:i})),{...E(r,e.maxHomologyDimension),modelRevision:e.modelRevision}}async computePersistence(e,t={}){if(this.cancelled.delete(e.requestId))throw new Error(`Topology request cancelled: ${e.requestId}`);let r=I(e);return M(r,{metric:e.metric,modelRevision:e.modelRevision,computeRepresentatives:e.computeRepresentatives},{...t,shouldCancel:()=>this.cancelled.has(e.requestId)||!!t.shouldCancel?.()})}cancel(e){this.cancelled.add(e)}clearCancellation(e){this.cancelled.delete(e)}};function ue(n,e){let t=n.stableKeys.length+n.vertexKeys.length;return t<=e.maxSimplices?null:{reason:"limit-exceeded",message:`This vault produces ${t.toLocaleString()} simplices, above the ${e.maxSimplices.toLocaleString()} ceiling. Raise the limit in settings, or narrow the filtration metric, to analyze it.`,phase:"building",simplexCount:t,vertexCount:n.vertexKeys.length}}function He(n){let e=new Set;return function(r){if(r.kind==="cancel"){e.add(r.requestId);return}let{requestId:i,input:o,limits:s}=r,a=o.stableKeys.length+o.vertexKeys.length,l=o.vertexKeys.length,u="building",d=ue(o,s);if(d){n({kind:"failure",requestId:i,failure:d});return}let c=new j,m=()=>e.has(i);(async()=>{try{if(r.kind==="static"){let g=await c.computeStatic(o);if(m())throw new S(0);n({kind:"static-result",requestId:i,result:g});return}n({kind:"progress",requestId:i,phase:u,fraction:0});let p=I(o);u="reducing";let f=await Z(p,{metric:o.metric,modelRevision:o.modelRevision,computeRepresentatives:o.computeRepresentatives},{shouldCancel:m,maxColumnEntries:s.maxColumnEntries,onProgress:g=>n({kind:"progress",requestId:i,phase:"reducing",fraction:g})});if(o.computeRepresentatives&&(u="witnesses",n({kind:"progress",requestId:i,phase:u,fraction:1})),o.bootstrap?.enabled&&(u="uncertainty",n({kind:"progress",requestId:i,phase:u,fraction:0}),f.uncertainty=te(o,p,f,o.bootstrap,{shouldCancel:m,onProgress:g=>n({kind:"progress",requestId:i,phase:"uncertainty",fraction:g})})),m())throw new S(p.simplices.length);n({kind:"persistence-result",requestId:i,result:f})}catch(p){n({kind:"failure",requestId:i,failure:je(p,u,a,l)})}finally{e.delete(i)}})()}}function je(n,e,t,r){return n instanceof S?{reason:"cancelled",message:n.message,phase:e,simplexCount:t,vertexCount:r}:n instanceof k?{reason:"limit-exceeded",message:n.message,phase:e,simplexCount:t,vertexCount:r}:{reason:"engine-error",message:n instanceof Error?n.message:String(n),phase:e,simplexCount:t,vertexCount:r}}if(typeof self<"u"&&typeof self.postMessage=="function"&&typeof document>"u"){let n=He(e=>self.postMessage(e));self.onmessage=e=>n(e.data)}})();\n',
+          ],
+          { type: "text/javascript" },
+        );
+        this.blobUrl = URL.createObjectURL(t);
+        let e = new Worker(this.blobUrl);
+        return (
+          (e.onmessage = (n) => this.receive(n.data)),
+          (e.onerror = (n) => this.failAll(n instanceof ErrorEvent ? n.message : "Topology worker error")),
+          (this.worker = e),
+          e
+        );
+      } catch (t) {
+        return (
+          C.warn("topology", "Falling back to main-thread topology: worker start failed", {
+            error: t instanceof Error ? t.message : String(t),
+          }),
+          this.disposeWorker(),
+          null
+        );
+      }
+    }
+    ensureInlineHandler() {
+      return (this.inlineHandler ?? (this.inlineHandler = Jt((t) => this.receive(t))), this.inlineHandler);
+    }
+    receive(t) {
+      let e = this.handlers.get(t.requestId);
+      e && (t.kind !== "progress" && this.handlers.delete(t.requestId), e.onMessage(t));
+    }
+    failAll(t) {
+      for (let [e, n] of [...this.handlers])
+        (this.handlers.delete(e),
+          n.onMessage({
+            kind: "failure",
+            requestId: e,
+            failure: { reason: "engine-error", message: t, phase: "reducing", simplexCount: 0, vertexCount: 0 },
+          }));
+      (this.disposeWorker(), this.restartCount++);
+    }
+    disposeWorker() {
+      (this.worker?.terminate(),
+        (this.worker = null),
+        this.blobUrl && URL.revokeObjectURL(this.blobUrl),
+        (this.blobUrl = null));
+    }
+  };
+var Do = 1,
+  To = 4,
   Z = { metric: "weight", maxHomologyDimension: 2, computeRepresentatives: !0, bootstrap: ts, limits: rs },
   ae = {
     status: "idle",
@@ -6976,7 +6978,7 @@ var Mo = 1,
         ? `${t.bootstrap.mode}:${t.bootstrap.sampleCount}:${t.bootstrap.retainFraction}:${t.bootstrap.perturbationScale}:${t.bootstrap.seed}`
         : "off";
       return [
-        `v${Mo}`,
+        `v${Do}`,
         `rev${this.model.revision}`,
         t.metric,
         `dim${t.maxHomologyDimension}`,
@@ -7064,7 +7066,7 @@ var Mo = 1,
       (this.client.dispose(), this.listeners.clear(), this.cache.clear(), (this.currentRequestId = null));
     }
     store(t, e) {
-      for (this.cache.set(t, e); this.cache.size > Ro;) {
+      for (this.cache.set(t, e); this.cache.size > To;) {
         let n = this.cache.keys().next().value;
         if (n === void 0) break;
         this.cache.delete(n);
@@ -7168,7 +7170,7 @@ function ct(s, t, e = !1) {
 var Qt = class extends le.Modal {
   onOpen() {
     (this.contentEl.addClass("simplicial-agent-guide"),
-      this.contentEl.createEl("h2", { text: "AI-assisted discovery" }),
+      this.contentEl.createEl("h2", { text: "Agent-assisted discovery" }),
       this.contentEl.createEl("p", {
         text: "Optional and provider-neutral: the plugin does not invoke an agent, transmit notes, or accept proposals automatically. You choose the tool, its vault access, and every intervention.",
       }),
@@ -7197,7 +7199,7 @@ var Qt = class extends le.Modal {
       }));
   }
 };
-var Do = {
+var Io = {
     simplex: {
       title: "Create simplex",
       blurb: "A simplex claims the group and every sub-relation within it is coherent. Its faces will be generated.",
@@ -7232,7 +7234,7 @@ var Do = {
     render() {
       let { contentEl: e } = this;
       e.empty();
-      let n = Do[this.kind];
+      let n = Io[this.kind];
       (e.createEl("h3", { text: n.title }),
         e.createEl("p", { text: n.blurb }),
         e.createEl("p", {
@@ -7273,7 +7275,7 @@ var Do = {
             .setName("Mode")
             .setDesc("What kind of encounter this was \u2014 free text, e.g. 'encounter', 'reading', 'argument'.")
             .addText((r) => {
-              (r.setPlaceholder("encounter"),
+              (r.setPlaceholder("Encounter"),
                 r.setValue(this.modeInput),
                 r.onChange((o) => {
                   this.modeInput = o;
@@ -7900,19 +7902,19 @@ function gs() {
   });
 }
 var J = require("obsidian");
-var To = { minimumNormalizedLifetime: 0.15, minimumBootstrapSupport: 0.5, maximumWitnessSize: 8, limit: 10 };
-function ys(s, t, e = To) {
+var ko = { minimumNormalizedLifetime: 0.15, minimumBootstrapSupport: 0.5, maximumWitnessSize: 8, limit: 10 };
+function ys(s, t, e = ko) {
   let n = new Map(t.representatives.map((a) => [a.intervalId, a])),
     i = new Map((t.uncertainty?.support ?? []).map((a) => [a.intervalId, a])),
-    r = Ao(t.intervals),
+    r = Ho(t.intervals),
     o = [];
   for (let a of t.intervals) {
     if (a.dimension !== 1) continue;
     let l = n.get(a.id);
     if (!l) continue;
-    let c = Lo(s, l);
+    let c = $o(s, l);
     if (c.length === 0 || c.length > e.maximumWitnessSize || s.simplices.has(w(c))) continue;
-    let u = Fo(a, r);
+    let u = Lo(a, r);
     if (u < e.minimumNormalizedLifetime) continue;
     let d = i.get(a.id)?.supportFrequency ?? null;
     (t.uncertainty && (d ?? 0) < e.minimumBootstrapSupport) ||
@@ -7920,7 +7922,7 @@ function ys(s, t, e = To) {
         intervalId: a.id,
         nodes: c,
         witnessKeys: l.simplices,
-        explanation: Io(s, a, l, c, {
+        explanation: No(s, a, l, c, {
           normalizedLifetime: u,
           bootstrapSupport: d,
           uncertainty: t.uncertainty,
@@ -7933,7 +7935,7 @@ function ys(s, t, e = To) {
     .sort((a, l) => fs(l.explanation) - fs(a.explanation) || a.intervalId.localeCompare(l.intervalId))
     .slice(0, e.limit);
 }
-function Io(s, t, e, n, i) {
+function No(s, t, e, n, i) {
   let r = [],
     o = [];
   for (let d of e.simplices) {
@@ -7952,8 +7954,8 @@ function Io(s, t, e, n, i) {
     c = {
       normalizedLifetime: ce(i.normalizedLifetime),
       bootstrapSupport: ce(i.bootstrapSupport ?? 0),
-      crossDomainDiversity: ce(No(n)),
-      representativeCompactness: ce(Po(n.length)),
+      crossDomainDiversity: ce(Fo(n)),
+      representativeCompactness: ce(Ao(n.length)),
       encounterRecurrence: ce(Math.min(1, l / 3) * 0.5),
       inferredEdgePenalty: ce(-a * 0.5),
       witnessComplexityPenalty: ce(-Math.max(0, n.length - 4) * 0.05),
@@ -7977,7 +7979,7 @@ function Io(s, t, e, n, i) {
         `${Math.round(a * 100)}% of this cycle's relations were inferred by the plugin rather than asserted by you.`,
       ),
     {
-      claim: ko(t, n, i),
+      claim: Po(t, n, i),
       kind: "persistent-gap",
       evidencePaths: n,
       contextIds: [],
@@ -7990,33 +7992,33 @@ function Io(s, t, e, n, i) {
     }
   );
 }
-function ko(s, t, e) {
+function Po(s, t, e) {
   let n =
       s.death === null
         ? `from ${s.birth.toFixed(2)} onward, never closing`
         : `across thresholds ${s.birth.toFixed(2)}\u2013${s.death.toFixed(2)}`,
-    i = [...t, t[0]].map(Ho).join(" \u2192 "),
+    i = [...t, t[0]].map(Oo).join(" \u2192 "),
     r =
       e.bootstrapSupport === null
         ? ""
         : ` It reappeared in ${Math.round(e.bootstrapSupport * 100)}% of configured subsamples.`;
   return `This loop persists ${n}. One representative connects ${i}.${r} Consider writing a synthesis that explains whether the loop should remain open or be filled.`;
 }
-function No(s) {
+function Fo(s) {
   let t = new Set(s.map((e) => (e.includes("/") ? e.slice(0, e.indexOf("/")) : "")));
   return s.length <= 1 ? 0 : Math.min(1, (t.size - 1) / (s.length - 1));
 }
-function Po(s) {
+function Ao(s) {
   return s <= 3 ? 1 : Math.max(0, 1 - (s - 3) / 8);
 }
-function Fo(s, t) {
+function Lo(s, t) {
   return s.lifetime === null ? 1 : t <= 0 ? 0 : Math.min(1, s.lifetime / t);
 }
-function Ao(s) {
+function Ho(s) {
   let t = s.flatMap((e) => [e.birth, ...(e.death === null ? [] : [e.death])]);
   return t.length === 0 ? 0 : Math.max(...t) - Math.min(...t);
 }
-function Lo(s, t) {
+function $o(s, t) {
   let e = new Map([...s.nodes.keys()].map((i) => [$(i), i])),
     n = new Set();
   for (let i of t.simplices) i.split("|").forEach((r) => n.add(r));
@@ -8029,7 +8031,7 @@ function ce(s) {
   let t = Math.round(s * 1e3) / 1e3;
   return t === 0 ? 0 : t;
 }
-function Ho(s) {
+function Oo(s) {
   return s.replace(/\.md$/, "");
 }
 var vs = { 0: "H\u2080 \u2014 connected pieces", 1: "H\u2081 \u2014 loops", 2: "H\u2082 \u2014 voids" },
@@ -8314,7 +8316,7 @@ var vs = { 0: "H\u2080 \u2014 connected pieces", 1: "H\u2081 \u2014 loops", 2: "
       let r = i.createEl("details");
       (r.createEl("summary", { text: "Why this ranked here" }),
         Object.entries(n.explanation.scoreComponents).forEach(([a, l]) => {
-          r.createDiv({ cls: "simplicial-panel-value", text: `${$o(a)}: ${l >= 0 ? "+" : ""}${l}` });
+          r.createDiv({ cls: "simplicial-panel-value", text: `${Ko(a)}: ${l >= 0 ? "+" : ""}${l}` });
         }));
       let o = i.createEl("details");
       (o.createEl("summary", { text: "What this does not prove" }),
@@ -8365,11 +8367,11 @@ function bs(s) {
     n = Math.max(...t);
   return { min: e, max: n, size: n - e };
 }
-function $o(s) {
+function Ko(s) {
   return s.replace(/([A-Z])/g, " $1").replace(/^./, (t) => t.toUpperCase());
 }
 var T = require("obsidian");
-var Oo = ["manual", "folder", "tag", "query", "moc"],
+var Bo = ["manual", "folder", "tag", "query", "moc"],
   ft = class extends T.ItemView {
     constructor(e, n, i, r) {
       super(e);
@@ -8407,7 +8409,7 @@ var Oo = ["manual", "folder", "tag", "query", "moc"],
           text: "Use this after you have overlapping groups. A context is one viewpoint (for example a project, folder, or theme). Give the same note a role in each viewpoint; the lab then shows whether those local readings agree when combined.",
         }));
       let n = e.createEl("details", { cls: "simplicial-sheaf-guide" });
-      (n.createEl("summary", { text: "What should I expect to see?" }),
+      (n.createEl("summary", { text: "What to expect here" }),
         n.createEl("p", {
           text: "Start by adding suggested context seeds. In each context, assign roles only where they make sense. The report will show either a compatible shared reading, a direct local disagreement, or contextuality: every overlap looks compatible on its own, but all viewpoints cannot be combined at once. Suggestions are hypotheses and never change your notes automatically.",
         }),
@@ -8482,7 +8484,7 @@ var Oo = ["manual", "folder", "tag", "query", "moc"],
         l = new Set();
       (new T.Setting(i).setName("Name").addText((d) => d.onChange((p) => (r = p.trim()))),
         new T.Setting(i).setName("Source").addDropdown((d) => {
-          (Oo.forEach((p) => {
+          (Bo.forEach((p) => {
             d.addOption(p, p === "moc" ? "MOC note" : p);
           }),
             d.setValue(o),
@@ -8490,7 +8492,9 @@ var Oo = ["manual", "folder", "tag", "query", "moc"],
         }),
         new T.Setting(i)
           .setName("Definition")
-          .setDesc("Folder path/tag for a derived seed, or a query/MOC description for an explicit selection.")
+          .setDesc(
+            "Folder path or tag for a derived seed, or a query or map-of-content description for an explicit selection.",
+          )
           .addText((d) => d.onChange((p) => (a = p.trim()))));
       let c = An(this.model),
         u = i.createDiv({ cls: "simplicial-sheaf-relations" });
@@ -8623,7 +8627,7 @@ var Oo = ["manual", "folder", "tag", "query", "moc"],
           .addButton((a) =>
             a
               .setButtonText("Discard scratch")
-              .setWarning()
+              .setDestructive()
               .onClick(() => {
                 (this.scratch.clear(), this.render());
               }),
@@ -8732,7 +8736,7 @@ var Oo = ["manual", "folder", "tag", "query", "moc"],
       }
       (this.renderContextRestructuring(o, n, r.id),
         new T.Setting(o).addButton((p) => {
-          (p.setButtonText("Delete context").setWarning(),
+          (p.setButtonText("Delete context").setDestructive(),
             p.onClick(async () => {
               (O(n, {
                 action: "context-deleted",
@@ -8933,8 +8937,10 @@ var yt = class extends xs.ItemView {
           }
         })();
       }));
-    let o = n.createEl("button", { cls: "simplicial-explore-action", text: "\u25C7 Record encounter" });
-    ((o.title = "Record several notes as one meaningful group; this does not imply pairwise links."),
+    let o = n.createEl("button", { cls: "simplicial-explore-action" });
+    (o.createSpan({ cls: "simplicial-explore-glyph", text: "\u25C7", attr: { "aria-hidden": "true" } }),
+      o.createSpan({ text: "Record encounter" }),
+      (o.title = "Record several notes as one meaningful group; this does not imply pairwise links."),
       o.setAttr("aria-label", o.title),
       o.addEventListener("click", () => this.actions?.recordEncounter()));
     let a = n.createEl("button", { cls: "simplicial-explore-action", text: "Contextuality" });
@@ -9370,26 +9376,6 @@ var vt = class extends S.PluginSettingTab {
           this.refreshSettingVisibility());
       },
     };
-  }
-  display() {
-    let { containerEl: e } = this;
-    (e.empty(),
-      this.renderDisplaySection(e, "Storage", (n) => this.renderPersistenceSettings(n)),
-      this.renderDisplaySection(e, "Hypergraph", (n) => this.renderHypergraphSettings(n)),
-      this.renderDisplaySection(e, "Dynamics", (n) => this.renderDynamicsSettings(n)),
-      this.renderDisplaySection(e, "Contextuality", (n) => this.renderSheafSettings(n)),
-      this.renderDisplaySection(e, "Persistent topology", (n) => this.renderPersistenceTopologySettings(n)),
-      this.renderDisplaySection(e, "Layout", (n) => this.renderLayoutSettings(n)),
-      this.renderDisplaySection(e, "Inference", (n) => this.renderInferenceSettings(n)),
-      this.renderDisplaySection(e, "Commands and display", (n) => this.renderCommandUiSettings(n)),
-      this.renderDisplaySection(e, "Topology and explanations", (n) => this.renderBettiSettings(n)),
-      this.renderDisplaySection(e, "Inference engine", (n) => this.renderEmergentSettings(n)),
-      this.renderDisplaySection(e, "Legacy inference weights", (n) => this.renderLegacySettings(n)),
-      this.refreshSettingVisibility());
-  }
-  renderDisplaySection(e, n, i) {
-    let r = e.createDiv({ cls: "simplicial-settings-section" });
-    (new S.Setting(r).setName(n).setHeading(), i(r));
   }
   renderPersistenceSettings(e) {
     (new S.Setting(e)
@@ -9831,14 +9817,14 @@ var vt = class extends S.PluginSettingTab {
       }),
       new S.Setting(e)
         .setName("Display betti on canvas")
-        .setDesc("Show actual homology ranks over F\u2082 in the top-left HUD.")
+        .setDesc("Show actual homology ranks mod 2 in the top-left overlay.")
         .addToggle((n) => {
           (n.setValue(this.plugin.settings.bettiDisplayOnCanvas),
             n.onChange(async (i) => {
               ((this.plugin.settings.bettiDisplayOnCanvas = i),
                 await this.plugin.saveSettings(),
                 this.plugin.renderer.render(),
-                new S.Notice(i ? "Betti HUD will appear in top-left of graph" : "Betti HUD hidden"));
+                new S.Notice(i ? "Betti overlay will appear in top-left of graph" : "Betti overlay hidden"));
             }));
         }),
       new S.Setting(e)

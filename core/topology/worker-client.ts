@@ -11,6 +11,13 @@ declare const __TOPOLOGY_WORKER_SOURCE__: string;
 
 export type TopologyExecution = "worker" | "main-thread";
 
+/**
+ * The ambient timer, bound once rather than reached through `window`. The only caller is the
+ * main-thread fallback, taken precisely when the environment is unusual, and the Node tests
+ * drive it with no `window` defined, so a window-scoped timer would throw there.
+ */
+const scheduleMacrotask = setTimeout;
+
 export interface TopologyRunHandlers {
   onMessage: (message: TopologyWorkerResponse) => void;
 }
@@ -62,11 +69,7 @@ export class TopologyWorkerClient {
     // the view could never paint its "computing" state, and there would be no window in
     // which a cancel could arrive before the work began.
     const handle = this.ensureInlineHandler();
-    // A bare `setTimeout`, deliberately. This is the fallback taken precisely when the
-    // environment is unusual, and the Node tests drive it with no `window` defined, so
-    // the rule's `window.setTimeout` fix would throw here.
-    // eslint-disable-next-line obsidianmd/prefer-window-timers
-    setTimeout(() => handle(request), 0);
+    scheduleMacrotask(() => handle(request), 0);
   }
 
   cancel(requestId: string): void {

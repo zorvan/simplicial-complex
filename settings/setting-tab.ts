@@ -4,8 +4,8 @@ import { ensureCentralFile } from "../data/persistence";
 import type { PluginSettings } from "../core/types";
 
 // Structural subset of Obsidian 1.13's SettingDefinitionItem. Keeping this local
-// lets the same bundle compile against the latest public (1.12) typings while
-// older Obsidian versions continue to use display().
+// lets the bundle compile against the public typings without depending on the
+// exported shape.
 interface SearchableSettingSection {
   name: string;
   aliases: string[];
@@ -20,7 +20,7 @@ export class SimplicialSettingTab extends PluginSettingTab {
     super(app, plugin);
   }
 
-  /** Obsidian 1.13+ settings/search; display() remains the pre-1.13 fallback. */
+  /** Obsidian 1.13+ settings/search. It supersedes display(), which the app no longer calls. */
   getSettingDefinitions(): SearchableSettingSection[] {
     return [
       this.settingSection("Storage", ["Persistence mode", "Central file"], (el) => this.renderPersistenceSettings(el)),
@@ -145,33 +145,6 @@ export class SimplicialSettingTab extends PluginSettingTab {
         this.refreshSettingVisibility();
       },
     };
-  }
-
-  display(): void {
-    const { containerEl } = this;
-    containerEl.empty();
-
-    this.renderDisplaySection(containerEl, "Storage", (section) => this.renderPersistenceSettings(section));
-    this.renderDisplaySection(containerEl, "Hypergraph", (section) => this.renderHypergraphSettings(section));
-    this.renderDisplaySection(containerEl, "Dynamics", (section) => this.renderDynamicsSettings(section));
-    this.renderDisplaySection(containerEl, "Contextuality", (section) => this.renderSheafSettings(section));
-    this.renderDisplaySection(containerEl, "Persistent topology", (section) =>
-      this.renderPersistenceTopologySettings(section),
-    );
-    this.renderDisplaySection(containerEl, "Layout", (section) => this.renderLayoutSettings(section));
-    this.renderDisplaySection(containerEl, "Inference", (section) => this.renderInferenceSettings(section));
-    this.renderDisplaySection(containerEl, "Commands and display", (section) => this.renderCommandUiSettings(section));
-    this.renderDisplaySection(containerEl, "Topology and explanations", (section) => this.renderBettiSettings(section));
-    this.renderDisplaySection(containerEl, "Inference engine", (section) => this.renderEmergentSettings(section));
-    this.renderDisplaySection(containerEl, "Legacy inference weights", (section) => this.renderLegacySettings(section));
-
-    this.refreshSettingVisibility();
-  }
-
-  private renderDisplaySection(containerEl: HTMLElement, name: string, render: (sectionEl: HTMLElement) => void): void {
-    const sectionEl = containerEl.createDiv({ cls: "simplicial-settings-section" });
-    new Setting(sectionEl).setName(name).setHeading();
-    render(sectionEl);
   }
 
   private renderPersistenceSettings(containerEl: HTMLElement): void {
@@ -689,15 +662,14 @@ export class SimplicialSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Display betti on canvas")
-      // eslint-disable-next-line obsidianmd/ui/sentence-case -- F₂ and HUD are an acronym and a field name, not words to lowercase.
-      .setDesc("Show actual homology ranks over F₂ in the top-left HUD.")
+      .setDesc("Show actual homology ranks mod 2 in the top-left overlay.")
       .addToggle((toggle) => {
         toggle.setValue(this.plugin.settings.bettiDisplayOnCanvas);
         toggle.onChange(async (value) => {
           this.plugin.settings.bettiDisplayOnCanvas = value;
           await this.plugin.saveSettings();
           this.plugin.renderer.render();
-          new Notice(value ? "Betti HUD will appear in top-left of graph" : "Betti HUD hidden");
+          new Notice(value ? "Betti overlay will appear in top-left of graph" : "Betti overlay hidden");
         });
       });
 
