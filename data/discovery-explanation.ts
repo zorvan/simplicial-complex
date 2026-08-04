@@ -8,11 +8,7 @@
  * the definition — the discovery inbox must import it rather than declare its own.
  */
 export type DiscoveryKind =
-  | "persistent-gap"
-  | "missing-face"
-  | "context-disagreement"
-  | "encounter-recurrence"
-  | "structural-bridge";
+  "persistent-gap" | "missing-face" | "context-disagreement" | "encounter-recurrence" | "structural-bridge";
 
 export type DiscoveryAction = "inspect" | "compare" | "refine" | "write" | "dismiss";
 

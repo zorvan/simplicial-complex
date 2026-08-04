@@ -83,6 +83,11 @@ export async function reduceBoundaryMatrixAsync(
 }
 
 function defaultYield(): Promise<void> {
+  // A bare `setTimeout`, deliberately. This module is the worker's reduction engine and a
+  // worker has no `window` to reach the timer through, so the rule's fix would throw on
+  // the very path it is applied to. The popout-window lifetime concern the rule guards
+  // against does not reach code that never touches a document.
+  // eslint-disable-next-line obsidianmd/prefer-window-timers
   return new Promise((resolve) => setTimeout(resolve, 0));
 }
 

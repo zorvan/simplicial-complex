@@ -62,6 +62,10 @@ export class TopologyWorkerClient {
     // the view could never paint its "computing" state, and there would be no window in
     // which a cancel could arrive before the work began.
     const handle = this.ensureInlineHandler();
+    // A bare `setTimeout`, deliberately. This is the fallback taken precisely when the
+    // environment is unusual, and the Node tests drive it with no `window` defined, so
+    // the rule's `window.setTimeout` fix would throw here.
+    // eslint-disable-next-line obsidianmd/prefer-window-timers
     setTimeout(() => handle(request), 0);
   }
 

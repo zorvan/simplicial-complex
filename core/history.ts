@@ -7,13 +7,7 @@ import type { NodeID, RelationKey, RelationKind } from "./types.js";
  * current state was always the state.
  */
 export type RelationEventType =
-  | "encountered"
-  | "recurred"
-  | "created"
-  | "promoted"
-  | "relaxed"
-  | "crystallized"
-  | "dissolved";
+  "encountered" | "recurred" | "created" | "promoted" | "relaxed" | "crystallized" | "dissolved";
 
 export type RelationActor = "user" | "inference" | "parser";
 

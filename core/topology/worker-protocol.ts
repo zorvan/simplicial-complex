@@ -72,10 +72,7 @@ export interface TopologyFailureMessage {
 }
 
 export type TopologyWorkerResponse =
-  | TopologyProgressMessage
-  | TopologyStaticResultMessage
-  | TopologyPersistenceResultMessage
-  | TopologyFailureMessage;
+  TopologyProgressMessage | TopologyStaticResultMessage | TopologyPersistenceResultMessage | TopologyFailureMessage;
 
 export function checkLimits(input: TopologyInput, limits: TopologyLimits): TopologyFailure | null {
   const simplexCount = input.stableKeys.length + input.vertexKeys.length;

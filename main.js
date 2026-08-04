@@ -220,7 +220,7 @@ function he(s, t) {
   let e = [],
     n = 0,
     i = 0;
-  for (; n < s.length || i < t.length; )
+  for (; n < s.length || i < t.length;)
     i >= t.length || (n < s.length && s[n] < t[i])
       ? e.push(s[n++])
       : n >= s.length || t[i] < s[n]
@@ -770,7 +770,7 @@ var me = class {
       if (o.has(v)) return;
       r++;
       let y = [v];
-      for (; y.length > 0; ) {
+      for (; y.length > 0;) {
         let b = y.pop();
         o.has(b) ||
           (o.add(b),
@@ -1451,7 +1451,7 @@ function Tn(s) {
 function Qs(s, t) {
   let e = Math.abs(s),
     n = Math.abs(t);
-  for (; n; ) {
+  for (; n;) {
     let i = e % n;
     ((e = n), (n = i));
   }
@@ -1587,7 +1587,7 @@ function Pn(s, t) {
     if (n.has(l)) return;
     (n.set(l, null), i.set(l, 0));
     let c = [l];
-    for (; c.length > 0; ) {
+    for (; c.length > 0;) {
       let u = c.shift();
       for (let d of e.adjacency.get(u) ?? [])
         r.has(d.edgeIndex) ||
@@ -1677,7 +1677,7 @@ function or(s, t) {
       if (n.has(r)) return;
       i++;
       let o = [r];
-      for (; o.length > 0; ) {
+      for (; o.length > 0;) {
         let a = o.pop();
         n.has(a) ||
           (n.add(a),
@@ -1713,7 +1713,7 @@ var lr = 12;
 function cr(s) {
   let t = 0,
     e = s;
-  for (; e; ) ((e &= e - 1), t++);
+  for (; e;) ((e &= e - 1), t++);
   return t;
 }
 function dr(s, t) {
@@ -1731,7 +1731,7 @@ function dr(s, t) {
     return { value: 0, consistentContexts: [], exact: !0 };
   }
   let i = new Set(e.map((r) => r.id));
-  for (; i.size > 0 && !n(i); ) {
+  for (; i.size > 0 && !n(i);) {
     let r = { contexts: e.filter((l) => i.has(l.id)), sections: t.sections },
       o = new Map();
     Pn(s, r)
@@ -1935,7 +1935,7 @@ function ye(s, t) {
     n = new Set(t.map((r) => r.id));
   if (!n.has(e)) return e;
   let i = 2;
-  for (; n.has(`${e}-${i}`); ) i++;
+  for (; n.has(`${e}-${i}`);) i++;
   return `${e}-${i}`;
 }
 function Bt(s, t, e, n, i) {
@@ -2390,7 +2390,7 @@ var mr = [
         ? this.flushing
         : ((this.flushing = (async () => {
             try {
-              for (; this.queue.length > 0; ) {
+              for (; this.queue.length > 0;) {
                 let e = this.queue.splice(0, this.queue.length).map((n) => fn(n)).join(`
 `);
                 await this.appendLines(e);
@@ -2474,7 +2474,7 @@ function ni(s, t) {
     if (o.has(c) || ge(c, e, s).length < n) continue;
     let d = new Set([c]),
       p = [c];
-    for (o.add(c); p.length > 0; ) {
+    for (o.add(c); p.length > 0;) {
       let v = p.shift(),
         y = ge(v, e, s);
       if (!(y.length < n)) for (let b of y) (d.add(b), !o.has(b) && (o.add(b), p.push(b)));
@@ -3836,7 +3836,7 @@ function Lr(s, t, e) {
   let n = [];
   fi.lastIndex = 0;
   let i;
-  for (; (i = fi.exec(s)) !== null; ) {
+  for (; (i = fi.exec(s)) !== null;) {
     let r = i[1],
       o = i[2].split(/\s+/).filter(Boolean),
       a = r === "\u25B3\u25B3" ? 4 : r === "\u25B3" ? 3 : o.length,
@@ -3849,7 +3849,7 @@ function Hr(s, t, e) {
   let n = [];
   yi.lastIndex = 0;
   let i;
-  for (; (i = yi.exec(s)) !== null; ) {
+  for (; (i = yi.exec(s)) !== null;) {
     let r = i[2].split(/\s+/).filter(Boolean),
       o = ne(r.map((a) => e.canonicalize(a)));
     o.length < 2 || n.push({ nodes: D(o), sourcePath: t, persistence: "momentary" });
@@ -4915,9 +4915,9 @@ function Ur(s) {
   let t = new Map(),
     e = (i) => {
       let r = i;
-      for (; t.get(r) !== r; ) r = t.get(r);
+      for (; t.get(r) !== r;) r = t.get(r);
       let o = i;
-      for (; t.get(o) !== r; ) {
+      for (; t.get(o) !== r;) {
         let a = t.get(o);
         (t.set(o, r), (o = a));
       }
@@ -6135,14 +6135,12 @@ var tt = class {
           Ss = V.bucket >= 3,
           ws = V.bucket === 2,
           Cs = V.bucket === 0;
-        if (
-          !(
-            sn ||
-            (Ss && Q && Ee) ||
-            (ws && d < Math.max(2, Math.floor(p * 0.45)) && Ee) ||
-            (!Cs && i.isActive && Q && Ee)
-          )
-        )
+        if (!(
+          sn ||
+          (Ss && Q && Ee) ||
+          (ws && d < Math.max(2, Math.floor(p * 0.45)) && Ee) ||
+          (!Cs && i.isActive && Q && Ee)
+        ))
           return;
         sn || d++;
         let rn = 18,
@@ -6349,7 +6347,7 @@ var lo = 256;
 function co(s, t = {}) {
   let e = Zi(s, t),
     n = e.next();
-  for (; !n.done; ) n = e.next();
+  for (; !n.done;) n = e.next();
   return n.value;
 }
 async function uo(s, t = {}, e = po, n = 8) {
@@ -6357,7 +6355,7 @@ async function uo(s, t = {}, e = po, n = 8) {
     r = () => (typeof performance > "u" ? Date.now() : performance.now()),
     o = r(),
     a = i.next();
-  for (; !a.done; ) (r() - o >= n && (await e(), (o = r())), (a = i.next()));
+  for (; !a.done;) (r() - o >= n && (await e(), (o = r())), (a = i.next()));
   return a.value;
 }
 function po() {
@@ -6586,7 +6584,7 @@ function fo(s, t) {
     i = 0,
     r = n.length - 1,
     o = null;
-  for (; i <= r; ) {
+  for (; i <= r;) {
     let a = (i + r) >> 1,
       l = vo(s, t, n[a]);
     l ? ((o = l), (r = a - 1)) : (i = a + 1);
@@ -7066,7 +7064,7 @@ var Mo = 1,
       (this.client.dispose(), this.listeners.clear(), this.cache.clear(), (this.currentRequestId = null));
     }
     store(t, e) {
-      for (this.cache.set(t, e); this.cache.size > Ro; ) {
+      for (this.cache.set(t, e); this.cache.size > Ro;) {
         let n = this.cache.keys().next().value;
         if (n === void 0) break;
         this.cache.delete(n);

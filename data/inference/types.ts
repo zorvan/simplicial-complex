@@ -34,12 +34,7 @@ export interface CandidateSimplex {
 export interface ScoredCandidate extends CandidateSimplex {
   insightScore: number;
   class:
-    | "folder-cluster"
-    | "bridge-triangle"
-    | "cross-domain"
-    | "cross-domain-core"
-    | "project-nucleus"
-    | "super-insight";
+    "folder-cluster" | "bridge-triangle" | "cross-domain" | "cross-domain-core" | "project-nucleus" | "super-insight";
   decayedWeight: number;
 }
 
