@@ -71,6 +71,19 @@ jobs:
           done
           echo "Build successful: main.js, styles.css and manifest.json exist"
 
+      # The byte-identity claim above is only a claim until it is checked. 0.5.0 first
+      # published an unformatted bundle because Prettier silently skipped it, and every
+      # existence check still passed. Attesting the wrong bytes proves their provenance,
+      # not their correctness, so this runs before the attestation.
+      - name: Verify the built bundle matches the tagged one
+        run: |
+          if ! git diff --quiet -- main.js; then
+            echo "Built main.js differs from the main.js committed at this tag"
+            git diff --stat -- main.js
+            exit 1
+          fi
+          echo "Built main.js is byte-identical to the tagged bundle"
+
       # Attest the exact bytes that are about to become release assets. The previous
       # workflow attested files it then uploaded with actions/upload-artifact, which
       # produces a workflow artifact rather than a release asset — so the assets people

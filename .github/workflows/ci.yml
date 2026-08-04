@@ -75,6 +75,19 @@ jobs:
           fi
           echo "Build successful: main.js exists"
 
+      # `npm run build` prettifies the bundle in place, so a clean build reproduces the
+      # committed main.js byte for byte. When it does not, the committed bundle and the
+      # released one are different artifacts — which is invisible to every other check
+      # here, since an unformatted bundle still exists, still types, and still runs.
+      - name: Verify the built bundle matches the committed one
+        run: |
+          if ! git diff --quiet -- main.js; then
+            echo "Built main.js differs from the committed main.js"
+            git diff --stat -- main.js
+            exit 1
+          fi
+          echo "Built main.js is byte-identical to the committed bundle"
+
       # Obsidian installs only main.js, styles.css and manifest.json, so the topology
       # worker is inlined into the bundle. A build that dropped the payload would pass
       # every other check and fail at runtime in an installed vault.

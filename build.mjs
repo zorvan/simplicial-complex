@@ -21,7 +21,22 @@ function prettifyBundle(file, maxPasses = 4) {
   // Invoked through node against the resolved binary rather than through a shell,
   // so this behaves the same on every platform and escapes nothing.
   const prettier = createRequire(import.meta.url).resolve("prettier/bin/prettier.cjs");
-  const run = (args) => spawnSync(process.execPath, [prettier, ...args, file], { stdio: "ignore" }).status === 0;
+  // Since Prettier 3.0 `--ignore-path` defaults to `.gitignore`, and this intermediate
+  // is git-ignored on purpose — so the default would make Prettier skip the one file
+  // this function exists to format. Point it at `.prettierignore` instead (absent here;
+  // a missing ignore path is not an error) so only a deliberate Prettier ignore counts.
+  const ignorePath = ["--ignore-path", ".prettierignore"];
+  const run = (args) =>
+    spawnSync(process.execPath, [prettier, ...ignorePath, ...args, file], { stdio: "ignore" }).status === 0;
+  // `--check` exits 0 for a file Prettier skipped just as it does for a file that is
+  // already formatted, so the loop below cannot distinguish "settled" from "never
+  // looked at" — which is exactly how an unformatted bundle can reach a release. Ask
+  // outright whether this file is in scope, and refuse to publish if it is not.
+  const info = spawnSync(process.execPath, [prettier, ...ignorePath, "--file-info", file], { encoding: "utf8" });
+  if (info.status !== 0 || JSON.parse(info.stdout).ignored) {
+    console.error(`[simplicial-complex] Prettier would skip ${file}; the published bundle would be unformatted`);
+    process.exit(1);
+  }
   for (let pass = 1; pass <= maxPasses; pass++) {
     run(["--write"]);
     if (run(["--check"])) {
