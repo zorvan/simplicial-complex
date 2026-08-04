@@ -173,7 +173,7 @@ export class RelationHistory {
     });
   }
 
-  lineageFor(target: RelationKey | NodeID): RelationLineageLink[] {
+  lineageFor(target: string): RelationLineageLink[] {
     const nodeTarget = target.startsWith("n:") ? target : `n:${target}`;
     return this.lineage().filter(
       (link) => link.source === target || link.target === target || link.target === nodeTarget,
@@ -278,8 +278,8 @@ export function deserializeEvent(line: string): RelationEvent | null {
   return Object.freeze({
     timestamp,
     type: type as RelationEventType,
-    kind: kind as RelationKind,
-    relationKey: relationKey(kind as RelationKind, nodes),
+    kind,
+    relationKey: relationKey(kind, nodes),
     nodeKey: normalizeKey(nodes),
     nodes: Object.freeze(nodes),
     actor: raw.a === "user" || raw.a === "inference" || raw.a === "parser" ? raw.a : "user",

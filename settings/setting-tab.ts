@@ -3,12 +3,144 @@ import type SimplicialPlugin from "../main";
 import { ensureCentralFile } from "../data/persistence";
 import type { PluginSettings } from "../core/types";
 
+// Structural subset of Obsidian 1.13's SettingDefinitionItem. Keeping this local
+// lets the same bundle compile against the latest public (1.12) typings while
+// older Obsidian versions continue to use display().
+interface SearchableSettingSection {
+  name: string;
+  aliases: string[];
+  render: (setting: Setting) => void;
+}
+
 export class SimplicialSettingTab extends PluginSettingTab {
   constructor(
     app: App,
     private plugin: SimplicialPlugin,
   ) {
     super(app, plugin);
+  }
+
+  /** Obsidian 1.13+ settings/search; display() remains the pre-1.13 fallback. */
+  getSettingDefinitions(): SearchableSettingSection[] {
+    return [
+      this.settingSection("Storage", ["Persistence mode", "Central file"], (el) => this.renderPersistenceSettings(el)),
+      this.settingSection(
+        "Hypergraph",
+        [
+          "Hypergraph layer",
+          "Show encounters",
+          "Discover possible encounters",
+          "Encounter suggestion confidence",
+          "Encounter opacity",
+          "Pulse focused encounters",
+          "Recurrence threshold",
+          "Crystallize folder",
+          "Record relation history",
+          "History file",
+        ],
+        (el) => this.renderHypergraphSettings(el),
+      ),
+      this.settingSection("Dynamics", ["Enable dynamics lab", "Attention half-life (minutes)"], (el) =>
+        this.renderDynamicsSettings(el),
+      ),
+      this.settingSection("Contextuality", ["Contextuality lab"], (el) => this.renderSheafSettings(el)),
+      this.settingSection(
+        "Layout",
+        [
+          "Max rendered dimension",
+          "Noise amount",
+          "Repulsion strength",
+          "Cohesion strength",
+          "Gravity strength",
+          "Damping",
+          "Boundary padding",
+          "Sleep threshold",
+          "Dark mode",
+        ],
+        (el) => this.renderLayoutSettings(el),
+      ),
+      this.settingSection(
+        "Inference",
+        [
+          "Higher-order inference output",
+          "Link graph baseline",
+          "Enable inferred edges",
+          "Inference threshold",
+          "Show suggestions",
+          "Suggestion threshold",
+        ],
+        (el) => this.renderInferenceSettings(el),
+      ),
+      this.settingSection(
+        "Commands and display",
+        [
+          "Command simplex size",
+          "Formal mode",
+          "Sparse edge length",
+          "Sparse gravity boost",
+          "Label density",
+          "Filtration metric",
+          "Filtration threshold",
+          "Open metadata panel after create",
+          "Metadata hover delay",
+        ],
+        (el) => this.renderCommandUiSettings(el),
+      ),
+      this.settingSection(
+        "Topology and explanations",
+        [
+          "Compute holes (advanced, slow)",
+          "Display betti on canvas",
+          "Max betti dimension",
+          "Show filtration slider",
+          "Enable explanation panel",
+        ],
+        (el) => this.renderBettiSettings(el),
+      ),
+      this.settingSection(
+        "Inference engine",
+        [
+          "Inference engine (v2)",
+          "Inference mode",
+          "Emergent inference",
+          "Domain source",
+          "Content cluster count",
+          "Link strength threshold",
+        ],
+        (el) => this.renderEmergentSettings(el),
+      ),
+      this.settingSection(
+        "Legacy inference weights",
+        [
+          "Link weight",
+          "Mutual link bonus",
+          "Shared tag weight",
+          "Title overlap weight",
+          "Content overlap weight",
+          "Same folder weight",
+          "Top folder weight",
+        ],
+        (el) => this.renderLegacySettings(el),
+      ),
+    ];
+  }
+
+  private settingSection(
+    name: string,
+    aliases: string[],
+    render: (containerEl: HTMLElement) => void,
+  ): SearchableSettingSection {
+    return {
+      name,
+      aliases,
+      render: (setting) => {
+        setting.settingEl.empty();
+        setting.settingEl.addClass("simplicial-settings-section");
+        setting.settingEl.createEl("h3", { text: name });
+        render(setting.settingEl);
+        this.refreshSettingVisibility();
+      },
+    };
   }
 
   display(): void {

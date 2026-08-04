@@ -18,6 +18,16 @@ export default defineConfig([
       ...obsidianmd.configs.recommended[0].rules,
       "obsidianmd/sample-names": "off",
       "obsidianmd/prefer-file-manager-trash-file": "error",
+      "@typescript-eslint/no-duplicate-type-constituents": "error",
+      "@typescript-eslint/no-misused-promises": "error",
+      "@typescript-eslint/no-unnecessary-type-assertion": "error",
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "CallExpression[callee.property.name='createElement']",
+          message: "Use Obsidian's createEl/createDiv/createSpan helpers instead of document.createElement.",
+        },
+      ],
       "no-unused-vars": "off",
       "@typescript-eslint/no-unused-vars": [
         "error",

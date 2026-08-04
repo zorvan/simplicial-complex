@@ -110,12 +110,20 @@ export class SheafView extends ItemView {
         .setDesc(`${reason} Starter roles: ${this.roleSummary(initialRoles)}.`)
         .addButton((button) => {
           button.setButtonText("Add worksheet");
-          button.onClick(async () => {
-            stored.contexts.push(context);
-            stored.sections[context.id] = { ...initialRoles };
-            appendSheafAudit(stored, { action: "context-added", contextId: context.id, after: context.name, reason });
-            await this.persist(stored);
-          });
+          button.onClick(
+            () =>
+              void (async () => {
+                stored.contexts.push(context);
+                stored.sections[context.id] = { ...initialRoles };
+                appendSheafAudit(stored, {
+                  action: "context-added",
+                  contextId: context.id,
+                  after: context.name,
+                  reason,
+                });
+                await this.persist(stored);
+              })(),
+          );
         });
     });
     new Setting(section)
@@ -156,7 +164,9 @@ export class SheafView extends ItemView {
 
     new Setting(section).setName("Name").addText((text) => text.onChange((value) => (name = value.trim())));
     new Setting(section).setName("Source").addDropdown((dropdown) => {
-      SOURCES.forEach((candidate) => dropdown.addOption(candidate, candidate === "moc" ? "MOC note" : candidate));
+      SOURCES.forEach((candidate) => {
+        dropdown.addOption(candidate, candidate === "moc" ? "MOC note" : candidate);
+      });
       dropdown.setValue(source);
       dropdown.onChange((value) => (source = value as ContextSource));
     });
@@ -388,22 +398,27 @@ export class SheafView extends ItemView {
         .setName(shortName(nodeId))
         .setDesc("Role inside this context only—not the note's permanent identity.");
       row.addDropdown((dropdown) => {
-        SHEAF_ROLES.forEach((role) => dropdown.addOption(role, role));
-        dropdown.setValue(section?.get(nodeId) ?? "reference");
-        dropdown.onChange(async (value) => {
-          stored.sections[context.id] ??= {};
-          const before = stored.sections[context.id][nodeId];
-          stored.sections[context.id][nodeId] = value as (typeof SHEAF_ROLES)[number];
-          appendSheafAudit(stored, {
-            action: "role-refined",
-            contextId: context.id,
-            nodeId,
-            before,
-            after: value,
-            reason: "Explicit role selection.",
-          });
-          await this.persist(stored);
+        SHEAF_ROLES.forEach((role) => {
+          dropdown.addOption(role, role);
         });
+        dropdown.setValue(section?.get(nodeId) ?? "reference");
+        dropdown.onChange(
+          (value) =>
+            void (async () => {
+              stored.sections[context.id] ??= {};
+              const before = stored.sections[context.id][nodeId];
+              stored.sections[context.id][nodeId] = value as (typeof SHEAF_ROLES)[number];
+              appendSheafAudit(stored, {
+                action: "role-refined",
+                contextId: context.id,
+                nodeId,
+                before,
+                after: value,
+                reason: "Explicit role selection.",
+              });
+              await this.persist(stored);
+            })(),
+        );
       });
       row.addButton((button) =>
         button.setButtonText("Compare readings").onClick(() => {

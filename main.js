@@ -671,7 +671,7 @@ var De = class {
 function Me(r) {
   return r === void 0 || Number.isNaN(r) ? 1 : Math.max(0.1, Math.min(1, r));
 }
-var Re = class {
+var Te = class {
   constructor() {
     this.events = [];
     this.listeners = new Set();
@@ -844,7 +844,7 @@ var Zi = { opened: 1, edited: 1, focused: 0.7, query: 0.5, recency: 0.25 },
 function ct(r) {
   return Math.max(0, Math.min(1, r));
 }
-var Te = class {
+var Re = class {
     constructor(t = Ji) {
       this.config = t;
       this.stamps = new Map();
@@ -2359,7 +2359,7 @@ function Dn(r, t) {
     n = new Set(r.map((i) => i.domain));
   return t === 1 ? e.size >= 2 || n.size >= 2 : t === 2 ? n.size >= 2 && e.size >= 2 : !0;
 }
-function Rn(r, t, e) {
+function Tn(r, t, e) {
   let n = new Set(r.map((l) => l.domain)),
     i = new Set(r.map((l) => l.role)),
     s = r.some((l) => l.role === "action");
@@ -2374,7 +2374,7 @@ var Ds = {
   enableReinforcement: !1,
   reinforcementStrength: 0.5,
 };
-function Tn(r, t, e = Ds, n, i) {
+function Rn(r, t, e = Ds, n, i) {
   let s = Date.now(),
     o = Math.max(...t.map((d) => d.modifiedAt)),
     a = (s - o) / (1e3 * 60 * 60 * 24),
@@ -2405,9 +2405,9 @@ function In(r, t, e) {
   if (((s -= u * e.commonTagPenalty), !Dn(n, i)))
     return { ...r, insightScore: 0, class: "folder-cluster", decayedWeight: 0 };
   let p =
-    i === 2 ? Rn(n, e.minDomainsForTetra, e.minRolesForTetra) : { qualifies: !0, isSuper: !1, class: "cross-domain" };
+    i === 2 ? Tn(n, e.minDomainsForTetra, e.minRolesForTetra) : { qualifies: !0, isSuper: !1, class: "cross-domain" };
   if (!p.qualifies) return { ...r, insightScore: 0, class: "folder-cluster", decayedWeight: 0 };
-  let y = Tn(r.weight ?? 1, n, {
+  let y = Rn(r.weight ?? 1, n, {
     halfLifeDays: e.decayHalfLifeDays,
     minimumWeight: e.decayMinimumWeight,
     roleModifier: { action: 0.3, project: 0.5, research: 0.7, idea: 1, creative: 1.2, reference: 1.5 },
@@ -2416,7 +2416,7 @@ function In(r, t, e) {
   });
   return { ...r, insightScore: s, class: p.class, decayedWeight: y };
 }
-function Rs(r, t) {
+function Ts(r, t) {
   let e = Ie(r, t),
     n = Nn(e, t),
     i = Mn(e, t),
@@ -2474,7 +2474,7 @@ function Rs(r, t) {
   return [...l, ...a];
 }
 function kn(r, t) {
-  return Rs(r, t);
+  return Ts(r, t);
 }
 var Pn = new Set([
     "the",
@@ -2738,7 +2738,7 @@ var Pn = new Set([
     "folder",
     "vault",
   ]),
-  Ts = new Set([
+  Rs = new Set([
     "\u0627\u06CC\u0646",
     "\u0622\u0646",
     "\u0622\u0646\u0627\u0646",
@@ -3371,7 +3371,7 @@ var Pn = new Set([
     "ordner",
     "tresor",
   ]),
-  As = { en: Pn, fa: Ts, es: Is, fr: ks, de: Ps };
+  As = { en: Pn, fa: Rs, es: Is, fr: ks, de: Ps };
 function Fs(r) {
   let t = r.toLowerCase().split("-")[0];
   return As[t] ?? Pn;
@@ -4488,7 +4488,7 @@ function F(r, t) {
   return qn(e ?? t);
 }
 var Qn = new Map();
-function Rt(r, t) {
+function Tt(r, t) {
   return r.nodes.map((e) => t.find((n) => n.id === e)).filter(Boolean);
 }
 function ti(r) {
@@ -4551,7 +4551,7 @@ function ni(r) {
 }
 function tr(r, t, e, n) {
   let i = r,
-    s = Rt(t, e);
+    s = Tt(t, e);
   if (!s.length) return null;
   let o = s.map((v) => ({ x: v.px, y: v.py })),
     a = Qn.get(i);
@@ -4563,7 +4563,7 @@ function tr(r, t, e, n) {
     u = Math.min(...h) - l,
     p = Math.max(...c) - d + l,
     y = Math.max(...h) - u + l,
-    m = activeDocument.createElement("canvas");
+    m = activeDocument.createEl("canvas");
   ((m.width = Math.max(1, Math.ceil(p))), (m.height = Math.max(1, Math.ceil(y))));
   let g = m.getContext("2d");
   if (!g) return null;
@@ -4588,7 +4588,7 @@ function ei(r, t, e) {
   er(r, Qs(Js(t), e));
 }
 function ii(r, t, e, n, i) {
-  let s = Rt(t, e);
+  let s = Tt(t, e);
   if (s.length < 2) return;
   let [o, a, l] = n,
     c = s.map((d) => ({ x: d.px, y: d.py })),
@@ -4625,7 +4625,7 @@ function ii(r, t, e, n, i) {
     r.restore());
 }
 function si(r, t, e, n, i, s, o) {
-  if (!Rt(e, i).length) return;
+  if (!Tt(e, i).length) return;
   let [l, c, h] = F(n, e),
     d = 36 + (e.weight ?? 1) * 24 + (e.nodes.length - 1 === 3 ? 20 : 0),
     u = o.isActive ? (o.involvesSimplex(e, t) ? s : s * 0.18) : s,
@@ -5153,7 +5153,7 @@ function fr(r, t) {
   }
   return null;
 }
-function Tt(r, t) {
+function Rt(r, t) {
   let e = r.boundaryNodes.map((n) => n.replace(/\.md$/, ""));
   return r.dimension === 1
     ? {
@@ -5419,7 +5419,7 @@ var je = class {
             o = this.hoveredHoleKey;
           if (s) {
             if (((this.hoveredHoleKey = s.boundaryNodes.sort().join("|")), this.hoveredHoleKey !== o)) {
-              let a = Tt(s, new Map());
+              let a = Rt(s, new Map());
               this.callbacks.onHoleHover?.(s, a);
             }
           } else ((this.hoveredHoleKey = null), o !== null && this.callbacks.onHoleHover?.(null, null));
@@ -5476,7 +5476,7 @@ var je = class {
         let e = this.eventToCanvasPoint(t),
           n = this.settings.enableBettiComputation ? this.findHoleAtPoint(e) : null;
         if (n) {
-          let s = Tt(n, new Map());
+          let s = Rt(n, new Map());
           this.callbacks.onHoleClick?.(n, s);
           return;
         }
@@ -6304,8 +6304,8 @@ var Ye = class extends Ue.Modal {
         }));
   }
 };
-var T = require("obsidian");
-var Xe = class extends T.ItemView {
+var R = require("obsidian");
+var Xe = class extends R.ItemView {
   constructor(e, n) {
     super(e);
     this.model = n;
@@ -6401,7 +6401,7 @@ var Xe = class extends T.ItemView {
         e.createEl("div", { cls: "simplicial-panel-footer", text: `dim: ${n.nodes.length - 1} \xB7 auto: yes` }));
       return;
     }
-    (new T.Setting(e).setName("Label").addText((d) => {
+    (new R.Setting(e).setName("Label").addText((d) => {
       (d.setPlaceholder("Unnamed"),
         d.setValue(n.label ?? ""),
         d.onChange((u) => {
@@ -6411,7 +6411,7 @@ var Xe = class extends T.ItemView {
             }, 500)));
         }));
     }),
-      new T.Setting(e)
+      new R.Setting(e)
         .setName("Weight")
         .setDesc(String(n.weight ?? 1))
         .addSlider((d) => {
@@ -6425,7 +6425,7 @@ var Xe = class extends T.ItemView {
               this.saveMetadata?.(this.simplexKey, { weight: u });
             }));
         }),
-      new T.Setting(e)
+      new R.Setting(e)
         .setName("Relax to encounter")
         .setDesc(
           "Withdraw the claim that this group's sub-relations are meaningful, while keeping the group relation itself.",
@@ -6436,19 +6436,19 @@ var Xe = class extends T.ItemView {
               this.simplexKey && (await this.actions?.relaxSimplex(this.simplexKey));
             }));
         }),
-      new T.Setting(e)
+      new R.Setting(e)
         .addButton((d) => {
           (d.setButtonText("Promote to note"),
             d.onClick(async () => {
               this.simplexKey &&
-                (await this.promoteSimplex?.(this.simplexKey), new T.Notice("Simplex promoted to note."));
+                (await this.promoteSimplex?.(this.simplexKey), new R.Notice("Simplex promoted to note."));
             }));
         })
         .addExtraButton((d) => {
           (d.setIcon("trash"),
             d.setTooltip("Dissolve simplex"),
             d.onClick(async () => {
-              this.simplexKey && (await this.dissolveSimplex?.(this.simplexKey), new T.Notice("Simplex dissolved."));
+              this.simplexKey && (await this.dissolveSimplex?.(this.simplexKey), new R.Notice("Simplex dissolved."));
             }));
         }),
       e.createEl("div", {
@@ -6475,7 +6475,7 @@ var Xe = class extends T.ItemView {
         cls: "simplicial-explanation-tension",
         text: `Probabilistic suggestion \xB7 ${Math.round((i.confidence ?? 0) * 100)}% confidence. Nothing has been recorded in your notes or history.`,
       }),
-      new T.Setting(e)
+      new R.Setting(e)
         .setName("Record this encounter")
         .setDesc("Confirm that these notes genuinely came together as one irreducible whole.")
         .addButton((d) => {
@@ -6508,7 +6508,7 @@ var Xe = class extends T.ItemView {
           cls: "simplicial-panel-value",
           text: `Crystallized into ${i.crystallizedInto.replace(/\.md$/, "")}`,
         }),
-      new T.Setting(e).setName("Label").addText((d) => {
+      new R.Setting(e).setName("Label").addText((d) => {
         (d.setPlaceholder("Unnamed"),
           d.setValue(i.label ?? ""),
           d.onChange((u) => {
@@ -6518,7 +6518,7 @@ var Xe = class extends T.ItemView {
               }, 500)));
           }));
       }),
-      new T.Setting(e)
+      new R.Setting(e)
         .setName("Weight")
         .setDesc(String(i.weight ?? 1))
         .addSlider((d) => {
@@ -6532,7 +6532,7 @@ var Xe = class extends T.ItemView {
               this.actions?.saveHyperedgeMetadata(n, { weight: u });
             }));
         }),
-      new T.Setting(e)
+      new R.Setting(e)
         .setName("Promote to simplex")
         .setDesc(
           "Assert that the sub-relations within this group are meaningful too. You will see the exact list first.",
@@ -6543,7 +6543,7 @@ var Xe = class extends T.ItemView {
             d.onClick(() => this.actions?.promoteEncounter(n)));
         }));
     let h = i.persistence === "recurring" && !i.suggested;
-    (new T.Setting(e)
+    (new R.Setting(e)
       .setName("Crystallize concept")
       .setDesc(
         h
@@ -6557,7 +6557,7 @@ var Xe = class extends T.ItemView {
             await this.actions?.crystallizeEncounter(n);
           }));
       }),
-      new T.Setting(e).addExtraButton((d) => {
+      new R.Setting(e).addExtraButton((d) => {
         (d.setIcon("trash"),
           d.setTooltip("Dissolve encounter"),
           d.onClick(async () => {
@@ -6672,7 +6672,7 @@ async function Pt(r, t, e) {
     i = 0;
   for (;;) {
     let s = `${n}${i === 0 ? "" : `-${i}`}.md`;
-    if (!(r.vault.getAbstractFileByPath(s) instanceof T.TFile)) return r.vault.create(s, e);
+    if (!(r.vault.getAbstractFileByPath(s) instanceof R.TFile)) return r.vault.create(s, e);
     i++;
   }
 }
@@ -6723,14 +6723,14 @@ var xe = {
         for (let a of dt) {
           let l = await zt(this.model, i, a, {
             sliceIterations: 20,
-            yieldControl: Ri,
+            yieldControl: Ti,
             isCancelled: () => n !== this.runGeneration,
           });
           if (n !== this.runGeneration) return;
           l && o.push(l);
         }
         (this.runs.push({ key: i, label: s.label?.trim() || s.nodes.map((a) => Di(a)).join(" \xB7 "), results: o }),
-          await Ri());
+          await Ti());
       }
       n === this.runGeneration && ((this.isRunning = !1), (this.lastRunAt = Date.now()), this.render());
     }
@@ -6826,14 +6826,14 @@ var xe = {
 function Di(r) {
   return r.split("/").pop()?.replace(/\.md$/, "") ?? r;
 }
-function Ri() {
+function Ti() {
   return new Promise((r) => {
     window.setTimeout(r, 0);
   });
 }
-var R = require("obsidian");
+var T = require("obsidian");
 var vr = ["manual", "folder", "tag", "query", "moc"],
-  Ze = class extends R.ItemView {
+  Ze = class extends T.ItemView {
     constructor(e, n, i, s) {
       super(e);
       this.model = n;
@@ -6896,20 +6896,22 @@ var vr = ["manual", "folder", "tag", "query", "moc"],
             : "No new overlapping authored relations are available as context seeds.",
         }),
         i.forEach(({ context: o, reason: a, initialRoles: l }) => {
-          new R.Setting(s)
+          new T.Setting(s)
             .setName(o.name)
             .setDesc(`${a} Starter roles: ${this.roleSummary(l)}.`)
             .addButton((c) => {
               (c.setButtonText("Add worksheet"),
-                c.onClick(async () => {
-                  (n.contexts.push(o),
-                    (n.sections[o.id] = { ...l }),
-                    $(n, { action: "context-added", contextId: o.id, after: o.name, reason: a }),
-                    await this.persist(n));
+                c.onClick(() => {
+                  (async () => {
+                    (n.contexts.push(o),
+                      (n.sections[o.id] = { ...l }),
+                      $(n, { action: "context-added", contextId: o.id, after: o.name, reason: a }),
+                      await this.persist(n));
+                  })();
                 }));
             });
         }),
-        new R.Setting(s)
+        new T.Setting(s)
           .setName("Folder and tag seeds")
           .setDesc("Optional filing-system hints, ranked by overlap. They are never added automatically.")
           .addButton((o) => {
@@ -6920,7 +6922,7 @@ var vr = ["manual", "folder", "tag", "query", "moc"],
           }),
         this.showDerivedSeeds &&
           dn(this.app, this.model, n.contexts).forEach(({ context: o, reason: a, initialRoles: l }) => {
-            new R.Setting(s)
+            new T.Setting(s)
               .setName(`${o.source}: ${o.name}`)
               .setDesc(`${a} Starter roles: ${this.roleSummary(l)}.`)
               .addButton((c) => {
@@ -6941,32 +6943,36 @@ var vr = ["manual", "folder", "tag", "query", "moc"],
         o = "manual",
         a = "",
         l = new Set();
-      (new R.Setting(i).setName("Name").addText((d) => d.onChange((u) => (s = u.trim()))),
-        new R.Setting(i).setName("Source").addDropdown((d) => {
-          (vr.forEach((u) => d.addOption(u, u === "moc" ? "MOC note" : u)), d.setValue(o), d.onChange((u) => (o = u)));
+      (new T.Setting(i).setName("Name").addText((d) => d.onChange((u) => (s = u.trim()))),
+        new T.Setting(i).setName("Source").addDropdown((d) => {
+          (vr.forEach((u) => {
+            d.addOption(u, u === "moc" ? "MOC note" : u);
+          }),
+            d.setValue(o),
+            d.onChange((u) => (o = u)));
         }),
-        new R.Setting(i)
+        new T.Setting(i)
           .setName("Definition")
           .setDesc("Folder path/tag for a derived seed, or a query/MOC description for an explicit selection.")
           .addText((d) => d.onChange((u) => (a = u.trim()))));
       let c = sn(this.model),
         h = i.createDiv({ cls: "simplicial-sheaf-relations" });
       (c.forEach((d) => {
-        new R.Setting(h).setName(this.relationLabel(d)).addToggle((u) => {
+        new T.Setting(h).setName(this.relationLabel(d)).addToggle((u) => {
           u.onChange((p) => (p ? l.add(d) : l.delete(d)));
         });
       }),
-        new R.Setting(i).addButton((d) => {
+        new T.Setting(i).addButton((d) => {
           (d.setButtonText("Add context").setCta(),
             d.onClick(async () => {
               if (!s) {
-                new R.Notice("Give the context a name first.");
+                new T.Notice("Give the context a name first.");
                 return;
               }
               let u = (o === "folder" || o === "tag") && a ? St(this.app, this.model, o, a, n.contexts) : null,
                 p = l.size > 0 ? [...l] : (u?.relations ?? []);
               if (p.length === 0) {
-                new R.Notice("Select at least one relation, or use a folder/tag that matches one.");
+                new T.Notice("Select at least one relation, or use a folder/tag that matches one.");
                 return;
               }
               let y = le(s, n.contexts);
@@ -7020,7 +7026,7 @@ var vr = ["manual", "folder", "tag", "query", "moc"],
         }),
         s.forEach((o, a) => {
           let l = n.contexts.find((h) => h.id === o.contextId);
-          new R.Setting(e)
+          new T.Setting(e)
             .setName(`${a === 0 ? "Most consequential \xB7 " : ""}${L(o.nodeId)} in ${l?.name ?? o.contextId}`)
             .setDesc(
               `${o.from} \u2192 ${o.to}; H\xB9 ${o.before.h1} \u2192 ${o.after.h1}; contextual fraction ${o.before.contextualFraction.toFixed(2)} \u2192 ${o.after.contextualFraction.toFixed(2)}${o.before.contextualityDetected && !o.after.contextualityDetected ? "; converts hidden contextuality into a directly inspectable local disagreement" : ""}.`,
@@ -7052,7 +7058,7 @@ var vr = ["manual", "folder", "tag", "query", "moc"],
         cls: "simplicial-measure-reading",
         text: `Temporary simultaneous readings: H\xB9 ${o.gluing.h1}, contextual fraction ${o.fraction.value.toFixed(2)}. Accept all to persist and audit them, or discard without changing plugin data.`,
       }),
-        new R.Setting(i)
+        new T.Setting(i)
           .addButton((a) =>
             a
               .setButtonText("Accept all")
@@ -7096,7 +7102,7 @@ var vr = ["manual", "folder", "tag", "query", "moc"],
       let l = k(this.model, s);
       (Object.keys(n.sections[s.id] ?? {}).length === 0 &&
         l.length > 0 &&
-        new R.Setting(o)
+        new T.Setting(o)
           .setName("This worksheet has no local readings yet")
           .setDesc(
             "Create an editable first draft from note tags and paths. This is a starting point, not a conclusion.",
@@ -7146,26 +7152,30 @@ var vr = ["manual", "folder", "tag", "query", "moc"],
       let d = ae(this.model, n, V(this.app, this.model)).sections.get(s.id);
       if (
         (l.forEach((u) => {
-          let p = new R.Setting(o)
+          let p = new T.Setting(o)
             .setName(L(u))
             .setDesc("Role inside this context only\u2014not the note's permanent identity.");
           (p.addDropdown((y) => {
-            (j.forEach((m) => y.addOption(m, m)),
+            (j.forEach((m) => {
+              y.addOption(m, m);
+            }),
               y.setValue(d?.get(u) ?? "reference"),
-              y.onChange(async (m) => {
-                var f, v;
-                (f = n.sections)[(v = s.id)] ?? (f[v] = {});
-                let g = n.sections[s.id][u];
-                ((n.sections[s.id][u] = m),
-                  $(n, {
-                    action: "role-refined",
-                    contextId: s.id,
-                    nodeId: u,
-                    before: g,
-                    after: m,
-                    reason: "Explicit role selection.",
-                  }),
-                  await this.persist(n));
+              y.onChange((m) => {
+                (async () => {
+                  var f, v;
+                  (f = n.sections)[(v = s.id)] ?? (f[v] = {});
+                  let g = n.sections[s.id][u];
+                  ((n.sections[s.id][u] = m),
+                    $(n, {
+                      action: "role-refined",
+                      contextId: s.id,
+                      nodeId: u,
+                      before: g,
+                      after: m,
+                      reason: "Explicit role selection.",
+                    }),
+                    await this.persist(n));
+                })();
               }));
           }),
             p.addButton((y) =>
@@ -7184,7 +7194,7 @@ var vr = ["manual", "folder", "tag", "query", "moc"],
           }));
       }
       (this.renderContextRestructuring(o, n, s.id),
-        new R.Setting(o).addButton((u) => {
+        new T.Setting(o).addButton((u) => {
           (u.setButtonText("Delete context").setWarning(),
             u.onClick(async () => {
               ($(n, {
@@ -7203,7 +7213,7 @@ var vr = ["manual", "folder", "tag", "query", "moc"],
       let s = n.contexts.find((a) => a.id === i);
       if (!s) return;
       s.relations.length > 1 &&
-        new R.Setting(e)
+        new T.Setting(e)
           .setName("Split suggestion")
           .setDesc("Review one relation as its own context; the current context remains unchanged until accepted.")
           .addButton((a) => {
@@ -7231,7 +7241,7 @@ var vr = ["manual", "folder", "tag", "query", "moc"],
           });
       let o = n.contexts.find((a) => a.id !== s.id && k(this.model, a).some((l) => k(this.model, s).includes(l)));
       o &&
-        new R.Setting(e)
+        new T.Setting(e)
           .setName(`Merge suggestion: ${o.name}`)
           .setDesc("The contexts overlap. Accepting creates a new combined context and preserves both originals.")
           .addButton((a) => {
@@ -7291,7 +7301,7 @@ function L(r) {
   return r.split("/").pop()?.replace(/\.md$/, "") ?? r;
 }
 var ki = require("obsidian");
-function Ti(r, t) {
+function Ri(r, t) {
   let e = [],
     n = [...r.simplices.entries()]
       .map(([a, l]) => ({ key: a, simplex: l, weight: br(l, t) }))
@@ -7382,7 +7392,7 @@ var Je = class extends ki.ItemView {
       return;
     }
     (this.sliderWrap && this.sliderWrap.removeClass("simplicial-hidden"),
-      (this.filtrationEvents = Ti(this.model, this.settings.renderFilterMetric)),
+      (this.filtrationEvents = Ri(this.model, this.settings.renderFilterMetric)),
       this.updateEventMarkers());
   }
   refreshSettings() {
@@ -7435,13 +7445,15 @@ var Je = class extends ki.ItemView {
     ((s.title =
       "Turn on all evidence sources, choose balanced discovery thresholds, and reveal suggested links, groups, and encounters. Hole computation stays off. Nothing is confirmed or written to notes."),
       s.setAttr("aria-label", s.title),
-      s.addEventListener("click", async () => {
-        ((s.disabled = !0), s.setText("Discovering\u2026"));
-        try {
-          await this.actions?.findExpressiveView();
-        } finally {
-          ((s.disabled = !1), s.setText("Find expressive view"));
-        }
+      s.addEventListener("click", () => {
+        (async () => {
+          ((s.disabled = !0), s.setText("Discovering\u2026"));
+          try {
+            await this.actions?.findExpressiveView();
+          } finally {
+            ((s.disabled = !1), s.setText("Find expressive view"));
+          }
+        })();
       }));
     let o = n.createEl("button", { cls: "simplicial-explore-action", text: "\u25C7 Record encounter" });
     ((o.title = "Record several notes as one meaningful group; this does not imply pairwise links."),
@@ -7642,13 +7654,15 @@ var Je = class extends ki.ItemView {
         .createDiv({ cls: "simplicial-control-row" })
         .createEl("button", { cls: "simplicial-control-button", text: "Find expressive view" });
     ((u.title = "Reveal a balanced, suggestion-only view using all available evidence."),
-      u.addEventListener("click", async () => {
-        ((u.disabled = !0), u.setText("Discovering\u2026"));
-        try {
-          await this.actions?.findExpressiveView();
-        } finally {
-          ((u.disabled = !1), u.setText("Find expressive view"));
-        }
+      u.addEventListener("click", () => {
+        (async () => {
+          ((u.disabled = !0), u.setText("Discovering\u2026"));
+          try {
+            await this.actions?.findExpressiveView();
+          } finally {
+            ((u.disabled = !1), u.setText("Find expressive view"));
+          }
+        })();
       }),
       h
         .createDiv({ cls: "simplicial-control-row" })
@@ -7747,6 +7761,122 @@ var Qe = class extends x.PluginSettingTab {
   constructor(e, n) {
     super(e, n);
     this.plugin = n;
+  }
+  getSettingDefinitions() {
+    return [
+      this.settingSection("Storage", ["Persistence mode", "Central file"], (e) => this.renderPersistenceSettings(e)),
+      this.settingSection(
+        "Hypergraph",
+        [
+          "Hypergraph layer",
+          "Show encounters",
+          "Discover possible encounters",
+          "Encounter suggestion confidence",
+          "Encounter opacity",
+          "Pulse focused encounters",
+          "Recurrence threshold",
+          "Crystallize folder",
+          "Record relation history",
+          "History file",
+        ],
+        (e) => this.renderHypergraphSettings(e),
+      ),
+      this.settingSection("Dynamics", ["Enable dynamics lab", "Attention half-life (minutes)"], (e) =>
+        this.renderDynamicsSettings(e),
+      ),
+      this.settingSection("Contextuality", ["Contextuality lab"], (e) => this.renderSheafSettings(e)),
+      this.settingSection(
+        "Layout",
+        [
+          "Max rendered dimension",
+          "Noise amount",
+          "Repulsion strength",
+          "Cohesion strength",
+          "Gravity strength",
+          "Damping",
+          "Boundary padding",
+          "Sleep threshold",
+          "Dark mode",
+        ],
+        (e) => this.renderLayoutSettings(e),
+      ),
+      this.settingSection(
+        "Inference",
+        [
+          "Higher-order inference output",
+          "Link graph baseline",
+          "Enable inferred edges",
+          "Inference threshold",
+          "Show suggestions",
+          "Suggestion threshold",
+        ],
+        (e) => this.renderInferenceSettings(e),
+      ),
+      this.settingSection(
+        "Commands and display",
+        [
+          "Command simplex size",
+          "Formal mode",
+          "Sparse edge length",
+          "Sparse gravity boost",
+          "Label density",
+          "Filtration metric",
+          "Filtration threshold",
+          "Open metadata panel after create",
+          "Metadata hover delay",
+        ],
+        (e) => this.renderCommandUiSettings(e),
+      ),
+      this.settingSection(
+        "Topology and explanations",
+        [
+          "Compute holes (advanced, slow)",
+          "Display betti on canvas",
+          "Max betti dimension",
+          "Show filtration slider",
+          "Enable explanation panel",
+        ],
+        (e) => this.renderBettiSettings(e),
+      ),
+      this.settingSection(
+        "Inference engine",
+        [
+          "Inference engine (v2)",
+          "Inference mode",
+          "Emergent inference",
+          "Domain source",
+          "Content cluster count",
+          "Link strength threshold",
+        ],
+        (e) => this.renderEmergentSettings(e),
+      ),
+      this.settingSection(
+        "Legacy inference weights",
+        [
+          "Link weight",
+          "Mutual link bonus",
+          "Shared tag weight",
+          "Title overlap weight",
+          "Content overlap weight",
+          "Same folder weight",
+          "Top folder weight",
+        ],
+        (e) => this.renderLegacySettings(e),
+      ),
+    ];
+  }
+  settingSection(e, n, i) {
+    return {
+      name: e,
+      aliases: n,
+      render: (s) => {
+        (s.settingEl.empty(),
+          s.settingEl.addClass("simplicial-settings-section"),
+          s.settingEl.createEl("h3", { text: e }),
+          i(s.settingEl),
+          this.refreshSettingVisibility());
+      },
+    };
   }
   display() {
     let { containerEl: e } = this;
@@ -8435,7 +8565,7 @@ var et = class extends N.Plugin {
     this.saveTimer = null;
     this.rescanTimer = null;
     this.subsetScorer = null;
-    this.activation = new Te();
+    this.activation = new Re();
     this.activationTimer = null;
   }
   async onload() {
@@ -8451,7 +8581,7 @@ var et = class extends N.Plugin {
         pinnedNodeCount: Object.keys(this.settings.pinnedNodes).length,
       }),
       (this.model = new De()),
-      (this.history = new Re()),
+      (this.history = new Te()),
       (this.historyStore = new Le(this.app, this.settings.historyFile)),
       this.settings.enableRelationHistory && this.history.onAppend((i) => this.historyStore.record(i)),
       (this.engine = new Ke()),

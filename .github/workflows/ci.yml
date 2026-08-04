@@ -25,6 +25,9 @@ jobs:
       - name: Run ESLint
         run: npm run lint
 
+      - name: Check Obsidian publisher diagnostics
+        run: npm run check:publisher
+
       - name: Check formatting
         run: npm run format:check
 

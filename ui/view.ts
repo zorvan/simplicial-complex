@@ -123,16 +123,20 @@ export class SimplicialView extends ItemView {
     discover.title =
       "Turn on all evidence sources, choose balanced discovery thresholds, and reveal suggested links, groups, and encounters. Hole computation stays off. Nothing is confirmed or written to notes.";
     discover.setAttr("aria-label", discover.title);
-    discover.addEventListener("click", async () => {
-      discover.disabled = true;
-      discover.setText("Discovering…");
-      try {
-        await this.actions?.findExpressiveView();
-      } finally {
-        discover.disabled = false;
-        discover.setText("Find expressive view");
-      }
-    });
+    discover.addEventListener(
+      "click",
+      () =>
+        void (async () => {
+          discover.disabled = true;
+          discover.setText("Discovering…");
+          try {
+            await this.actions?.findExpressiveView();
+          } finally {
+            discover.disabled = false;
+            discover.setText("Find expressive view");
+          }
+        })(),
+    );
 
     const encounter = explore.createEl("button", {
       cls: "simplicial-explore-action",
@@ -453,16 +457,20 @@ export class SimplicialView extends ItemView {
       text: "Find expressive view",
     });
     expressiveBtn.title = "Reveal a balanced, suggestion-only view using all available evidence.";
-    expressiveBtn.addEventListener("click", async () => {
-      expressiveBtn.disabled = true;
-      expressiveBtn.setText("Discovering…");
-      try {
-        await this.actions?.findExpressiveView();
-      } finally {
-        expressiveBtn.disabled = false;
-        expressiveBtn.setText("Find expressive view");
-      }
-    });
+    expressiveBtn.addEventListener(
+      "click",
+      () =>
+        void (async () => {
+          expressiveBtn.disabled = true;
+          expressiveBtn.setText("Discovering…");
+          try {
+            await this.actions?.findExpressiveView();
+          } finally {
+            expressiveBtn.disabled = false;
+            expressiveBtn.setText("Find expressive view");
+          }
+        })(),
+    );
 
     // Rescan button
     const rescanRow = actions.createDiv({ cls: "simplicial-control-row" });

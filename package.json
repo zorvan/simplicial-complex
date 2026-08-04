@@ -1,6 +1,6 @@
 {
   "name": "simplicial-complex",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "private": true,
   "type": "module",
   "description": "simplicial complex visualization with topological analysis",
@@ -11,6 +11,7 @@
     "test": "./node_modules/typescript/bin/tsc -p tsconfig.tests.json && node --test tests-dist/tests/*.test.js",
     "benchmark:hypergraph": "./node_modules/typescript/bin/tsc -p tsconfig.tests.json && node scripts/hypergraph-benchmark.mjs",
     "lint": "eslint .",
+    "check:publisher": "eslint . --max-warnings 0",
     "format:check": "prettier --check .",
     "verify": "node scripts/verify.mjs",
     "ci:act": "act push --workflows .github/workflows/ci.yml --pull=false",
@@ -19,7 +20,7 @@
   "devDependencies": {
     "esbuild": "^0.27.4",
     "eslint-plugin-obsidianmd": "^0.2.4",
-    "obsidian": "^1.8.0",
+    "obsidian": "^1.12.3",
     "prettier": "^3.8.3",
     "typescript": "^5.9.3"
   },
