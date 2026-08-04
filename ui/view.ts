@@ -121,7 +121,7 @@ export class SimplicialView extends ItemView {
       text: "Find expressive view",
     });
     discover.title =
-      "Turn on all evidence sources, choose balanced discovery thresholds, and reveal suggested links, groups, and encounters. Hole computation stays off. Nothing is confirmed or written to notes.";
+      "Turn on all evidence sources, choose balanced discovery thresholds, and reveal suggested links, groups, and encounters. Missing-face display stays off. Nothing is confirmed or written to notes.";
     discover.setAttr("aria-label", discover.title);
     discover.addEventListener(
       "click",
@@ -414,12 +414,7 @@ export class SimplicialView extends ItemView {
     const visibility = this.addControlSection(panel, "What is shown", true);
 
     // Betti Toggle
-    this.addCanvasToggle(visibility, "Compute holes (slow)", this.settings.enableBettiComputation, (value) => {
-      this.settings.enableBettiComputation = value;
-      this.onSettingsChanged();
-      this.renderer.render();
-      if (!value) this.onRescan?.("hole-analysis-disabled", 0);
-    });
+    this.addCanvasToggle(visibility, "Show missing faces (unavailable)", false, () => undefined, true);
 
     // Show Suggestions Toggle
     this.addCanvasToggle(visibility, "Suggested relations", this.settings.showSuggestions, (value) => {
@@ -500,11 +495,15 @@ export class SimplicialView extends ItemView {
     label: string,
     initialValue: boolean,
     onChange: (_value: boolean) => void,
+    disabled = false,
   ): void {
-    const row = container.createDiv({ cls: "simplicial-control-row" });
+    const row = container.createDiv({
+      cls: `simplicial-control-row${disabled ? " is-disabled" : ""}`,
+    });
     row.createSpan({ text: label });
     const toggle = row.createEl("input", { type: "checkbox" });
     toggle.checked = initialValue;
+    toggle.disabled = disabled;
     toggle.addEventListener("change", () => {
       onChange(toggle.checked);
     });

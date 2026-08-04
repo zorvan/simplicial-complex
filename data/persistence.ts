@@ -285,5 +285,7 @@ export function getDefaultSettings(): PluginSettings {
     encounterSuggestionThreshold: 0.55,
     maxEncounterSuggestions: 20,
     discoveryNoticeShown: false,
+    topologyCorrectionNoticeShown: false,
+    performanceDefaultsV045Applied: false,
   };
 }

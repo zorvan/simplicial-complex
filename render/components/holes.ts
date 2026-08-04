@@ -1,5 +1,6 @@
 import type { SimplicialModel } from "../../core/model";
-import type { Hole } from "../../core/types";
+import { findMissingFaces } from "../../core/missing-faces";
+import type { MissingFaceBoundary } from "../../core/types";
 
 export interface VisibleBounds {
   minX: number;
@@ -15,8 +16,8 @@ export function drawPhantomHoles(
   visibleBounds: VisibleBounds,
   hoveredHoleKey: string | null,
 ): void {
-  const analysis = model.getAnalysisSummary();
-  if (!analysis.betti?.holes?.length) return;
+  const missingFaces = findMissingFaces(model, 2);
+  if (!missingFaces.length) return;
 
   const allNodes = model.getAllNodes();
   const nodeMap = new Map(allNodes.map((n) => [n.id, n]));
@@ -25,7 +26,7 @@ export function drawPhantomHoles(
   ctx.setLineDash([8, 4]);
   ctx.lineWidth = 1.5;
 
-  for (const hole of analysis.betti.holes) {
+  for (const hole of missingFaces) {
     drawSingleHole(ctx, hole, nodeMap, isDark, visibleBounds, hoveredHoleKey);
   }
 
@@ -34,7 +35,7 @@ export function drawPhantomHoles(
 
 function drawSingleHole(
   ctx: CanvasRenderingContext2D,
-  hole: Hole,
+  hole: MissingFaceBoundary,
   nodeMap: Map<string, { px: number; py: number }>,
   isDark: boolean,
   visibleBounds: VisibleBounds,
@@ -77,7 +78,7 @@ function drawSingleHole(
   }
 
   // Generate hole key from boundary nodes
-  const holeKey = hole.boundaryNodes.sort().join("|");
+  const holeKey = [...hole.boundaryNodes].sort().join("|");
   const isHovered = hoveredHoleKey === holeKey;
 
   // Draw phantom simplex outline

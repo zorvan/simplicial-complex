@@ -89,7 +89,7 @@ export class SimplicialSettingTab extends PluginSettingTab {
       this.settingSection(
         "Topology and explanations",
         [
-          "Compute holes (advanced, slow)",
+          "Show missing-face opportunities",
           "Display betti on canvas",
           "Max betti dimension",
           "Show filtration slider",
@@ -147,18 +147,24 @@ export class SimplicialSettingTab extends PluginSettingTab {
     const { containerEl } = this;
     containerEl.empty();
 
-    this.renderPersistenceSettings(containerEl);
-    this.renderHypergraphSettings(containerEl);
-    this.renderDynamicsSettings(containerEl);
-    this.renderSheafSettings(containerEl);
-    this.renderLayoutSettings(containerEl);
-    this.renderInferenceSettings(containerEl);
-    this.renderCommandUiSettings(containerEl);
-    this.renderBettiSettings(containerEl);
-    this.renderEmergentSettings(containerEl);
-    this.renderLegacySettings(containerEl);
+    this.renderDisplaySection(containerEl, "Storage", (section) => this.renderPersistenceSettings(section));
+    this.renderDisplaySection(containerEl, "Hypergraph", (section) => this.renderHypergraphSettings(section));
+    this.renderDisplaySection(containerEl, "Dynamics", (section) => this.renderDynamicsSettings(section));
+    this.renderDisplaySection(containerEl, "Contextuality", (section) => this.renderSheafSettings(section));
+    this.renderDisplaySection(containerEl, "Layout", (section) => this.renderLayoutSettings(section));
+    this.renderDisplaySection(containerEl, "Inference", (section) => this.renderInferenceSettings(section));
+    this.renderDisplaySection(containerEl, "Commands and display", (section) => this.renderCommandUiSettings(section));
+    this.renderDisplaySection(containerEl, "Topology and explanations", (section) => this.renderBettiSettings(section));
+    this.renderDisplaySection(containerEl, "Inference engine", (section) => this.renderEmergentSettings(section));
+    this.renderDisplaySection(containerEl, "Legacy inference weights", (section) => this.renderLegacySettings(section));
 
     this.refreshSettingVisibility();
+  }
+
+  private renderDisplaySection(containerEl: HTMLElement, name: string, render: (sectionEl: HTMLElement) => void): void {
+    const sectionEl = containerEl.createDiv({ cls: "simplicial-settings-section" });
+    sectionEl.createEl("h3", { text: name });
+    render(sectionEl);
   }
 
   private renderPersistenceSettings(containerEl: HTMLElement): void {
@@ -289,8 +295,6 @@ export class SimplicialSettingTab extends PluginSettingTab {
   }
 
   private renderHypergraphSettings(containerEl: HTMLElement): void {
-    new Setting(containerEl).setName("Hypergraph layer").setHeading();
-
     new Setting(containerEl)
       .setName("Show encounters")
       .setDesc(
@@ -415,8 +419,6 @@ export class SimplicialSettingTab extends PluginSettingTab {
   }
 
   private renderDynamicsSettings(containerEl: HTMLElement): void {
-    new Setting(containerEl).setName("Dynamics").setHeading();
-
     new Setting(containerEl)
       .setName("Enable dynamics lab")
       .setDesc(
@@ -445,7 +447,6 @@ export class SimplicialSettingTab extends PluginSettingTab {
   }
 
   private renderSheafSettings(containerEl: HTMLElement): void {
-    new Setting(containerEl).setName("Contextuality").setHeading();
     new Setting(containerEl)
       .setName("Contextuality lab")
       .setDesc(
@@ -541,14 +542,10 @@ export class SimplicialSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Formal mode")
-      .setDesc("Switch from ambient blobs to a crisper geometric rendering with analysis overlays.")
+      .setDesc("Locked on in v0.4.5. Computation-intensive Ambient rendering is temporarily unavailable.")
       .addToggle((toggle) => {
-        toggle.setValue(this.plugin.settings.formalMode);
-        toggle.onChange(async (value) => {
-          this.plugin.settings.formalMode = value;
-          await this.plugin.saveSettings();
-          this.plugin.renderer.render();
-        });
+        toggle.setValue(true);
+        toggle.setDisabled(true);
       });
 
     {
@@ -634,25 +631,16 @@ export class SimplicialSettingTab extends PluginSettingTab {
 
   private renderBettiSettings(containerEl: HTMLElement): void {
     new Setting(containerEl)
-      .setName("Compute holes (advanced, slow)")
-      .setDesc(
-        "Explicitly calculate β₀, β₁, and β₂ holes. This can make large canvases slow or unresponsive, is never enabled by automatic discovery, and does not control links or encounters.",
-      )
+      .setName("Show missing-face opportunities")
+      .setDesc("Temporarily unavailable in v0.4.5 because the interactive missing-face scan is computation intensive.")
       .addToggle((toggle) => {
-        toggle.setValue(this.plugin.settings.enableBettiComputation);
-        toggle.onChange(async (value) => {
-          this.plugin.settings.enableBettiComputation = value;
-          await this.plugin.saveSettings();
-          this.plugin.simplicialView?.refreshSettings();
-          this.plugin.renderer.render();
-          if (!value) this.plugin.scheduleFullScan("hole-analysis-disabled", 0);
-          new Notice(value ? "Betti computation enabled" : "Betti computation disabled");
-        });
+        toggle.setValue(false);
+        toggle.setDisabled(true);
       });
 
     new Setting(containerEl)
       .setName("Display betti on canvas")
-      .setDesc("Show live betti numbers in the top-left hud overlay (requires betti computation to be enabled).")
+      .setDesc("Show actual homology ranks over F₂ in the top-left HUD.")
       .addToggle((toggle) => {
         toggle.setValue(this.plugin.settings.bettiDisplayOnCanvas);
         toggle.onChange(async (value) => {
@@ -665,10 +653,10 @@ export class SimplicialSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Max betti dimension")
-      .setDesc("Compute holes up to this dimension (1 = triangles, 2 = tetrahedra).")
+      .setDesc("Choose the highest homology dimension reported for the analyzed skeleton.")
       .addDropdown((dropdown) => {
-        dropdown.addOption("1", "β₁ only (unfilled triangles)");
-        dropdown.addOption("2", "β₁ and β₂ (including voids)");
+        dropdown.addOption("1", "Through β₁");
+        dropdown.addOption("2", "Through β₂");
         dropdown.setValue(String(this.plugin.settings.maxBettiDim));
         dropdown.onChange(async (value) => {
           this.plugin.settings.maxBettiDim = Number(value) as 1 | 2;
@@ -679,7 +667,7 @@ export class SimplicialSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Show filtration slider")
-      .setDesc("Enable the slider UI with topological event markers in the graph view. (requires reopening the view)")
+      .setDesc("Enable the slider UI with simplex-appearance markers. Persistence births and deaths arrive in v0.5.0.")
       .addToggle((toggle) => {
         toggle.setValue(this.plugin.settings.showFiltrationSlider);
         toggle.onChange(async (value) => {
@@ -706,7 +694,6 @@ export class SimplicialSettingTab extends PluginSettingTab {
 
   private renderEmergentSettings(containerEl: HTMLElement): void {
     // V2 Settings Section - Inference Architecture
-    new Setting(containerEl).setName("Inference engine (v2)").setHeading();
     containerEl.createEl("p", {
       cls: "setting-item-description",
       text: "The plugin has two inference systems: emergent (graph-based with semantic clustering) and legacy (rule-based). Choose which to use.",
@@ -784,7 +771,6 @@ export class SimplicialSettingTab extends PluginSettingTab {
 
   private renderLegacySettings(containerEl: HTMLElement): void {
     // Legacy inference weights (only apply when inference mode is taxonomic or hybrid)
-    new Setting(containerEl).setName("Legacy inference weights").setHeading();
     containerEl.createEl("p", {
       cls: "setting-item-description",
       text: "These weights only apply when using legacy or hybrid inference mode. They control rule-based edge detection.",

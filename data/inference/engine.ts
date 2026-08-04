@@ -1,4 +1,4 @@
-import type { Simplex, Hole } from "../../core/types.js";
+import type { Simplex, MissingFaceBoundary } from "../../core/types.js";
 import type { InferenceConfig, InferenceContext } from "./types.js";
 import { buildRawGraph } from "./graph.js";
 import { detectOpenTriads, detectOpenTriadsFromHoles } from "./rules/open-triad.js";
@@ -87,12 +87,12 @@ export function inferSimplicesEmergentWithMode(contexts: InferenceContext[], con
 
 /**
  * Run emergent inference using pre-computed Betti holes for triad detection.
- * This avoids the O(n × d²) enumeration by using already-computed β₁ holes.
+ * This avoids repeating enumeration by consuming already-computed triangular missing faces.
  */
 export function runEmergentInferenceWithHoles(
   contexts: InferenceContext[],
   config: InferenceConfig,
-  holes: Hole[],
+  holes: MissingFaceBoundary[],
 ): Simplex[] {
   const graph = buildRawGraph(contexts, config);
   const triads = detectOpenTriadsFromHoles(holes, graph, config);

@@ -30,7 +30,7 @@ import type { NodeID, RelationKey } from "./types.js";
 
 /**
  * The stalk alphabet. Deliberately the small discrete role set the inference layer
- * already uses: it keeps H⁰ and H¹ computable over a finite space, and a richer
+ * already uses: it keeps the baseline and obstruction diagnostics finite, and a richer
  * stalk (embeddings, tag sets, notes-on-the-relation) can replace it without
  * changing anything below.
  */
@@ -346,10 +346,10 @@ export interface GluingResult {
   /** Contexts that disagree pairwise on their overlap — the easy, uninteresting kind. */
   pairwiseDisagreements: PairwiseAgreement[];
   cycles: FundamentalCycle[];
-  /** dim H¹: how many independent ways the local readings fail to reconcile. */
-  h1: number;
-  /** dim H⁰ over the role space: the space of globally consistent readings. */
-  h0: number;
+  /** Rank of non-closing holonomy vectors; not a computed sheaf-cohomology group. */
+  obstructionRank: number;
+  /** Free incidence-component baselines over the role space; not a computed H⁰. */
+  globalBaselineDimension: number;
   glues: boolean;
   /**
    * The signature the whole layer exists for: pairwise compatible everywhere, and
@@ -371,20 +371,20 @@ export function checkGluing(model: SimplicialModel, data: SheafData): GluingResu
   const cycles = fundamentalCycles(model, data);
   const openCycles = cycles.filter((cycle) => !cycle.closes);
   const holonomyMatrix: Matrix = openCycles.map((cycle) => cycle.holonomy);
-  const h1 = holonomyMatrix.length > 0 ? rank(holonomyMatrix) : 0;
+  const obstructionRank = holonomyMatrix.length > 0 ? rank(holonomyMatrix) : 0;
 
   // Components of the incidence graph each carry one free baseline, so a gluing
   // cover admits exactly one reading per component per role dimension.
   const componentCount = incidenceComponents(model, data);
-  const glues = h1 === 0;
+  const glues = obstructionRank === 0;
 
   return {
     pairwiseDisagreements,
     cycles,
-    h1,
-    h0: glues ? componentCount * SHEAF_ROLES.length : 0,
+    obstructionRank,
+    globalBaselineDimension: glues ? componentCount * SHEAF_ROLES.length : 0,
     glues,
-    contextualityDetected: h1 > 0 && pairwiseDisagreements.length === 0,
+    contextualityDetected: obstructionRank > 0 && pairwiseDisagreements.length === 0,
   };
 }
 
@@ -422,7 +422,7 @@ export interface Obstruction {
 /**
  * One entry per independent obstruction class, each naming a concrete cycle of
  * contexts. Redundant cycles — those spanned by ones already listed — are dropped,
- * so the count matches `h1` rather than counting the same failure repeatedly.
+ * so the count matches `obstructionRank` rather than counting the same failure repeatedly.
  */
 export function obstructions(result: GluingResult): Obstruction[] {
   const open = result.cycles.filter((cycle) => !cycle.closes);
@@ -438,7 +438,7 @@ export function obstructions(result: GluingResult): Obstruction[] {
       nodes: cycle.nodes,
       magnitude: cycle.holonomy.reduce((sum, value) => sum + Math.abs(value.n / value.d), 0),
     });
-    if (independent.length >= result.h1) break;
+    if (independent.length >= result.obstructionRank) break;
   }
   return independent;
 }
@@ -546,8 +546,18 @@ export interface RoleRefinementSuggestion {
   nodeId: NodeID;
   from: SheafRole;
   to: SheafRole;
-  before: { h1: number; contextualFraction: number; localDisagreements: number; contextualityDetected: boolean };
-  after: { h1: number; contextualFraction: number; localDisagreements: number; contextualityDetected: boolean };
+  before: {
+    obstructionRank: number;
+    contextualFraction: number;
+    localDisagreements: number;
+    contextualityDetected: boolean;
+  };
+  after: {
+    obstructionRank: number;
+    contextualFraction: number;
+    localDisagreements: number;
+    contextualityDetected: boolean;
+  };
   score: number;
 }
 
@@ -573,12 +583,12 @@ export function suggestRoleRefinements(
 
   const baseline = analyzeSheaf(model, data);
   const before = {
-    h1: baseline.gluing.h1,
+    obstructionRank: baseline.gluing.obstructionRank,
     contextualFraction: baseline.fraction.value,
     localDisagreements: baseline.gluing.pairwiseDisagreements.length,
     contextualityDetected: baseline.gluing.contextualityDetected,
   };
-  if (before.h1 === 0 && before.localDisagreements === 0) return [];
+  if (before.obstructionRank === 0 && before.localDisagreements === 0) return [];
 
   const implicatedContexts = new Set<string>();
   const implicatedNodes = new Set<NodeID>();
@@ -607,13 +617,13 @@ export function suggestRoleRefinements(
         trialSections.set(context.id, new Map(section).set(nodeId, to));
         const report = analyzeSheaf(model, { contexts: data.contexts, sections: trialSections });
         const after = {
-          h1: report.gluing.h1,
+          obstructionRank: report.gluing.obstructionRank,
           contextualFraction: report.fraction.value,
           localDisagreements: report.gluing.pairwiseDisagreements.length,
           contextualityDetected: report.gluing.contextualityDetected,
         };
         const score =
-          (before.h1 - after.h1) * 100 +
+          (before.obstructionRank - after.obstructionRank) * 100 +
           (Number(before.contextualityDetected) - Number(after.contextualityDetected)) * 50 +
           (after.contextualFraction - before.contextualFraction) * 25 +
           (before.localDisagreements - after.localDisagreements) * 10;

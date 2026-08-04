@@ -1,117 +1,90 @@
 import type { SimplicialModel } from "./model.js";
-import type { NodeID, Simplex, RenderFilterMetric } from "./types.js";
+import { normalizeKey } from "./normalize.js";
+import type { NodeID, RenderFilterMetric, Simplex, SimplexKey } from "./types.js";
 
-export interface FiltrationEvent {
+export interface FiltrationValue {
+  simplexKey: SimplexKey;
+  dimension: number;
+  score: number;
+  /** Increasing sublevel value. The UI's decreasing score sweep uses 1-score. */
+  value: number;
+  metric: RenderFilterMetric;
+  direction: "increasing";
+}
+
+export interface SimplexAppearanceEvent {
   threshold: number;
-  type: "component-merge" | "triangle-close" | "void-open" | "void-fill" | "edge-appear";
+  type: "simplex-appearance";
   nodes: NodeID[];
+  simplexKey: SimplexKey;
   description: string;
 }
 
+export type FiltrationEvent = SimplexAppearanceEvent;
+
 /**
- * Compute topological events that occur during filtration.
- * Events are detected by sorting simplices by weight and tracking
- * when the complex changes topology.
+ * Mathematical object: a real-valued increasing filtration f on a finite simplicial complex.
+ * Result used: sublevel sets are complexes iff f(face)≤f(coface).
+ * Preconditions: all scores are finite and lie in [0,1].
+ * Consequence: every prefix in the declared tie order is downward closed.
+ * Witness: validated values with metric and direction provenance.
+ * Non-claim: simplex appearances are not persistence births or deaths.
+ * Reference: Edelsbrunner and Harer, Computational Topology, Ch. VII.
  */
+export function buildFiltration(model: SimplicialModel, metric: RenderFilterMetric): FiltrationValue[] {
+  const values = [...model.simplices.entries()].map(([simplexKey, simplex]) => {
+    const score = getSimplexScore(simplex, metric);
+    if (!Number.isFinite(score) || score < 0 || score > 1) throw new Error(`Invalid ${metric} score for ${simplexKey}`);
+    return {
+      simplexKey,
+      dimension: simplex.nodes.length - 1,
+      score,
+      value: 1 - score,
+      metric,
+      direction: "increasing" as const,
+    };
+  });
+  const byKey = new Map(values.map((entry) => [entry.simplexKey, entry]));
+  for (const entry of values) {
+    const nodes = entry.simplexKey.split("|");
+    if (nodes.length <= 2) continue;
+    for (let omitted = 0; omitted < nodes.length; omitted++) {
+      const faceKey = normalizeKey(nodes.filter((_, index) => index !== omitted));
+      const face = byKey.get(faceKey);
+      if (!face) throw new Error(`Filtration input is not downward closed: ${entry.simplexKey} lacks ${faceKey}`);
+      if (face.value > entry.value)
+        throw new Error(`Filtration face condition violated: ${faceKey} follows ${entry.simplexKey}`);
+    }
+  }
+  return values.sort(
+    (a, b) => a.value - b.value || a.dimension - b.dimension || a.simplexKey.localeCompare(b.simplexKey),
+  );
+}
+
+/** UI-history markers only. Persistence events arrive in v0.5.0 from matrix reduction. */
 export function computeFiltrationEvents(model: SimplicialModel, metric: RenderFilterMetric): FiltrationEvent[] {
-  const events: FiltrationEvent[] = [];
-
-  const simplices = [...model.simplices.entries()]
-    .map(([key, simplex]) => ({
-      key,
-      simplex,
-      weight: getSimplexWeight(simplex, metric),
+  return buildFiltration(model, metric)
+    .map((entry) => ({
+      threshold: entry.score,
+      type: "simplex-appearance" as const,
+      nodes: model.simplices.get(entry.simplexKey)?.nodes ?? entry.simplexKey.split("|"),
+      simplexKey: entry.simplexKey,
+      description: `${entry.dimension}-simplex appears: ${entry.simplexKey.split("|").join(" · ")}`,
     }))
-    .sort((a, b) => b.weight - a.weight);
-
-  const appearedNodes = new Set<NodeID>();
-  const appearedEdges = new Map<string, Set<NodeID>>(); // node -> connected component
-  const appearedTriangles = new Set<string>();
-
-  for (const { simplex, weight } of simplices) {
-    const dim = simplex.nodes.length - 1;
-
-    if (dim === 0) {
-      // Node appears
-      for (const node of simplex.nodes) {
-        if (!appearedNodes.has(node)) {
-          appearedNodes.add(node);
-          appearedEdges.set(node, new Set([node]));
-          events.push({
-            threshold: weight,
-            type: "edge-appear",
-            nodes: [node],
-            description: `Node ${node} appears`,
-          });
-        }
-      }
-    } else if (dim === 1) {
-      // Edge appears - check for component merge
-      const [a, b] = simplex.nodes;
-      const compA = appearedEdges.get(a);
-      const compB = appearedEdges.get(b);
-
-      if (compA && compB && compA !== compB) {
-        // Merge components
-        const merged = new Set([...compA, ...compB]);
-        for (const node of merged) {
-          appearedEdges.set(node, merged);
-        }
-        events.push({
-          threshold: weight,
-          type: "component-merge",
-          nodes: [a, b],
-          description: `Components merge via ${a} ↔ ${b}`,
-        });
-      }
-    } else if (dim === 2) {
-      // Triangle appears - check if it closes a hole
-      const triangleKey = simplex.nodes.sort().join("|");
-
-      // Check if this triangle fills a previously open 1-dimensional hole
-      const edges = getTriangleEdges(simplex.nodes);
-      const allEdgesExisted = edges.every((edge) => {
-        const edgeKey = edge.sort().join("|");
-        return simplices.some(
-          (s) => s.simplex.nodes.length === 2 && s.simplex.nodes.sort().join("|") === edgeKey && s.weight > weight,
-        );
-      });
-
-      if (allEdgesExisted && !appearedTriangles.has(triangleKey)) {
-        appearedTriangles.add(triangleKey);
-        events.push({
-          threshold: weight,
-          type: "triangle-close",
-          nodes: simplex.nodes,
-          description: `Triangle closes: ${simplex.nodes.join(" · ")}`,
-        });
-      }
-    }
-  }
-
-  return events.sort((a, b) => b.threshold - a.threshold);
+    .sort(
+      (a, b) =>
+        b.threshold - a.threshold || a.nodes.length - b.nodes.length || a.simplexKey.localeCompare(b.simplexKey),
+    );
 }
 
-function getSimplexWeight(simplex: Simplex, metric: RenderFilterMetric): number {
-  if (metric === "confidence") return simplex.confidence ?? simplex.weight ?? 0;
-  if (metric === "decayed-weight") return simplex.decayedWeight ?? simplex.weight ?? simplex.confidence ?? 0;
-  return simplex.weight ?? simplex.decayedWeight ?? simplex.confidence ?? 0;
+function getSimplexScore(simplex: Simplex, metric: RenderFilterMetric): number {
+  const fallback = simplex.autoGenerated ? 1 : 0;
+  if (metric === "confidence") return simplex.confidence ?? simplex.weight ?? fallback;
+  if (metric === "decayed-weight") return simplex.decayedWeight ?? simplex.weight ?? simplex.confidence ?? fallback;
+  return simplex.weight ?? simplex.decayedWeight ?? simplex.confidence ?? fallback;
 }
 
-function getTriangleEdges(nodes: NodeID[]): [NodeID, NodeID][] {
-  const edges: [NodeID, NodeID][] = [];
-  for (let i = 0; i < nodes.length; i++) {
-    for (let j = i + 1; j < nodes.length; j++) {
-      edges.push([nodes[i], nodes[j]]);
-    }
-  }
-  return edges;
-}
-
-/**
- * Get unique threshold values where events occur, for slider markers.
- */
 export function getEventThresholds(events: FiltrationEvent[]): number[] {
-  const thresholds = new Set(events.map((e) => Math.round(e.threshold * 100) / 100));
+  const thresholds = new Set(events.map((event) => Math.round(event.threshold * 100) / 100));
   return [...thresholds].sort((a, b) => a - b);
 }

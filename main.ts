@@ -69,6 +69,15 @@ export default class SimplicialPlugin extends Plugin {
   async onload(): Promise<void> {
     const saved = ((await this.loadData()) ?? {}) as Partial<PluginSettings>;
     this.settings = migrateSettings(getDefaultSettings(), saved);
+    const applyPerformanceDefaults = !this.settings.performanceDefaultsV045Applied;
+    if (applyPerformanceDefaults) {
+      // v0.4.5 makes the two expensive visual analyses explicitly opt-in, even
+      // for vaults whose earlier data.json left them enabled.
+      this.settings.enableBettiComputation = false;
+      this.settings.formalMode = true;
+      this.settings.performanceDefaultsV045Applied = true;
+    }
+    const showTopologyCorrectionNotice = !this.settings.topologyCorrectionNoticeShown;
     if (this.settings.maxRenderedDim === 3) {
       this.settings.maxRenderedDim = 12;
     }
@@ -120,7 +129,7 @@ export default class SimplicialPlugin extends Plugin {
         if (hole && explanation) {
           // Show subtle notice about the hole on hover
           const nodeNames = hole.boundaryNodes.map((id) => id.split("/").pop()?.replace(/\.md$/, "") ?? id);
-          new Notice(`Hole: ${explanation.headline}\n${nodeNames.join(" · ")}`, 3000);
+          new Notice(`Missing face: ${explanation.headline}\n${nodeNames.join(" · ")}`, 3000);
         }
       },
       onHoleClick: (hole, explanation) => {
@@ -145,7 +154,10 @@ export default class SimplicialPlugin extends Plugin {
         this.model,
         this.renderer,
         this.settings,
-        () => this.queueSaveSettings(),
+        () => {
+          this.applyLiveSettings();
+          this.queueSaveSettings();
+        },
         (reason, delayMs) => this.scheduleFullScan(reason, delayMs),
         {
           recordEncounter: () => this.createEncounterFromOpenNote(),
@@ -318,7 +330,17 @@ export default class SimplicialPlugin extends Plugin {
       this.syncEncounterState();
     }
     this.scheduleFullScan("startup", 0);
-    this.app.workspace.onLayoutReady(() => this.scheduleFullScan("layout-ready", 50));
+    this.app.workspace.onLayoutReady(() => {
+      this.scheduleFullScan("layout-ready", 50);
+      if (showTopologyCorrectionNotice) {
+        this.settings.topologyCorrectionNoticeShown = true;
+        new Notice(
+          "Topology corrected in v0.4.5: β₁/β₂ are now actual homology ranks. Earlier values counted local missing-face motifs, and each empty triangle was counted three times. No note data was changed.",
+          10000,
+        );
+      }
+      if (showTopologyCorrectionNotice || applyPerformanceDefaults) void this.saveSettings();
+    });
     this.registerEvent(this.app.metadataCache.on("resolved", () => this.scheduleFullScan("metadata-resolved", 50)));
   }
 
@@ -345,6 +367,7 @@ export default class SimplicialPlugin extends Plugin {
   }
 
   async saveSettings(): Promise<void> {
+    this.applyLiveSettings();
     const pinned: PluginSettings["pinnedNodes"] = {};
     this.model.getAllNodes().forEach((node) => {
       if (node.isPinned) pinned[node.id] = { px: node.px, py: node.py };
@@ -387,6 +410,29 @@ export default class SimplicialPlugin extends Plugin {
         formalMode: this.settings.formalMode,
       },
     });
+  }
+
+  /**
+   * One live-update contract for every settings surface. Visual changes redraw,
+   * while physics changes are copied into the engine before waking it.
+   */
+  applyLiveSettings(): void {
+    // Performance lock for v0.4.5: these views are unavailable, not merely
+    // default-off, so no settings surface can reactivate them indirectly.
+    this.settings.enableBettiComputation = false;
+    this.settings.formalMode = true;
+    this.engine.configure({
+      noiseAmount: this.settings.noiseAmount,
+      sleepThreshold: this.settings.sleepThreshold,
+      repulsionStrength: this.settings.repulsionStrength,
+      cohesionStrength: this.settings.cohesionStrength,
+      gravityStrength: this.settings.gravityStrength,
+      dampingFactor: this.settings.dampingFactor,
+      boundaryPadding: this.settings.boundaryPadding,
+      sparseEdgeLength: this.settings.sparseEdgeLength,
+      sparseGravityBoost: this.settings.sparseGravityBoost,
+    });
+    this.engine.refresh();
   }
 
   private queueSaveSettings(): void {
@@ -1038,7 +1084,7 @@ export default class SimplicialPlugin extends Plugin {
             this.settings.formalMode = true;
             await this.saveSettings();
             this.controller.selectSimplex(target.simplexKey!);
-            this.renderer.render();
+            this.applyLiveSettings();
           }),
       );
     }
@@ -1203,7 +1249,7 @@ export default class SimplicialPlugin extends Plugin {
       enableEncounterSuggestions: true,
       encounterSuggestionThreshold: 0.48,
       showHyperedges: true,
-      // Hole computation is intentionally never enabled by guided discovery: it
+      // Missing-face display is intentionally never enabled by guided discovery: it
       // can be expensive on large vaults and is independent of expressiveness.
       maxRenderedDim: 12,
       renderFilterThreshold: 0,

@@ -4,9 +4,12 @@
 
 - `npm test` covers model invariants, inferred-hyperedge Betti isolation, pre-`inferenceEmits` migration, sheaf analysis, scratch acceptance/discard, and persistence boundaries.
 - `npm run benchmark:hypergraph` constructs 500 deterministic nodes with coincident relation kinds, reports 31-run medians, and fails if mixed preparation exceeds the simplicial baseline by 10%, warm cache loses to cold cache, or analysis budgets are exceeded.
+- `npm run benchmark:topology` constructs deterministic 500, 2,000, and 10,000-node complexes and gates actual static homology at 100 ms, 300 ms, and 1,500 ms.
 - `npm run verify` runs lint/format, type checking, production build, tests, and release preflight.
 
 Benchmark run on 2026-08-03: Linux x64 (kernel 6.18.39), Node 26.4.0, Obsidian 1.12.7 (API package 1.12.3), Electron 39.8.10 / Chromium 142. Median results in milliseconds: simplicial render preparation 0.293; mixed 0.174 (59.2% of baseline); cold/warm cache 0.214/0.205; 80-participant glyph 0.013; incidence 0.027; synchronization 1.604; sheaf analysis 0.831. Budgets: mixed ≤110% baseline, glyph ≤5 ms, incidence ≤20 ms, synchronization/sheaf ≤250 ms.
+
+Topology benchmark run on 2026-08-04: 500 nodes / 619 edges / 130 triangles / 10 tetrahedra / 1,668 boundary nonzeros, static homology 1.470 ms, cold summary 7.828 ms, and missing-face scan 4.236 ms; 2,000 / 2,479 / 520 / 40 / 6,678, 4.547 ms, 73.797 ms, and 59.254 ms; 10,000 / 12,399 / 2,600 / 200 / 33,398, 22.067 ms, 1,409.545 ms, and 1,376.216 ms. All static-homology budgets passed.
 
 ## Visual and reload matrix
 

@@ -1,4 +1,4 @@
-import type { Simplex, Hole, NodeID } from "../core/types";
+import type { Simplex, MissingFaceBoundary, NodeID } from "../core/types";
 import type { EncounterDiagnostics } from "../core/diagnostics";
 import type { InferenceContext, NoteProfile } from "./inference/types";
 
@@ -122,7 +122,7 @@ export function explainSimplex(
   simplex: Simplex,
   nodes: NoteProfile[],
   contexts: Map<string, InferenceContext>,
-  holes: Hole[],
+  holes: MissingFaceBoundary[],
 ): SimplexExplanation {
   const nodeIds = simplex.nodes;
   const nodeProfiles = nodeIds.map((id) => nodes.find((n) => n.id === id)).filter(Boolean) as NoteProfile[];
@@ -147,7 +147,7 @@ function explainInferredSimplex(
   simplex: Simplex,
   nodes: NoteProfile[],
   contexts: Map<string, InferenceContext>,
-  filledHole: Hole | undefined,
+  filledHole: MissingFaceBoundary | undefined,
 ): SimplexExplanation {
   const dim = simplex.nodes.length - 1;
   const nodeNames = nodes.map((n) => n.id.replace(/\.md$/, ""));
@@ -156,10 +156,13 @@ function explainInferredSimplex(
   // Check for hole-filling
   if (filledHole) {
     return {
-      headline: `This ${dim === 1 ? "edge" : dim === 2 ? "triangle" : "tetrahedron"} fills a topological hole in your complex.`,
-      tension: `Notes ${nodeNames.join(" · ")} formed an unfilled cycle. This structure now binds them together.`,
+      headline: `This ${dim === 1 ? "edge" : dim === 2 ? "triangle" : "tetrahedron"} fills a local missing face.`,
+      tension: `Notes ${nodeNames.join(" · ")} bounded an absent simplex. This structure now completes that local motif.`,
       prompt: `Does this new connection reveal a synthesis you hadn't consciously noticed?`,
-      signals: [`Fills β${filledHole.dimension} hole`, ...signals],
+      signals: [
+        filledHole.dimension === 1 ? "Fills a triangular missing face" : "Fills a tetrahedral missing face",
+        ...signals,
+      ],
     };
   }
 
@@ -252,24 +255,24 @@ function detectBridgeNode(nodes: NoteProfile[], contexts: Map<string, InferenceC
 }
 
 /**
- * Generate explanation for a hole (Betti void) rather than a simplex.
+ * Explain a missing-face completion motif, not a homology class.
  */
-export function explainHole(hole: Hole, _contexts: Map<string, InferenceContext>): SimplexExplanation {
+export function explainHole(hole: MissingFaceBoundary, _contexts: Map<string, InferenceContext>): SimplexExplanation {
   const nodeNames = hole.boundaryNodes.map((id) => id.replace(/\.md$/, ""));
 
   if (hole.dimension === 1) {
     return {
-      headline: "A 1-dimensional hole in your complex — an unfilled triangle.",
+      headline: "A triangular missing face — a local completion opportunity.",
       tension: `Notes ${nodeNames.join(" · ")} connect pairwise, but no synthesizing structure exists at the center.`,
-      prompt: `What's at the center of this triangle? Writing a note that connects all three would close this hole.`,
-      signals: ["β₁ hole: three notes, no triangle"],
+      prompt: `What could synthesize all three notes?`,
+      signals: ["Three boundary edges, no triangle"],
     };
   }
 
   return {
-    headline: "A 2-dimensional void — a hollow tetrahedron.",
+    headline: "A tetrahedral boundary missing its 3-simplex.",
     tension: `Four notes form a complete boundary of triangles, but the interior is empty.`,
-    prompt: `What synthesis would fill this void? A note at the center would complete the structure.`,
-    signals: ["β₂ void: four notes, no tetrahedron"],
+    prompt: `What synthesis would complete this local structure?`,
+    signals: ["Four triangular faces, no tetrahedron"],
   };
 }

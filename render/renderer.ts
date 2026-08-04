@@ -7,7 +7,7 @@ import type {
   RelationKey,
   RenderFilterMetric,
   Simplex,
-  Hole,
+  MissingFaceBoundary,
 } from "../core/types";
 import { normalizeKey, relationKey } from "../core/normalize";
 import type { RelationReplayState } from "../core/history";
@@ -25,14 +25,15 @@ import { drawPhantomHoles, type VisibleBounds } from "./components/holes";
 import { drawObstructionSeams } from "./components/obstructions";
 import type { SheafReport } from "../core/sheaf";
 import { explainHole, type SimplexExplanation } from "../data/explainer";
+import { findMissingFaces } from "../core/missing-faces";
 import type { InferenceContext } from "../data/inference/types";
 
 interface RendererCallbacks {
   onContextMenu?: (target: { nodeId?: string; simplexKey?: string; hyperedgeKey?: string }, event: MouseEvent) => void;
   onLassoCreate?: (nodeIds: string[]) => void;
   onNodeOpen?: (nodeId: string) => void;
-  onHoleHover?: (hole: Hole | null, explanation: SimplexExplanation | null) => void;
-  onHoleClick?: (hole: Hole, explanation: SimplexExplanation) => void;
+  onHoleHover?: (hole: MissingFaceBoundary | null, explanation: SimplexExplanation | null) => void;
+  onHoleClick?: (hole: MissingFaceBoundary, explanation: SimplexExplanation) => void;
 }
 
 type Box = { left: number; top: number; right: number; bottom: number };
@@ -385,7 +386,7 @@ export class Renderer {
         const hole = this.findHoleAtPoint(point);
         const prevHoleKey = this.hoveredHoleKey;
         if (hole) {
-          this.hoveredHoleKey = hole.boundaryNodes.sort().join("|");
+          this.hoveredHoleKey = [...hole.boundaryNodes].sort().join("|");
           if (this.hoveredHoleKey !== prevHoleKey) {
             const explanation = explainHole(hole, new Map<string, InferenceContext>());
             this.callbacks.onHoleHover?.(hole, explanation);
@@ -590,16 +591,16 @@ export class Renderer {
     return null;
   }
 
-  private findHoleAtPoint(point: { x: number; y: number }): Hole | null {
+  private findHoleAtPoint(point: { x: number; y: number }): MissingFaceBoundary | null {
     if (!this.settings.enableBettiComputation) return null;
-    const betti = this.model.getCachedBetti();
-    if (!betti?.holes?.length) return null;
+    const missingFaces = findMissingFaces(this.model, 2);
+    if (!missingFaces.length) return null;
 
     const allNodes = this.model.getAllNodes();
     const nodeMap = new Map(allNodes.map((n) => [n.id, n]));
     const clickRadius = this.worldRadius(15); // Tolerance for hole clicking
 
-    for (const hole of betti.holes) {
+    for (const hole of missingFaces) {
       const nodes = hole.boundaryNodes.map((id) => nodeMap.get(id)).filter(Boolean) as Array<{
         px: number;
         py: number;
@@ -1039,7 +1040,7 @@ export class Renderer {
       );
     });
 
-    // Unlike a β₁ hole, this is not an absent filler. Existing fields fail to meet
+    // Unlike a missing face, this is not an absent filler. Existing fields fail to meet
     // along an open seam, so it is drawn over relations and never closed or filled.
     if (this.sheafReport?.obstructions.length) {
       drawObstructionSeams(

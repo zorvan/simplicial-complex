@@ -14,6 +14,7 @@ import type {
   SimplexKey,
 } from "./types.js";
 import { computeBetti } from "./betti.js";
+import { findMissingFaces } from "./missing-faces.js";
 import { logger } from "./logger.js";
 
 function randomInRange(min: number, max: number): number {
@@ -70,6 +71,8 @@ function createNode(id: NodeID, bounds?: Rect, isVirtual = false): LayoutNode {
 type Listener = () => void;
 
 export class SimplicialModel {
+  /** Revision of the simplicial layer only; hypergraph-only changes do not perturb homology caches. */
+  revision = 0;
   readonly nodes = new Map<NodeID, LayoutNode>();
   readonly simplices = new Map<SimplexKey, Simplex>();
   /**
@@ -248,14 +251,14 @@ export class SimplicialModel {
       ...(!hyperedge.suggested ? { occurredAt: base?.occurredAt ?? hyperedge.occurredAt ?? Date.now() } : {}),
     };
     this.hyperedges.set(key, normalized);
-    this.invalidateAnalysisCache();
+    this.invalidateAnalysisCache(false);
     this.emitChange();
     return key;
   }
 
   removeHyperedge(key: RelationKey): boolean {
     if (!this.hyperedges.delete(key)) return false;
-    this.invalidateAnalysisCache();
+    this.invalidateAnalysisCache(false);
     this.emitChange();
     return true;
   }
@@ -275,7 +278,7 @@ export class SimplicialModel {
     if (updates.label !== undefined) updated.colorKey = hashLabel(updates.label);
     if (updates.weight !== undefined) updated.weight = clampWeight(updates.weight);
     this.hyperedges.set(key, updated);
-    this.invalidateAnalysisCache();
+    this.invalidateAnalysisCache(false);
     this.emitChange();
     return updated;
   }
@@ -420,7 +423,7 @@ export class SimplicialModel {
       hyperedges.forEach((hyperedge) =>
         this.addHyperedge({ ...hyperedge, inferred: true, suggested: true, suggestionSource: "inference" }),
       );
-      this.invalidateAnalysisCache();
+      this.invalidateAnalysisCache(false);
       this.emitChange();
     });
   }
@@ -511,9 +514,10 @@ export class SimplicialModel {
   /**
    * Invalidate the analysis cache. Called automatically on model mutations.
    */
-  private invalidateAnalysisCache(): void {
+  private invalidateAnalysisCache(simplicialChange = true): void {
     this._analysisDirty = true;
     this._crossLayerCache = null;
+    if (simplicialChange) this.revision++;
   }
 
   /** Backing store for the cross-layer map in core/incidence.ts. */
@@ -545,7 +549,7 @@ export class SimplicialModel {
   getCachedBetti(): BettiResult {
     // Get from analysis cache if available, otherwise compute just Betti
     if (!this._analysisDirty && this._analysisCache) {
-      return this._analysisCache.betti ?? { b0: 0, b1: 0, b2: 0, holes: [] };
+      return this._analysisCache.betti ?? computeBetti(this, 2);
     }
     return computeBetti(this, 2);
   }
@@ -608,7 +612,7 @@ export class SimplicialModel {
     });
 
     const betti = computeBetti(this, 2);
-    const holeCount = betti.holes.length;
+    const missingFaceCount = findMissingFaces(this, 2).length;
 
     const hyperedges = [...this.hyperedges.values()];
 
@@ -630,7 +634,7 @@ export class SimplicialModel {
       maxSimplexCentrality: Math.max(0, maxSimplexCentrality),
       averageSimplexCentrality: this.nodes.size ? Number((simplexCentralityTotal / this.nodes.size).toFixed(2)) : 0,
       betti,
-      holeCount,
+      missingFaceCount,
     };
   }
 }

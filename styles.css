@@ -852,3 +852,114 @@
   overflow: auto;
   white-space: pre-wrap;
 }
+
+/* Settings use the same geometry in Obsidian's searchable definitions and the
+   legacy display() path. The outer searchable Setting is normally a flex row;
+   reset it before nesting real setting rows inside. */
+.simplicial-settings-section {
+  display: block !important;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  margin: 0 0 28px;
+  padding: 0;
+}
+
+.simplicial-settings-section > h3 {
+  margin: 0;
+  padding: 0 0 10px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  color: var(--text-normal);
+  font-size: var(--font-ui-medium);
+  line-height: 1.35;
+}
+
+.simplicial-settings-section > .setting-item,
+.simplicial-settings-section > .emergent-settings > .setting-item {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(240px, 300px);
+  column-gap: 24px;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 12px 0;
+}
+
+.simplicial-settings-section .setting-item-info,
+.simplicial-settings-section .setting-item-control {
+  min-width: 0;
+  margin: 0;
+}
+
+.simplicial-settings-section .setting-item-control {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.simplicial-settings-section .setting-item-control input[type="text"],
+.simplicial-settings-section .setting-item-control select,
+.simplicial-settings-section .setting-item-control .dropdown {
+  width: min(100%, 300px);
+}
+
+.simplicial-settings-section .setting-item-control input[type="range"] {
+  flex: 1 1 180px;
+  min-width: 120px;
+}
+
+.simplicial-setting-value {
+  flex: 0 0 58px;
+  min-width: 58px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.simplicial-control-row.is-disabled {
+  color: var(--text-faint);
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.simplicial-settings-section > p.setting-item-description {
+  margin: 10px 0 2px;
+  max-width: 68ch;
+}
+
+.simplicial-settings-section .emergent-settings {
+  margin: 8px 0 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.simplicial-settings-section .emergent-settings .setting-heading {
+  grid-template-columns: 1fr;
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+@media (max-width: 700px) {
+  .simplicial-settings-section > .setting-item,
+  .simplicial-settings-section > .emergent-settings > .setting-item {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 10px;
+    align-items: start;
+  }
+
+  .simplicial-settings-section .setting-item-control {
+    justify-content: flex-start;
+  }
+
+  .simplicial-settings-section .setting-item-control input[type="text"],
+  .simplicial-settings-section .setting-item-control select,
+  .simplicial-settings-section .setting-item-control .dropdown {
+    width: 100%;
+  }
+}

@@ -5,7 +5,7 @@ My blog post about the motivation and process of creating this plugin : [blog po
 
 ---
 
-![Version](https://img.shields.io/badge/version-0.4.0-green)
+![Version](https://img.shields.io/badge/version-0.4.5-green)
 ![Obsidian](https://img.shields.io/badge/obsidian-%3E%3D1.5.0-blueviolet)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
@@ -68,9 +68,9 @@ On first scan the plugin also proposes lightweight, in-memory `◇` candidates f
 
 **Analysis & Inference:** Edge inference from tags/links/folders, suggestion system for missing connections, temporal decay, and centrality measures.
 
-**Topological Analysis (v3):** Real-time Betti numbers (β₀, β₁, β₂), phantom hole visualization, and live Betti HUD.
+**Topological Analysis (v3):** Actual static homology over F₂ (β₀, β₁, β₂), a live Betti HUD, and separately named missing-face completion opportunities. The HUD records the analyzed skeleton; a dashed orange motif is local evidence, not necessarily an independent homology class.
 
-**Contextuality (v3):** Define overlapping contexts and give the same note a different local role in each. The Contextuality Lab reports whether those readings glue, identifies H¹ obstruction cycles, and shows the contextual fraction. A crimson failed seam means existing local meanings cannot be reconciled; it is not an orange topological hole, where a filler is absent.
+**Contextuality (v3):** Define overlapping contexts and give the same note a different local role in each. The Contextuality Lab reports a global baseline dimension, obstruction rank, inspectable holonomy cycles, and contextual fraction. This is a language-context gluing instrument inspired by sheaf methods, not an Abramsky–Brandenburger empirical model. A crimson failed seam is distinct from an orange missing-face opportunity.
 
 **Optional external-agent help:** Encounter creation and the Contextuality Lab include provider-neutral, copyable prompts for a file-capable agent. The plugin itself never invokes an AI service or sends vault content anywhere. Agents prepare cited proposals; the user reviews and records every meaning-changing intervention. See [AI-assisted discovery](docs/AI-assisted-discovery.md).
 
@@ -140,7 +140,7 @@ If `Levinas`, `AI Agent` and `Refusal` appeared together during one insight, tha
 
 A simplex is not "a better hyperedge." It is a different achievement: the relation has become compositional, supported across its faces. Moving between the two is always an explicit act — see [Transformations](#transformations).
 
-**The invariant:** a hyperedge never generates faces, never enters the simplicial complex, and never affects Betti numbers. An encounter over a triad leaves the triangular hole in that triad exactly where it was — only a simplex fills it.
+**The invariant:** a hyperedge never generates faces, never enters the simplicial complex, and never affects Betti numbers. An encounter over a triad leaves any triangular missing face exactly where it was — only a simplex fills it.
 
 ---
 
@@ -330,9 +330,9 @@ Alias resolution builds its index once per vault change rather than per lookup, 
 
 ### Topological Analysis (v3)
 
-- **Betti numbers (β₀, β₁, β₂)** — real-time computation of topological invariants showing connected components, unfilled triangles (holes), and hollow shells (voids).
-- **Phantom hole visualization** — missing simplices rendered as dashed orange outlines on the canvas. Click to create the missing connection.
-- **Hole-as-prompt interaction** — hover over a phantom hole to see which notes would complete the structure.
+- **Betti numbers (β₀, β₁, β₂)** — boundary-rank computation of actual simplicial homology over F₂.
+- **Missing-face visualization** — absent simplices with complete local boundaries rendered as dashed orange outlines. Click to create the missing connection.
+- **Completion prompts** — hover over a missing face to see which notes would complete the local structure.
 - **Live Betti HUD** — display current Betti numbers in the top-left corner of the canvas.
 
 ### Emergent Inference Engine (v3)

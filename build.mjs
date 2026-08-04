@@ -1,10 +1,12 @@
 import esbuild from "esbuild";
 import { spawnSync } from "node:child_process";
 import { createRequire } from "node:module";
+import { renameSync } from "node:fs";
 import process from "node:process";
 
 const production = process.argv[2] === "production";
 const watch = process.argv.includes("--watch");
+const bundleOutput = production && !watch ? ".main.build.js" : "main.js";
 
 /**
  * Format the bundle until Prettier stops changing it.
@@ -34,7 +36,7 @@ function prettifyBundle(file, maxPasses = 4) {
 const context = await esbuild.context({
   entryPoints: ["main.ts"],
   bundle: true,
-  outfile: "main.js",
+  outfile: bundleOutput,
   format: "cjs",
   platform: "browser",
   target: "es2020",
@@ -70,5 +72,12 @@ if (watch) {
 } else {
   await context.rebuild();
   await context.dispose();
-  if (production) prettifyBundle("main.js");
+  if (production) {
+    prettifyBundle(bundleOutput);
+    // Obsidian may be watching the installed development directory. Publishing
+    // only the settled bundle prevents it from loading esbuild/Prettier's
+    // intermediate files and orphaning the plugin's live workspace leaves.
+    renameSync(bundleOutput, "main.js");
+    console.log("[simplicial-complex] main.js published atomically");
+  }
 }

@@ -1058,6 +1058,23 @@ test("the layout engine keeps ticking while an animation hold is set", () => {
   assert.equal(engine.isAnimationHeld, true, "a settled layout must not stop a pulse that has its own clock");
 });
 
+test("ambient gravity and noise keep the living layout awake", () => {
+  const engine = new LayoutEngine();
+  engine.configure({ gravityStrength: 0.001, noiseAmount: 0.12, sleepThreshold: 0.01 });
+  const node = {
+    id: "ambient.md",
+    px: 300,
+    py: 200,
+    vx: 0,
+    vy: 0,
+    isVirtual: false,
+    isPinned: false,
+    displayAlpha: 1,
+  };
+  engine.tick([node], [], { width: 960, height: 640 }, null);
+  assert.equal(engine.sleeping, false, "configured ambient forces must continue scheduling the living field");
+});
+
 // ---------------------------------------------------------------------------
 // HG-18 — emergence and closure-deficit visuals
 // ---------------------------------------------------------------------------
@@ -1368,11 +1385,11 @@ test("when every context agrees, the sheaf layer reports nothing — the degener
   });
 
   const report = analyzeSheaf(model, data);
-  assert.equal(report.gluing.h1, 0, "an agreeing vault has no obstruction");
+  assert.equal(report.gluing.obstructionRank, 0, "an agreeing vault has no obstruction");
   assert.equal(report.gluing.glues, true);
   assert.equal(report.obstructions.length, 0);
   assert.equal(report.fraction.value, 1);
-  assert.ok(report.gluing.h0 > 0, "an agreeing vault admits a global reading");
+  assert.ok(report.gluing.globalBaselineDimension > 0, "an agreeing vault admits a global reading");
 });
 
 test("the canonical fixture: three contexts, pairwise compatible, globally impossible", () => {
@@ -1386,7 +1403,7 @@ test("the canonical fixture: three contexts, pairwise compatible, globally impos
 
   const report = analyzeSheaf(model, data);
   assert.equal(report.gluing.pairwiseDisagreements.length, 0, "every pair is compatible on its overlap");
-  assert.equal(report.gluing.h1, 1, "exactly one obstruction class");
+  assert.equal(report.gluing.obstructionRank, 1, "exactly one obstruction class");
   assert.equal(report.gluing.glues, false);
   assert.equal(report.gluing.contextualityDetected, true);
   assert.equal(report.obstructions.length, 1);
@@ -1414,7 +1431,7 @@ test("two contexts overlapping in one note always glue — a single shift reconc
   });
 
   const report = analyzeSheaf(model, data);
-  assert.equal(report.gluing.h1, 0, "no cycle, no obstruction");
+  assert.equal(report.gluing.obstructionRank, 0, "no cycle, no obstruction");
   assert.equal(report.fraction.value, 1);
 });
 
@@ -1466,7 +1483,7 @@ test("role refinement suggestions improve gluing without mutating the live sheaf
   assert.ok(
     suggestions.every(
       (suggestion) =>
-        suggestion.after.h1 < suggestion.before.h1 ||
+        suggestion.after.obstructionRank < suggestion.before.obstructionRank ||
         suggestion.after.contextualFraction > suggestion.before.contextualFraction ||
         suggestion.after.localDisagreements < suggestion.before.localDisagreements ||
         (suggestion.before.contextualityDetected && !suggestion.after.contextualityDetected),
@@ -1517,14 +1534,14 @@ test("backfilling from a global role assignment produces the agreeing case", () 
     sections: new Map(data.contexts.map((context) => [context.id, backfillSection(model, context, globalRoles)])),
   };
 
-  assert.equal(analyzeSheaf(model, backfilled).gluing.h1, 0);
+  assert.equal(analyzeSheaf(model, backfilled).gluing.obstructionRank, 0);
   assert.equal(analyzeSheaf(model, backfilled).fraction.value, 1);
 });
 
 test("an empty cover is not an obstructed one", () => {
   const model = new SimplicialModel();
   const report = analyzeSheaf(model, { contexts: [], sections: new Map() });
-  assert.equal(report.gluing.h1, 0);
+  assert.equal(report.gluing.obstructionRank, 0);
   assert.equal(report.fraction.value, 1);
   assert.equal(report.obstructions.length, 0);
 });
@@ -1536,7 +1553,7 @@ test("a sheaf obstruction and a beta-one hole remain different objects", () => {
     c3: { "c.md": "research", "a.md": "idea" },
   });
   assert.equal(obstructed.model.getCachedBetti().b1, 0, "encounter contexts create no simplicial hole");
-  assert.equal(analyzeSheaf(obstructed.model, obstructed.data).gluing.h1, 1);
+  assert.equal(analyzeSheaf(obstructed.model, obstructed.data).gluing.obstructionRank, 1);
 
   const hole = new SimplicialModel();
   hole.addSimplex({ nodes: ["a.md", "b.md"], userDefined: true });
@@ -1544,7 +1561,7 @@ test("a sheaf obstruction and a beta-one hole remain different objects", () => {
   hole.addSimplex({ nodes: ["a.md", "c.md"], userDefined: true });
   assert.ok(hole.getCachedBetti().b1 > 0, "the triangular boundary has a topological hole");
   assert.equal(
-    analyzeSheaf(hole, { contexts: [], sections: new Map() }).gluing.h1,
+    analyzeSheaf(hole, { contexts: [], sections: new Map() }).gluing.obstructionRank,
     0,
     "no cover means no gluing obstruction",
   );

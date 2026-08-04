@@ -218,7 +218,7 @@ export class VaultIndex {
   }
 
   private rebuildInferredSimplices(): void {
-    // Hole analysis is an optional visualization and must never change the graph.
+    // Missing-face analysis is an optional visualization and must never change the graph.
     // In particular, toggling it must not select a different inference algorithm.
     const inferred = inferSimplices([...this.inferenceContexts.values()], this.settings);
 

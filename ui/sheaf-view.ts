@@ -220,7 +220,7 @@ export class SheafView extends ItemView {
     card.createEl("div", { cls: "simplicial-panel-section-label", text: "Gluing report" });
     card.createEl("div", {
       cls: "simplicial-panel-value",
-      text: `H⁰ ${report.gluing.h0} · H¹ ${report.gluing.h1} · contextual fraction ${report.fraction.value.toFixed(2)}${report.fraction.exact ? "" : " lower bound"}`,
+      text: `Global baseline dimension ${report.gluing.globalBaselineDimension} · obstruction rank ${report.gluing.obstructionRank} · contextual fraction ${report.fraction.value.toFixed(2)}${report.fraction.exact ? "" : " lower bound"}`,
     });
     if (report.obstructions.length === 0) {
       card.createEl("div", { cls: "simplicial-measure-reading", text: "No gluing obstruction detected." });
@@ -265,7 +265,7 @@ export class SheafView extends ItemView {
           `${index === 0 ? "Most consequential · " : ""}${shortName(suggestion.nodeId)} in ${context?.name ?? suggestion.contextId}`,
         )
         .setDesc(
-          `${suggestion.from} → ${suggestion.to}; H¹ ${suggestion.before.h1} → ${suggestion.after.h1}; contextual fraction ${suggestion.before.contextualFraction.toFixed(2)} → ${suggestion.after.contextualFraction.toFixed(2)}${suggestion.before.contextualityDetected && !suggestion.after.contextualityDetected ? "; converts hidden contextuality into a directly inspectable local disagreement" : ""}.`,
+          `${suggestion.from} → ${suggestion.to}; obstruction rank ${suggestion.before.obstructionRank} → ${suggestion.after.obstructionRank}; contextual fraction ${suggestion.before.contextualFraction.toFixed(2)} → ${suggestion.after.contextualFraction.toFixed(2)}${suggestion.before.contextualityDetected && !suggestion.after.contextualityDetected ? "; converts a global-reconciliation candidate into a directly inspectable local disagreement" : ""}.`,
         );
       setting.addButton((button) => {
         button.setButtonText("Try in scratch");
@@ -297,7 +297,7 @@ export class SheafView extends ItemView {
     );
     section.createEl("div", {
       cls: "simplicial-measure-reading",
-      text: `Temporary simultaneous readings: H¹ ${report.gluing.h1}, contextual fraction ${report.fraction.value.toFixed(2)}. Accept all to persist and audit them, or discard without changing plugin data.`,
+      text: `Temporary simultaneous readings: obstruction rank ${report.gluing.obstructionRank}, contextual fraction ${report.fraction.value.toFixed(2)}. Accept all to persist and audit them, or discard without changing plugin data.`,
     });
     new Setting(section)
       .addButton((button) =>

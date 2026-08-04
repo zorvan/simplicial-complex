@@ -143,3 +143,21 @@ The hypergraph layer. The plugin previously modelled one kind of togetherness �
 
 [Unreleased]: https://github.com/zorvan/simplicial-complex/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/zorvan/simplicial-complex/releases/tag/v0.1.0
+
+# 0.4.5
+
+## Mathematical correctness
+
+- Replaced triangular/tetrahedral motif counting with canonical sparse boundary operators over F₂. The HUD now reports actual β₀, β₁, and β₂ ranks, with coefficient field, boundary ranks, chain dimensions, analyzed dimension, and model revision retained as provenance.
+- Split local completion motifs into `MissingFaceBoundary`. A missing simplex boundary is no longer presented as an independent homology class. Empty triangles are canonicalized and emitted once; earlier releases emitted each triangle three times and called that number β₁.
+- Added deterministic truth fixtures, boundary-of-boundary checks, truncation-aware Euler–Poincaré checks, hypergraph isolation coverage, and a dense test-only oracle boundary.
+- Filtration scores now have explicit increasing direction (`1-score`), face-condition validation, deterministic face-first ties, and metric provenance. Slider markers describe simplex appearances only; they do not claim persistence births or deaths.
+- Renamed the Contextuality Lab's displayed cohomological shorthand to “global baseline dimension” and “obstruction rank.” The current instrument is a language-context holonomy model inspired by sheaf gluing, not an Abramsky–Brandenburger empirical model.
+
+## Migration note
+
+Prior “hole” values change for two independent reasons: they are now actual homology ranks, and the old triangular motif enumerator triple-counted every empty triangle. Computed results are not persisted, so no vault data is migrated or lost. Existing settings keys remain readable; `enableBettiComputation` now controls missing-face display.
+
+## Measured topology budgets
+
+Deterministic Linux/Node benchmark on 2026-08-04: 500 nodes / 1,668 boundary nonzeros, 1.470 ms static homology; 2,000 / 6,678, 4.547 ms; 10,000 / 33,398, 22.067 ms. Gates are 100 ms, 300 ms, and 1,500 ms. Cold analysis-summary times were 7.828 ms, 73.797 ms, and 1,409.545 ms; the full missing-face scan measured 4.236 ms, 59.254 ms, and 1,376.216 ms respectively.

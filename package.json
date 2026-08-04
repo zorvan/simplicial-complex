@@ -1,6 +1,6 @@
 {
   "name": "simplicial-complex",
-  "version": "0.4.1",
+  "version": "0.4.5",
   "private": true,
   "type": "module",
   "description": "simplicial complex visualization with topological analysis",
@@ -10,6 +10,7 @@
     "check": "./node_modules/typescript/bin/tsc --noEmit",
     "test": "./node_modules/typescript/bin/tsc -p tsconfig.tests.json && node --test tests-dist/tests/*.test.js",
     "benchmark:hypergraph": "./node_modules/typescript/bin/tsc -p tsconfig.tests.json && node scripts/hypergraph-benchmark.mjs",
+    "benchmark:topology": "./node_modules/typescript/bin/tsc -p tsconfig.tests.json && node scripts/topology-benchmark.mjs",
     "lint": "eslint .",
     "check:publisher": "eslint . --max-warnings 0",
     "format:check": "prettier --check .",

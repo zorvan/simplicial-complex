@@ -19,10 +19,15 @@ export interface BettiResult {
   b0: number;
   b1: number;
   b2: number;
-  holes: Hole[];
+  coefficientField: "F2";
+  betti: number[];
+  chainDimensions: number[];
+  boundaryRanks: number[];
+  maxDimension: number;
+  modelRevision: number;
 }
 
-export interface Hole {
+export interface MissingFaceBoundary {
   dimension: 1 | 2;
   boundaryNodes: NodeID[];
   missingSimplex: NodeID[];
@@ -231,6 +236,8 @@ export interface PluginSettings {
   encounterSuggestionThreshold: number;
   maxEncounterSuggestions: number;
   discoveryNoticeShown: boolean;
+  topologyCorrectionNoticeShown: boolean;
+  performanceDefaultsV045Applied: boolean;
 }
 
 export interface RelationSelection {
@@ -295,5 +302,5 @@ export interface AnalysisSummary {
   maxSimplexCentrality: number;
   averageSimplexCentrality: number;
   betti?: BettiResult;
-  holeCount: number;
+  missingFaceCount: number;
 }

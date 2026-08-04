@@ -224,6 +224,15 @@ export class LayoutEngine {
     this.start(this.renderFn, this.getState);
   }
 
+  /** A visual-mode transition must produce a live layout even after prior settling. */
+  refresh(): void {
+    if (this.isAsleep) {
+      this.wake();
+      return;
+    }
+    this.renderFn?.();
+  }
+
   /**
    * Keep ticking even once the layout has settled.
    *
@@ -238,6 +247,11 @@ export class LayoutEngine {
 
   get isAnimationHeld(): boolean {
     return this.animationHold;
+  }
+
+  /** Diagnostic used by invariant tests and the Dynamics controls. */
+  get sleeping(): boolean {
+    return this.isAsleep;
   }
 
   tick(
@@ -437,7 +451,11 @@ export class LayoutEngine {
 
     const kineticEnergy = nodes.reduce((sum, node) => sum + node.vx * node.vx + node.vy * node.vy, 0);
     const averageKineticEnergy = nodes.length > 0 ? kineticEnergy / nodes.length : 0;
-    if (averageKineticEnergy < this.SLEEP_THRESHOLD && !this.animationHold) {
+    // Gravity and noise are deliberate ambient forces: sleeping while either is
+    // enabled freezes the field after one low-energy frame and makes the view
+    // appear to have lost its physics. Zero-force configurations may still sleep.
+    const hasAmbientForce = this.GRAVITY > 0 || this.NOISE > 0;
+    if (averageKineticEnergy < this.SLEEP_THRESHOLD && !this.animationHold && !hasAmbientForce) {
       this.isAsleep = true;
     }
   }

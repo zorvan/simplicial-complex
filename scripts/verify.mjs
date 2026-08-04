@@ -16,7 +16,7 @@ const JOBS = [
   { name: "Lint & Format", steps: ["npm run lint", "npm run format:check"] },
   { name: "Type Check", steps: ["npm run check"] },
   { name: "Build", steps: ["npm run build"], after: verifyBuildOutput },
-  { name: "Test", steps: ["npm test"] },
+  { name: "Test", steps: ["npm test", "npm run benchmark:topology"] },
   { name: "Release preflight", steps: [], after: verifyVersions },
 ];
 

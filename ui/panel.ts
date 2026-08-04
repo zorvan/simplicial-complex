@@ -8,6 +8,7 @@ import type { PluginSettings, RelationKey, RelationSelection, Simplex, SimplexKe
 import { VIEW_TYPE_SIMPLICIAL_PANEL } from "../core/types";
 import { effectiveColorForSimplex } from "../render/palette";
 import { explainEncounter, explainSimplex } from "../data/explainer";
+import { findMissingFaces } from "../core/missing-faces";
 import type { NoteProfile } from "../data/inference/types";
 
 export interface RelationPanelActions {
@@ -473,8 +474,7 @@ export class MetadataPanel extends ItemView {
   }
 
   private renderExplanationCard(contentEl: HTMLElement, simplex: Simplex): void {
-    const analysis = this.model.getAnalysisSummary();
-    const holes = analysis.betti?.holes ?? [];
+    const holes = findMissingFaces(this.model, 2);
 
     const explanation = explainSimplex(simplex, this.nodeProfiles, new Map(), holes);
 

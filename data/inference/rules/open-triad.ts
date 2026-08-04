@@ -1,21 +1,20 @@
 import type { CandidateSimplex, RawGraph, InferenceConfig } from "../types.js";
-import type { Hole } from "../../../core/types.js";
+import type { MissingFaceBoundary } from "../../../core/types.js";
 import { getNeighborsAbove, getEdgeStrength } from "../graph.js";
 
 /**
- * Detect open triads from pre-computed Betti holes (β₁).
- * This avoids the O(n × d²) enumeration in detectOpenTriads by using
- * the already-computed unfilled triangles from Betti analysis.
+ * Detect open triads from pre-computed triangular missing faces.
+ * These are local completion motifs, not independent homology classes.
  */
 export function detectOpenTriadsFromHoles(
-  holes: Hole[],
+  holes: MissingFaceBoundary[],
   graph: RawGraph,
   _config: InferenceConfig,
 ): CandidateSimplex[] {
   const candidates: CandidateSimplex[] = [];
 
   for (const hole of holes) {
-    if (hole.dimension !== 1) continue; // Only use β₁ holes (unfilled triangles)
+    if (hole.dimension !== 1) continue; // Only triangular missing faces.
     if (hole.boundaryNodes.length !== 3) continue;
 
     const [a, b, c] = hole.boundaryNodes;
