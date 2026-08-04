@@ -15,12 +15,31 @@ test("production TypeScript uses Obsidian element creation helpers", async () =>
       } else if (entry.name.endsWith(".ts")) {
         const source = await readFile(path, "utf8");
         if (/\.createElement\s*\(/u.test(source)) violations.push(path);
+        // obsidianmd/prefer-create-el wants the tag-specific shorthands for the
+        // two tags that have them; createEl("div") is what the review bot flags.
+        if (/\.createEl\s*\(\s*"(?:div|span)"/u.test(source)) violations.push(path);
       }
     }
   }
 
   await Promise.all(productionDirectories.map(inspect));
-  assert.deepEqual(violations, [], "Use createEl/createDiv/createSpan instead of createElement");
+  assert.deepEqual(violations, [], 'Use createDiv/createSpan instead of createElement or createEl("div"|"span")');
+});
+
+test("the lint config actually enables the obsidianmd rule set", async () => {
+  const { pathToFileURL } = await import("node:url");
+  // Regression guard: the config used to spread `recommended[0].rules`, which is
+  // only the core-ESLint slice of the plugin's flat-config array. Every
+  // obsidianmd/* rule was silently off, so `check:publisher` passed while the
+  // community-plugin review still reported warnings.
+  const config = (await import(pathToFileURL("eslint.config.js").href)).default as Array<{
+    rules?: Record<string, unknown>;
+  }>;
+  const enabled = new Set(config.flatMap((entry) => Object.keys(entry.rules ?? {})));
+
+  for (const rule of ["obsidianmd/prefer-create-el", "obsidianmd/no-static-styles-assignment", "obsidianmd/platform"]) {
+    assert.ok(enabled.has(rule), `${rule} must be enabled by eslint.config.js`);
+  }
 });
 
 test("the settings tab exposes searchable declarative definitions", async () => {

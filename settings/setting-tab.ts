@@ -532,7 +532,7 @@ export class SimplicialSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Formal mode")
-      .setDesc("Locked on in v0.4.5. Computation-intensive Ambient rendering is temporarily unavailable.")
+      .setDesc("Locked on in v0.4.5. Computation-intensive ambient rendering is temporarily unavailable.")
       .addToggle((toggle) => {
         toggle.setValue(true);
         toggle.setDisabled(true);
@@ -630,6 +630,7 @@ export class SimplicialSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Display betti on canvas")
+      // eslint-disable-next-line obsidianmd/ui/sentence-case -- F₂ and HUD are an acronym and a field name, not words to lowercase.
       .setDesc("Show actual homology ranks over F₂ in the top-left HUD.")
       .addToggle((toggle) => {
         toggle.setValue(this.plugin.settings.bettiDisplayOnCanvas);

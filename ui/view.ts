@@ -140,6 +140,7 @@ export class SimplicialView extends ItemView {
 
     const encounter = explore.createEl("button", {
       cls: "simplicial-explore-action",
+      // eslint-disable-next-line obsidianmd/ui/sentence-case -- Already sentence case; the rule counts the ◇ glyph as the first word.
       text: "◇ Record encounter",
     });
     encounter.title = "Record several notes as one meaningful group; this does not imply pairwise links.";
