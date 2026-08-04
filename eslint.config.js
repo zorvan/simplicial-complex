@@ -3,6 +3,16 @@ import tseslint from "typescript-eslint";
 import { defineConfig } from "eslint/config";
 import obsidianmd from "eslint-plugin-obsidianmd";
 
+// The plugin ships `recommended` as a flat-config *array*; the obsidianmd rules
+// live in a later entry, so reading only `recommended[0]` silently enables none
+// of them. Collect every obsidianmd/* rule across the whole array instead —
+// these are the rules the community-plugin review bot reports against.
+const obsidianmdRecommendedRules = Object.fromEntries(
+  obsidianmd.configs.recommended
+    .flatMap((config) => Object.entries(config.rules ?? {}))
+    .filter(([name]) => name.startsWith("obsidianmd/")),
+);
+
 export default defineConfig([
   {
     ignores: ["tests/**", "tests-dist/**", "node_modules/**", "**/*.mjs", "**/*.js"],
@@ -15,7 +25,7 @@ export default defineConfig([
       parserOptions: { project: "./tsconfig.json" },
     },
     rules: {
-      ...obsidianmd.configs.recommended[0].rules,
+      ...obsidianmdRecommendedRules,
       "obsidianmd/sample-names": "off",
       "obsidianmd/prefer-file-manager-trash-file": "error",
       "@typescript-eslint/no-duplicate-type-constituents": "error",

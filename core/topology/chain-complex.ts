@@ -1,6 +1,7 @@
+import { getSimplexScore } from "../filtration.js";
 import type { SimplicialModel } from "../model.js";
 import { normalizeKey, normalizeNodes } from "../normalize.js";
-import type { BettiResult, NodeID } from "../types.js";
+import type { BettiResult, NodeID, RenderFilterMetric } from "../types.js";
 import type { BoundaryOperator, ChainBasis, ChainComplex, SparseColumn, TopologyInput } from "./backend.js";
 
 /**
@@ -131,16 +132,29 @@ export function topologyInputToModelData(input: TopologyInput): { nodes: NodeID[
   return { nodes: input.vertexKeys, simplices };
 }
 
+export interface TopologyInputOptions {
+  maxHomologyDimension?: number;
+  metric?: RenderFilterMetric;
+  computeRepresentatives?: boolean;
+}
+
 /** Serialize the simplicial layer only; hyperedges never cross the topology boundary. */
 export function createTopologyInput(
   model: SimplicialModel,
   requestId: string,
-  maxHomologyDimension = 2,
+  options: TopologyInputOptions = {},
 ): TopologyInput {
+  const maxHomologyDimension = options.maxHomologyDimension ?? 2;
+  const metric = options.metric ?? "weight";
   const vertexKeys = normalizeNodes([...model.nodes.keys()]);
   const vertexIndex = new Map(vertexKeys.map((key, index) => [key, index]));
   const records = [...model.simplices.values()]
-    .map((simplex) => ({ nodes: normalizeNodes(simplex.nodes), key: normalizeKey(simplex.nodes) }))
+    .map((simplex) => ({
+      nodes: normalizeNodes(simplex.nodes),
+      key: normalizeKey(simplex.nodes),
+      // Increasing sublevel value: a strong relation is early evidence, so it enters first.
+      value: 1 - getSimplexScore(simplex, metric),
+    }))
     .sort((a, b) => a.nodes.length - b.nodes.length || a.key.localeCompare(b.key));
   const offsets = [0];
   const vertices: number[] = [];
@@ -158,9 +172,11 @@ export function createTopologyInput(
     simplexOffsets: Uint32Array.from(offsets),
     simplexVertices: Uint32Array.from(vertices),
     simplexDimensions: Uint16Array.from(records.map((record) => record.nodes.length - 1)),
-    filtrationValues: Float64Array.from(records.map(() => 0)),
+    filtrationValues: Float64Array.from(records.map((record) => record.value)),
     stableKeys: records.map((record) => record.key),
     maxHomologyDimension,
     modelRevision: model.revision,
+    metric,
+    computeRepresentatives: options.computeRepresentatives ?? false,
   };
 }

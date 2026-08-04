@@ -7,6 +7,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.5.0]
+
+Persistent topology. v0.4.5 made the numbers correct; this release makes them answerable. The question a reader can now ask is not "how many loops are there" but "which shapes survive as I move the evidence threshold, which notes carry one of them, how stable is that, and why was it ranked where it was".
+
+### Added
+
+- **Persistence over F₂** (`core/topology/persistence.ts`) — standard left-to-right filtered boundary-column reduction. Births and deaths come from the matrix pairing, not from inspecting the complex at sampled thresholds. This is deliberately _not_ Smith normal form: the filtration order is essential and permuting it would discard exactly the information sought.
+- **Filtered chain complex** (`core/topology/filtered-complex.ts`) — one total order in which every face precedes its cofaces, so every ordered prefix is a simplicial complex. Where a relation was weighted below one of its own faces, the coface is _delayed_ rather than the face advanced, and every such repair is reported in the UI rather than applied silently.
+- **Representative cycles** (`core/topology/representatives.ts`) — each bar above dimension 0 can expose one concrete cycle, verified by recomputing ∂z = 0 rather than asserted. Labelled non-canonical and non-minimal, because it is: another valid reduction returns a different witness for the same class.
+- **Persistence X-ray view** — barcode as the primary representation, persistence diagram as a second tab, with metric, direction, coefficient field, tie policy and filtration repairs stated on screen. Keyboard-navigable, with honest empty and failure states.
+- **Brush-linked cycle highlighting** — selecting a bar draws its representative on the canvas and back. Routed through a single `CycleHighlightBus` seam so the target surface can change without touching the barcode.
+- **Empirical stability** (`core/topology/bootstrap.ts`) — opt-in, off by default, seeded, with a wall-clock budget. Stratified subsampling and weight perturbation are separate modes that never share a label. Reported as bootstrap support, explicitly not a confidence band.
+- **Ranked gaps to write** (`data/inference/persistent-gaps.ts`) — persistent 1-dimensional gaps as writing prompts, each carrying its interval, witness, provenance, uncertainty and a decomposed score that the UI shows term by term rather than collapsing into a "significance" number.
+- **`DiscoveryExplanation`** (`data/discovery-explanation.ts`) — the shared explanation record for ranked results. Defined here because this release reached the contract first; the discovery inbox conforms to it rather than forking it.
+- **Cooperative cancellation that actually works.** The reduction returns to the event loop between column batches rather than only polling a flag: a worker has one thread, so while a synchronous loop runs no `cancel` message can be dequeued for it to observe. Yielding is gated on elapsed time, so a short reduction never pays for it.
+- **Inlined topology worker** — Obsidian's installer fetches only `main.js`, `styles.css` and `manifest.json`, so the worker is bundled as a string and started from a Blob URL, with no second emitted file. Where no worker can start, the same engine runs on the main thread and the view says so rather than pretending otherwise.
+- Truth fixtures in `fixtures/topology/truth/`, seeded property tests, and `npm run benchmark:persistence` with wall-clock, memory and cancellation budgets.
+
+### Changed
+
+- **Filtration markers are now topological.** Births and deaths are read off the persistence pairing and drawn in their own lane, separate from simplex-appearance markers. A relation entering the filtration may create a class, kill one, or do neither, and the slider no longer implies otherwise. The barcode and the slider read the same pairing, so they cannot disagree.
+- The ESLint config now actually enables the `obsidianmd` rule set. It previously spread only the first entry of the plugin's flat-config array, which is the core-ESLint slice, so every `obsidianmd/*` rule was silently off.
+- CI runs both benchmarks and asserts the worker payload is present in the built bundle.
+
+### Mathematical vocabulary
+
+Three unrelated meanings of "persistence" now stay apart, and tests enforce it:
+
+- **storage persistence** — where confirmed relations are written (`data/persistence.ts`);
+- **encounter recurrence** — how often the same encounter has been recorded;
+- **persistent homology** — the subject of this release.
+
+### Not claimed
+
+Bootstrap support is an empirical procedure under a stated sampling scheme; the stability theorem bounds how far a diagram can move, and supplies no coverage probability. Representative cycles are one valid basis element, not the shortest and not canonical. The obstruction rank in the Contextuality Lab is still an obstruction rank, not H¹ — a cochain complex is 0.6.0 work.
+
+---
+
+## [0.4.5]
+
+Mathematical correctness. The plugin stopped presenting conspicuous missing faces as homology.
+
+### Changed
+
+- **Real static homology over F₂** via boundary-rank computation, replacing a motif count that triple-counted every empty triangle (once per vertex) and sorted live model arrays in place while doing it.
+- `Hole` removed outright. A missing face and a homology class are different objects, and `MissingFaceBoundary` names the one the enumeration actually finds.
+- The Contextuality Lab reports an **obstruction rank**, not H¹.
+- Filtration events are simplex appearances, and say so.
+
+---
+
 ## [0.4.0]
 
 The hypergraph layer. The plugin previously modelled one kind of togetherness — the simplex, whose defining property is downward closure — and generated faces for every relation. That is correct for simplices and wrong for encounters: a triad that only means something as a triad is a hyperedge, and asserting its pairs claims something the user never said.

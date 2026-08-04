@@ -1,4 +1,6 @@
-import type { BettiResult, SimplexKey } from "../types.js";
+import type { BettiResult, RenderFilterMetric, SimplexKey } from "../types.js";
+import type { BootstrapConfig } from "./bootstrap.js";
+import type { PersistenceResult } from "./persistence-types.js";
 
 export type SparseColumn = Uint32Array;
 
@@ -32,6 +34,12 @@ export interface TopologyInput {
   stableKeys: string[];
   maxHomologyDimension: number;
   modelRevision: number;
+  /** Which score produced `filtrationValues`. Carried so results can state their provenance. */
+  metric: RenderFilterMetric;
+  /** Opt-in: V-column tracking roughly doubles the reduction's peak memory. */
+  computeRepresentatives: boolean;
+  /** Absent or disabled means no resampling runs at all. */
+  bootstrap?: BootstrapConfig;
 }
 
 export interface TopologyCapabilities {
@@ -43,6 +51,6 @@ export interface TopologyCapabilities {
 export interface TopologyBackend {
   capabilities(): TopologyCapabilities;
   computeStatic(input: TopologyInput): Promise<BettiResult>;
-  computePersistence(input: TopologyInput): Promise<never>;
+  computePersistence(input: TopologyInput): Promise<PersistenceResult>;
   cancel(requestId: string): void;
 }

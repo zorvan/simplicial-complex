@@ -3,7 +3,12 @@ import { SimplicialModel } from "../core/model";
 import type { PluginSettings, RenderFilterMetric } from "../core/types";
 import { VIEW_TYPE_SIMPLICIAL } from "../core/types";
 import { Renderer } from "../render/renderer";
-import { computeFiltrationEvents, getEventThresholds, type FiltrationEvent } from "../core/filtration";
+import {
+  computeFiltrationEvents,
+  getEventThresholds,
+  type FiltrationEvent,
+  type PersistenceEvent,
+} from "../core/filtration";
 import type { RelationHistory } from "../core/history";
 
 export interface SimplicialViewActions {
@@ -14,6 +19,12 @@ export interface SimplicialViewActions {
 
 export class SimplicialView extends ItemView {
   private filtrationEvents: FiltrationEvent[] = [];
+  /**
+   * Births and deaths from the persistence pairing. Populated once the Persistence X-ray
+   * has produced a result; until then the slider shows only the appearance lane, because
+   * inventing topological markers without a reduction is exactly the v0.4.0 defect.
+   */
+  private persistenceEvents: PersistenceEvent[] = [];
   private eventMarkers: HTMLElement[] = [];
 
   private onRescan?: (_reason: string, _delayMs: number) => void;
@@ -58,6 +69,12 @@ export class SimplicialView extends ItemView {
 
   refreshSettings(): void {
     this.computeFiltrationEvents();
+  }
+
+  /** Fed by the topology analysis service; the view never derives these itself. */
+  setPersistenceEvents(events: PersistenceEvent[]): void {
+    this.persistenceEvents = events;
+    this.updateEventMarkers();
   }
 
   getViewType(): string {
@@ -140,6 +157,7 @@ export class SimplicialView extends ItemView {
 
     const encounter = explore.createEl("button", {
       cls: "simplicial-explore-action",
+      // eslint-disable-next-line obsidianmd/ui/sentence-case -- Already sentence case; the rule counts the ◇ glyph as the first word.
       text: "◇ Record encounter",
     });
     encounter.title = "Record several notes as one meaningful group; this does not imply pairwise links.";
@@ -596,24 +614,45 @@ export class SimplicialView extends ItemView {
     onBoundsChange?.(lowerBound, upperBound);
   }
 
+  /**
+   * Two lanes, deliberately separate. A simplex appearing is not a topological event: it
+   * may create a class, kill one, or do neither. Births and deaths come only from the
+   * persistence pairing, which is the same pairing the barcode draws — so the slider and
+   * the barcode cannot disagree about what happened.
+   */
   private updateEventMarkers(): void {
-    // Clear existing markers
     this.eventMarkers.forEach((m) => m.remove());
     this.eventMarkers = [];
 
-    if (!this.sliderWrap || !this.sliderEl || this.filtrationEvents.length === 0) return;
-
-    const thresholds = getEventThresholds(this.filtrationEvents);
+    if (!this.sliderWrap || !this.sliderEl) return;
     const sliderRect = this.sliderEl.getBoundingClientRect();
     if (sliderRect.width === 0) return; // Slider not rendered yet
 
-    thresholds.forEach((threshold) => {
-      const marker = this.sliderWrap!.createDiv({ cls: "simplicial-filtration-marker" });
-      const percent = threshold * 100;
-      marker.style.setProperty("left", `${percent}%`);
-      marker.title = `Event at ${threshold.toFixed(2)}`;
+    if (this.filtrationEvents.length > 0) {
+      getEventThresholds(this.filtrationEvents).forEach((threshold) => {
+        const marker = this.sliderWrap!.createDiv({ cls: "simplicial-filtration-marker" });
+        marker.style.setProperty("left", `${threshold * 100}%`);
+        marker.title = `A relation enters the filtration at ${threshold.toFixed(2)}. This is not a birth or a death.`;
+        this.eventMarkers.push(marker);
+      });
+    }
+
+    const byThreshold = new Map<number, PersistenceEvent[]>();
+    for (const event of this.persistenceEvents) {
+      const rounded = Math.round(event.threshold * 100) / 100;
+      byThreshold.set(rounded, [...(byThreshold.get(rounded) ?? []), event]);
+    }
+    for (const [threshold, events] of byThreshold) {
+      const deaths = events.filter((event) => event.type === "class-death");
+      const marker = this.sliderWrap.createDiv({
+        cls: `simplicial-persistence-marker${deaths.length > 0 ? " is-death" : " is-birth"}`,
+      });
+      marker.style.setProperty("left", `${threshold * 100}%`);
+      // Selecting a death says which simplex kills which class, and names the witness
+      // that carried it up to that point.
+      marker.title = events.map((event) => event.description).join("\n");
       this.eventMarkers.push(marker);
-    });
+    }
   }
 
   private renderLegend(container: HTMLElement): void {

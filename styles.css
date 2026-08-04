@@ -963,3 +963,169 @@
     width: 100%;
   }
 }
+
+/* --- Persistence x-ray (v0.5.0) ------------------------------------------ */
+
+.simplicial-persistence-tabs {
+  display: flex;
+  gap: 6px;
+  margin: 8px 0 12px;
+}
+
+.simplicial-persistence-tab {
+  padding: 4px 12px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.simplicial-persistence-tab.is-active {
+  color: var(--text-normal);
+  background: var(--background-modifier-hover);
+  border-color: var(--interactive-accent);
+}
+
+.simplicial-barcode-lane {
+  margin: 14px 0;
+}
+
+.simplicial-barcode-list {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+}
+
+.simplicial-barcode-row {
+  padding: 4px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.simplicial-barcode-row:hover,
+.simplicial-barcode-row:focus-visible {
+  background: var(--background-modifier-hover);
+  outline: 2px solid var(--interactive-accent);
+  outline-offset: -2px;
+}
+
+.simplicial-barcode-row.is-selected {
+  background: var(--background-modifier-active-hover);
+}
+
+.simplicial-barcode-track {
+  position: relative;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--background-modifier-border);
+  overflow: hidden;
+}
+
+.simplicial-barcode-bar {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  border-radius: 4px;
+  background: var(--interactive-accent);
+}
+
+/* An essential class has no death coordinate; the stripe says "runs off the end"
+   rather than implying a death at the right edge of the plot. */
+.simplicial-barcode-row.is-essential .simplicial-barcode-bar {
+  background: repeating-linear-gradient(
+    90deg,
+    var(--interactive-accent) 0 6px,
+    var(--background-modifier-border) 6px 10px
+  );
+}
+
+.simplicial-barcode-caption {
+  display: block;
+  margin-top: 3px;
+  font-size: 0.78em;
+  color: var(--text-muted);
+}
+
+.simplicial-persistence-diagram {
+  position: relative;
+  height: 220px;
+  margin: 12px 0;
+  border-left: 1px solid var(--background-modifier-border);
+  border-bottom: 1px solid var(--background-modifier-border);
+  background: linear-gradient(
+    to top right,
+    transparent calc(50% - 1px),
+    var(--background-modifier-border) 50%,
+    transparent calc(50% + 1px)
+  );
+}
+
+.simplicial-diagram-point {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+  border-radius: 50%;
+  background: var(--interactive-accent);
+}
+
+.simplicial-diagram-point.is-dim-0 {
+  background: var(--text-muted);
+}
+.simplicial-diagram-point.is-dim-2 {
+  background: var(--text-accent);
+}
+.simplicial-diagram-point.is-essential {
+  border: 2px solid var(--text-normal);
+}
+.simplicial-diagram-point.is-selected {
+  transform: scale(1.6);
+}
+
+.simplicial-persistence-witness,
+.simplicial-persistence-gaps {
+  margin-top: 16px;
+  padding-top: 10px;
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+.simplicial-gap-card {
+  margin: 10px 0;
+  padding: 10px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+}
+
+.simplicial-persistence-repairs summary,
+.simplicial-gap-card summary {
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 0.85em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .simplicial-diagram-point,
+  .simplicial-barcode-bar {
+    transition: none;
+  }
+}
+
+/* Births and deaths live in their own lane: a relation appearing is not a
+   topological event, and v0.4.0's conflation of the two is what 0.4.5 corrected. */
+.simplicial-persistence-marker {
+  position: absolute;
+  bottom: -3px;
+  width: 2px;
+  height: 9px;
+  border-radius: 1px;
+  pointer-events: auto;
+}
+
+.simplicial-persistence-marker.is-birth {
+  background: var(--interactive-accent);
+}
+
+.simplicial-persistence-marker.is-death {
+  background: var(--text-error);
+}

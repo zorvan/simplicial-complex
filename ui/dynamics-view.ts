@@ -126,8 +126,8 @@ export class DynamicsLabView extends ItemView {
   private render(): void {
     const { contentEl } = this;
     contentEl.empty();
-    contentEl.createEl("div", { cls: "simplicial-panel-title", text: "Dynamics lab" });
-    contentEl.createEl("div", {
+    contentEl.createDiv({ cls: "simplicial-panel-title", text: "Dynamics lab" });
+    contentEl.createDiv({
       cls: "simplicial-explanation-tension",
       text: "Three models of how attention spreads, run over the same vault. Where they disagree is where the shape of your notes is doing something a graph cannot describe.",
     });
@@ -148,13 +148,13 @@ export class DynamicsLabView extends ItemView {
     const legend = contentEl.createDiv({ cls: "simplicial-kernel-legend" });
     KERNEL_NAMES.forEach((name) => {
       const row = legend.createDiv({ cls: "simplicial-kernel-legend-row" });
-      row.createEl("span", { cls: `simplicial-kernel-swatch is-${name}` });
-      row.createEl("span", { cls: "simplicial-kernel-name", text: KERNEL_COPY[name].title });
-      row.createEl("span", { cls: "simplicial-kernel-claim", text: KERNEL_COPY[name].claim });
+      row.createSpan({ cls: `simplicial-kernel-swatch is-${name}` });
+      row.createSpan({ cls: "simplicial-kernel-name", text: KERNEL_COPY[name].title });
+      row.createSpan({ cls: "simplicial-kernel-claim", text: KERNEL_COPY[name].claim });
     });
 
     if (this.runs.length === 0) {
-      contentEl.createEl("div", {
+      contentEl.createDiv({
         cls: "simplicial-panel-value",
         text: this.isRunning ? "Running…" : "Nothing run yet.",
       });
@@ -167,16 +167,16 @@ export class DynamicsLabView extends ItemView {
 
   private renderRun(contentEl: HTMLElement, run: EncounterRun): void {
     const card = contentEl.createDiv({ cls: "simplicial-dynamics-card" });
-    card.createEl("div", { cls: "simplicial-panel-section-label", text: run.label });
+    card.createDiv({ cls: "simplicial-panel-section-label", text: run.label });
 
     run.results.forEach((result) => {
       const row = card.createDiv({ cls: "simplicial-dynamics-row" });
       const head = row.createDiv({ cls: "simplicial-measure-head" });
-      head.createEl("span", {
+      head.createSpan({
         cls: `simplicial-kernel-name is-${result.kernel}`,
         text: KERNEL_COPY[result.kernel].title,
       });
-      head.createEl("span", {
+      head.createSpan({
         cls: "simplicial-measure-figure",
         // A kernel that never settled says so; reporting the cap would be a number
         // that looks like a measurement and is not one.
@@ -190,7 +190,7 @@ export class DynamicsLabView extends ItemView {
       const fastest = settled.reduce((best, current) => (current.iterations! < best.iterations! ? current : best));
       const slowest = settled.reduce((worst, current) => (current.iterations! > worst.iterations! ? current : worst));
       if (fastest.kernel !== slowest.kernel) {
-        card.createEl("div", {
+        card.createDiv({
           cls: "simplicial-measure-reading",
           text: `Settles fastest as a ${KERNEL_COPY[fastest.kernel].title.toLowerCase()} structure and slowest as a ${KERNEL_COPY[slowest.kernel].title.toLowerCase()} one.`,
         });
@@ -222,9 +222,9 @@ export class DynamicsLabView extends ItemView {
     if (competing.length === 0) return;
 
     const section = contentEl.createDiv({ cls: "simplicial-dynamics-card" });
-    section.createEl("div", { cls: "simplicial-panel-section-label", text: "Competing rhythms" });
+    section.createDiv({ cls: "simplicial-panel-section-label", text: "Competing rhythms" });
     competing.slice(0, 5).forEach((rhythm) => {
-      section.createEl("div", {
+      section.createDiv({
         cls: "simplicial-measure-reading",
         text: `${rhythm.sharedNodes.map(shortName).join(" · ")} belongs to two encounters that settle ${rhythm.separation} iterations apart. It is being asked to move at two speeds.`,
       });

@@ -71,12 +71,13 @@ export class SheafView extends ItemView {
   private render(): void {
     const { contentEl } = this;
     contentEl.empty();
-    contentEl.createEl("div", { cls: "simplicial-panel-title", text: "Contextuality lab" });
-    contentEl.createEl("div", {
+    contentEl.createDiv({ cls: "simplicial-panel-title", text: "Contextuality lab" });
+    contentEl.createDiv({
       cls: "simplicial-explanation-tension",
       text: "Use this after you have overlapping groups. A context is one viewpoint (for example a project, folder, or theme). Give the same note a role in each viewpoint; the lab then shows whether those local readings agree when combined.",
     });
     const guide = contentEl.createEl("details", { cls: "simplicial-sheaf-guide" });
+    // eslint-disable-next-line obsidianmd/ui/sentence-case -- "I" is the pronoun; lowercasing it is not sentence case.
     guide.createEl("summary", { text: "What should I expect to see?" });
     guide.createEl("p", {
       text: "Start by adding suggested context seeds. In each context, assign roles only where they make sense. The report will show either a compatible shared reading, a direct local disagreement, or contextuality: every overlap looks compatible on its own, but all viewpoints cannot be combined at once. Suggestions are hypotheses and never change your notes automatically.",
@@ -97,8 +98,8 @@ export class SheafView extends ItemView {
   private renderSuggestions(container: HTMLElement, stored: StoredSheaf): void {
     const suggestions = suggestRelationContexts(this.app, this.model, stored.contexts);
     const section = container.createDiv({ cls: "simplicial-sheaf-suggestions" });
-    section.createEl("div", { cls: "simplicial-panel-section-label", text: "Suggested starting cover" });
-    section.createEl("div", {
+    section.createDiv({ cls: "simplicial-panel-section-label", text: "Suggested starting cover" });
+    section.createDiv({
       cls: "simplicial-measure-reading",
       text: suggestions.length
         ? "Each worksheet includes a deterministic first draft from authored overlap and note metadata. Add it, then rename it and correct any local role that does not fit."
@@ -156,7 +157,7 @@ export class SheafView extends ItemView {
 
   private renderCreator(container: HTMLElement, stored: StoredSheaf): void {
     const section = container.createDiv({ cls: "simplicial-sheaf-create" });
-    section.createEl("div", { cls: "simplicial-panel-section-label", text: "Define context" });
+    section.createDiv({ cls: "simplicial-panel-section-label", text: "Define context" });
     let name = "";
     let source: ContextSource = "manual";
     let definition = "";
@@ -172,6 +173,7 @@ export class SheafView extends ItemView {
     });
     new Setting(section)
       .setName("Definition")
+      // eslint-disable-next-line obsidianmd/ui/sentence-case -- MOC (map of content) is an acronym, not a word.
       .setDesc("Folder path/tag for a derived seed, or a query/MOC description for an explicit selection.")
       .addText((text) => text.onChange((value) => (definition = value.trim())));
 
@@ -217,19 +219,19 @@ export class SheafView extends ItemView {
     const data = buildSheafData(this.model, stored, buildGlobalRoles(this.app, this.model));
     const report = analyzeSheaf(this.model, data);
     const card = container.createDiv({ cls: "simplicial-sheaf-report" });
-    card.createEl("div", { cls: "simplicial-panel-section-label", text: "Gluing report" });
-    card.createEl("div", {
+    card.createDiv({ cls: "simplicial-panel-section-label", text: "Gluing report" });
+    card.createDiv({
       cls: "simplicial-panel-value",
       text: `Global baseline dimension ${report.gluing.globalBaselineDimension} · obstruction rank ${report.gluing.obstructionRank} · contextual fraction ${report.fraction.value.toFixed(2)}${report.fraction.exact ? "" : " lower bound"}`,
     });
     if (report.obstructions.length === 0) {
-      card.createEl("div", { cls: "simplicial-measure-reading", text: "No gluing obstruction detected." });
+      card.createDiv({ cls: "simplicial-measure-reading", text: "No gluing obstruction detected." });
     } else {
       report.obstructions.forEach((obstruction) => {
         const names = obstruction.contexts.map(
           (id) => stored.contexts.find((context) => context.id === id)?.name ?? id,
         );
-        card.createEl("div", {
+        card.createDiv({
           cls: "simplicial-obstruction-reading",
           text: report.gluing.contextualityDetected
             ? `${obstruction.nodes.map(shortName).join(" · ")} are pairwise compatible, but cannot be read together across ${names.join(" ↔ ")}.`
@@ -238,7 +240,7 @@ export class SheafView extends ItemView {
       });
     }
     report.gluing.pairwiseDisagreements.forEach((disagreement) => {
-      card.createEl("div", {
+      card.createDiv({
         cls: "simplicial-measure-reading",
         text: `Local disagreement between ${disagreement.a} and ${disagreement.b}: ${disagreement.disagreeingNodes.map(shortName).join(" · ")}. This is not contextuality.`,
       });
@@ -253,8 +255,8 @@ export class SheafView extends ItemView {
   ): void {
     const suggestions = suggestRoleRefinements(this.model, data);
     if (suggestions.length === 0) return;
-    container.createEl("div", { cls: "simplicial-panel-section-label", text: "Try a local refinement" });
-    container.createEl("div", {
+    container.createDiv({ cls: "simplicial-panel-section-label", text: "Try a local refinement" });
+    container.createDiv({
       cls: "simplicial-measure-reading",
       text: "These are counterfactual improvements, not claims about meaning. Apply one only if the proposed local reading is accurate.",
     });
@@ -280,7 +282,7 @@ export class SheafView extends ItemView {
 
   private renderScratch(container: HTMLElement, stored: StoredSheaf): void {
     const section = container.createDiv({ cls: "simplicial-sheaf-scratch" });
-    section.createEl("div", { cls: "simplicial-panel-section-label", text: `Scratch changes (${this.scratch.size})` });
+    section.createDiv({ cls: "simplicial-panel-section-label", text: `Scratch changes (${this.scratch.size})` });
     const preview: StoredSheaf = {
       contexts: stored.contexts,
       sections: Object.fromEntries(Object.entries(stored.sections).map(([id, roles]) => [id, { ...roles }])),
@@ -295,7 +297,7 @@ export class SheafView extends ItemView {
       this.model,
       buildSheafData(this.model, preview, buildGlobalRoles(this.app, this.model)),
     );
-    section.createEl("div", {
+    section.createDiv({
       cls: "simplicial-measure-reading",
       text: `Temporary simultaneous readings: obstruction rank ${report.gluing.obstructionRank}, contextual fraction ${report.fraction.value.toFixed(2)}. Accept all to persist and audit them, or discard without changing plugin data.`,
     });
@@ -340,7 +342,7 @@ export class SheafView extends ItemView {
     const card = container.createDiv({ cls: "simplicial-sheaf-context" });
     const heading = card.createDiv({ cls: "simplicial-sheaf-context-head" });
     heading.createEl("strong", { text: context.name });
-    heading.createEl("span", { text: `${context.source}${context.definition ? ` · ${context.definition}` : ""}` });
+    heading.createSpan({ text: `${context.source}${context.definition ? ` · ${context.definition}` : ""}` });
     const support = contextSupport(this.model, context);
     if (Object.keys(stored.sections[context.id] ?? {}).length === 0 && support.length > 0) {
       new Setting(card)
@@ -381,11 +383,11 @@ export class SheafView extends ItemView {
       .map((other) => ({ other, nodes: support.filter((node) => contextSupport(this.model, other).includes(node)) }))
       .filter((entry) => entry.nodes.length > 0);
     overlaps.forEach(({ other, nodes }) => {
-      card.createEl("div", {
+      card.createDiv({
         cls: "simplicial-context-overlap",
         text: `Intersection with ${other.name}: ${nodes.map(shortName).join(" · ")}`,
       });
-      card.createEl("div", {
+      card.createDiv({
         cls: "simplicial-measure-reading",
         text: `Useful because ${nodes.length} shared note${nodes.length === 1 ? " carries" : "s carry"} readings that can be tested for agreement.`,
       });
@@ -430,12 +432,12 @@ export class SheafView extends ItemView {
     if (this.compareNodeId && support.includes(this.compareNodeId)) {
       const globalRoles = buildGlobalRoles(this.app, this.model);
       const comparison = card.createDiv({ cls: "simplicial-sheaf-comparison" });
-      comparison.createEl("div", {
+      comparison.createDiv({
         cls: "simplicial-panel-section-label",
         text: `Readings of ${shortName(this.compareNodeId)}`,
       });
       compareReadings(this.model, stored, globalRoles, this.compareNodeId).forEach((reading) => {
-        comparison.createEl("div", { text: `${reading.contextName}: ${reading.role} · ${reading.provenance}` });
+        comparison.createDiv({ text: `${reading.contextName}: ${reading.role} · ${reading.provenance}` });
       });
     }
     this.renderContextRestructuring(card, stored, context.id);
@@ -527,12 +529,12 @@ export class SheafView extends ItemView {
 
   private renderAudit(container: HTMLElement, stored: StoredSheaf): void {
     const section = container.createDiv({ cls: "simplicial-sheaf-audit" });
-    section.createEl("div", { cls: "simplicial-panel-section-label", text: "Accepted refinement audit trail" });
+    section.createDiv({ cls: "simplicial-panel-section-label", text: "Accepted refinement audit trail" });
     const events = stored.audit.slice(-20).reverse();
     if (events.length === 0)
-      section.createEl("div", { cls: "simplicial-measure-reading", text: "No accepted refinements yet." });
+      section.createDiv({ cls: "simplicial-measure-reading", text: "No accepted refinements yet." });
     events.forEach((event) =>
-      section.createEl("div", {
+      section.createDiv({
         cls: "simplicial-measure-reading",
         text: `${new Date(event.at).toLocaleString()} · ${event.action} · ${event.nodeId ? `${shortName(event.nodeId)} · ` : ""}${event.before ?? "∅"} → ${event.after ?? "∅"} · ${event.reason}`,
       }),

@@ -1,0 +1,37 @@
+{
+  "notes": "Two loops sharing one vertex. Rank of H1 is 2, not 1.",
+  "nodes": ["a", "b", "c", "d", "e"],
+  "simplices": [
+    {
+      "nodes": ["a", "b"],
+      "weight": 1
+    },
+    {
+      "nodes": ["b", "c"],
+      "weight": 1
+    },
+    {
+      "nodes": ["c", "a"],
+      "weight": 1
+    },
+    {
+      "nodes": ["a", "d"],
+      "weight": 1
+    },
+    {
+      "nodes": ["d", "e"],
+      "weight": 1
+    },
+    {
+      "nodes": ["e", "a"],
+      "weight": 1
+    }
+  ],
+  "hyperedges": [],
+  "betti": [1, 2, 0],
+  "intervals": [
+    [0, 0, null],
+    [1, 0, null],
+    [1, 0, null]
+  ]
+}

@@ -5,6 +5,7 @@ export const VIEW_TYPE_SIMPLICIAL = "simplicial-view";
 export const VIEW_TYPE_SIMPLICIAL_PANEL = "simplicial-panel";
 export const VIEW_TYPE_SIMPLICIAL_SHEAF = "simplicial-sheaf";
 export const VIEW_TYPE_SIMPLICIAL_DYNAMICS = "simplicial-dynamics";
+export const VIEW_TYPE_SIMPLICIAL_PERSISTENCE = "simplicial-persistence";
 export const MAX_FACE_GEN_DIM = 4;
 export const MAX_RENDERED_DIM = 3;
 export const HOLD_REPULSION = 900;
@@ -238,6 +239,21 @@ export interface PluginSettings {
   discoveryNoticeShown: boolean;
   topologyCorrectionNoticeShown: boolean;
   performanceDefaultsV045Applied: boolean;
+  // --- persistent topology (v0.5.0) ---
+  /** Registers the Persistence x-ray view and its command. */
+  enablePersistenceView: boolean;
+  /**
+   * Off by default. Bootstrap multiplies a full reduction plus a diagram matching by the
+   * resample count; it is an opt-in analysis with a visible cost, not a background task.
+   */
+  enableBootstrapUncertainty: boolean;
+  bootstrapSampleCount: number;
+  /**
+   * Ceiling on simplices sent to the engine. Sized for the lowest supported platform:
+   * mobile stays in scope, so this is the mobile limit, not the desktop one.
+   */
+  topologyMaxSimplices: number;
+  persistenceReleaseNoticeShown: boolean;
 }
 
 export interface RelationSelection {

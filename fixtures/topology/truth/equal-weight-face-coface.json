@@ -1,0 +1,18 @@
+{
+  "notes": "A face weighted below its coface. The coface is delayed to keep every prefix a complex; the repair is reported, never silent.",
+  "nodes": ["a", "b", "c"],
+  "simplices": [
+    {
+      "nodes": ["a", "b"],
+      "weight": 0.2
+    },
+    {
+      "nodes": ["a", "b", "c"],
+      "weight": 0.9
+    }
+  ],
+  "hyperedges": [],
+  "betti": [1, 0, 0],
+  "intervals": [[0, 0, null]],
+  "expectRepairs": 1
+}

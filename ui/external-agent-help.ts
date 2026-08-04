@@ -73,7 +73,7 @@ async function copyPrompt(prompt: string, label: string): Promise<void> {
 
 export function renderExternalAgentHelp(container: HTMLElement, app: App, compact = false): void {
   const card = container.createDiv({ cls: "simplicial-agent-help" });
-  card.createEl("div", { cls: "simplicial-panel-section-label", text: "Use an external AI reader" });
+  card.createDiv({ cls: "simplicial-panel-section-label", text: "Use an external AI reader" });
   card.createEl("p", {
     text: "This plugin never sends your vault anywhere. If you independently give a file-capable agent access, these instructions help it propose structure for you to review.",
   });
@@ -92,6 +92,7 @@ export function renderExternalAgentHelp(container: HTMLElement, app: App, compac
 class ExternalAgentGuideModal extends Modal {
   onOpen(): void {
     this.contentEl.addClass("simplicial-agent-guide");
+    // eslint-disable-next-line obsidianmd/ui/sentence-case -- AI is an acronym; "Ai-assisted" is not the correction.
     this.contentEl.createEl("h2", { text: "AI-assisted discovery" });
     this.contentEl.createEl("p", {
       text: "Optional and provider-neutral: the plugin does not invoke an agent, transmit notes, or accept proposals automatically. You choose the tool, its vault access, and every intervention.",

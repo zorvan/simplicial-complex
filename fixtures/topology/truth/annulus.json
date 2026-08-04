@@ -1,0 +1,36 @@
+{
+  "notes": "A triangulated ring: one component, one loop around the hole, no void.",
+  "nodes": ["a", "b", "c", "d", "e", "f"],
+  "simplices": [
+    {
+      "nodes": ["a", "b", "d"],
+      "weight": 1
+    },
+    {
+      "nodes": ["b", "d", "e"],
+      "weight": 1
+    },
+    {
+      "nodes": ["b", "c", "e"],
+      "weight": 1
+    },
+    {
+      "nodes": ["c", "e", "f"],
+      "weight": 1
+    },
+    {
+      "nodes": ["c", "a", "f"],
+      "weight": 1
+    },
+    {
+      "nodes": ["a", "f", "d"],
+      "weight": 1
+    }
+  ],
+  "hyperedges": [],
+  "betti": [1, 1, 0],
+  "intervals": [
+    [0, 0, null],
+    [1, 0, null]
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "notes": "A hollow shell: one 2-dimensional void, no loops.",
+  "nodes": ["a", "b", "c", "d"],
+  "simplices": [
+    {
+      "nodes": ["a", "b", "c"],
+      "weight": 1
+    },
+    {
+      "nodes": ["a", "b", "d"],
+      "weight": 1
+    },
+    {
+      "nodes": ["a", "c", "d"],
+      "weight": 1
+    },
+    {
+      "nodes": ["b", "c", "d"],
+      "weight": 1
+    }
+  ],
+  "hyperedges": [],
+  "betti": [1, 0, 1],
+  "intervals": [
+    [0, 0, null],
+    [2, 0, null]
+  ]
+}
