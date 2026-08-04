@@ -368,7 +368,6 @@ Open Settings → Simplicial Complex to configure:
 | Show cores             | On               | Render simplices with dimension 3 and higher                               |
 | Max rendered dimension | 12               | Cap visual rendering (higher-order still stored)                           |
 | Noise amount           | 0.12             | Breathing intensity of the layout                                          |
-| Sleep threshold        | 0.01             | Kinetic energy level at which the layout pauses                            |
 | Dark mode              | Auto             | Follow system, or force light/dark                                         |
 | Formal mode            | Off              | Switch from ambient blobs to geometric rendering with analysis overlays    |
 | Label density          | 0.5              | How many non-focused labels render before decluttering hides the rest      |

@@ -1043,15 +1043,16 @@ test("a still pulse leaves the node exactly as it was — reduced motion is the 
   assert.ok(pulsedNodeRadius(5, 1) > 5);
 });
 
-test("the layout engine keeps ticking while an animation hold is set", () => {
+test("an animation hold records pulse state on a settled layout", () => {
   const engine = new LayoutEngine();
   const nodes: LayoutNode[] = [
     { id: "a.md", px: 0, py: 0, vx: 0, vy: 0, isVirtual: false, isPinned: true, displayAlpha: 1 },
   ];
 
-  // A pinned lone node has no kinetic energy, so the engine sleeps immediately.
+  // A pinned lone node has no kinetic energy, but the live canvas remains active.
   engine.tick(nodes, [], { width: 800, height: 600 }, null, []);
   assert.equal(engine.isAnimationHeld, false);
+  assert.equal(engine.sleeping, false);
 
   engine.setAnimationHold(true);
   engine.tick(nodes, [], { width: 800, height: 600 }, null, []);
@@ -1073,6 +1074,63 @@ test("ambient gravity and noise keep the living layout awake", () => {
   };
   engine.tick([node], [], { width: 960, height: 640 }, null);
   assert.equal(engine.sleeping, false, "configured ambient forces must continue scheduling the living field");
+});
+
+test("the live layout never auto-sleeps, even with no forces or kinetic energy", () => {
+  const engine = new LayoutEngine();
+  engine.configure({ gravityStrength: 0, noiseAmount: 0, repulsionStrength: 0, sleepThreshold: 1 });
+  const node: LayoutNode = {
+    id: "still.md",
+    px: 0,
+    py: 0,
+    vx: 0,
+    vy: 0,
+    isVirtual: false,
+    isPinned: true,
+    displayAlpha: 1,
+  };
+
+  for (let frame = 0; frame < 10; frame++) {
+    engine.tick([node], [], { width: 800, height: 600 }, null, []);
+  }
+
+  assert.equal(engine.sleeping, false, "only an explicit stop may halt the live canvas");
+});
+
+test("a settings refresh replaces the frame even when the engine still reports awake", () => {
+  const originalWindow = globalThis.window;
+  let nextFrame = 0;
+  const requested: FrameRequestCallback[] = [];
+  const cancelled: number[] = [];
+  Object.defineProperty(globalThis, "window", {
+    configurable: true,
+    value: {
+      requestAnimationFrame(callback: FrameRequestCallback): number {
+        requested.push(callback);
+        return ++nextFrame;
+      },
+      cancelAnimationFrame(frame: number): void {
+        cancelled.push(frame);
+      },
+    },
+  });
+
+  try {
+    const engine = new LayoutEngine();
+    engine.start(
+      () => undefined,
+      () => ({ nodes: [], simplices: [], hyperedges: [], bounds: { width: 800, height: 600 }, holdNode: null }),
+    );
+    assert.equal(requested.length, 1);
+
+    engine.refresh();
+
+    assert.deepEqual(cancelled, [1], "the possibly stale frame is discarded");
+    assert.equal(requested.length, 2, "settings interaction establishes a fresh animation frame");
+    assert.equal(engine.sleeping, false);
+  } finally {
+    Object.defineProperty(globalThis, "window", { configurable: true, value: originalWindow });
+  }
 });
 
 // ---------------------------------------------------------------------------

@@ -54,7 +54,6 @@ export class SimplicialSettingTab extends PluginSettingTab {
           "Gravity strength",
           "Damping",
           "Boundary padding",
-          "Sleep threshold",
           "Dark mode",
         ],
         (el) => this.renderLayoutSettings(el),
@@ -269,15 +268,6 @@ export class SimplicialSettingTab extends PluginSettingTab {
       this.addNumberSlider(setting, this.plugin.settings.boundaryPadding, 0, 200, 5, async (value) => {
         this.plugin.settings.boundaryPadding = value;
         this.plugin.engine.configure({ boundaryPadding: value });
-        await this.plugin.saveSettings();
-      });
-    }
-
-    {
-      const setting = new Setting(containerEl).setName("Sleep threshold");
-      this.addNumberSlider(setting, this.plugin.settings.sleepThreshold, 0.001, 0.1, 0.001, async (value) => {
-        this.plugin.settings.sleepThreshold = value;
-        this.plugin.engine.configure({ sleepThreshold: value });
         await this.plugin.saveSettings();
       });
     }

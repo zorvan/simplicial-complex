@@ -161,7 +161,6 @@ export class LayoutEngine {
   private GRAVITY = 0.0007;
   private NOISE = 0.06; // reduce random jitter
   private DAMPING = 0.9; // higher damping for quicker stabilization
-  private SLEEP_THRESHOLD = 0.02;
   private BOUNDARY_PADDING = 50;
   private SPARSE_EDGE_LENGTH = 150;
   private SPARSE_GRAVITY_BOOST = 1.8;
@@ -186,7 +185,9 @@ export class LayoutEngine {
     sparseGravityBoost?: number;
   }): void {
     if (opts.noiseAmount !== undefined) this.NOISE = opts.noiseAmount;
-    if (opts.sleepThreshold !== undefined) this.SLEEP_THRESHOLD = opts.sleepThreshold;
+    // Kept in the public options for settings-file compatibility. The live
+    // canvas no longer auto-sleeps, regardless of the stored threshold.
+    void opts.sleepThreshold;
     if (opts.repulsionStrength !== undefined) this.REPULSION = opts.repulsionStrength;
     if (opts.cohesionStrength !== undefined) this.COHESION = opts.cohesionStrength;
     if (opts.gravityStrength !== undefined) this.GRAVITY = opts.gravityStrength;
@@ -224,22 +225,20 @@ export class LayoutEngine {
     this.start(this.renderFn, this.getState);
   }
 
-  /** A visual-mode transition must produce a live layout even after prior settling. */
+  /**
+   * Re-establish the frame loop after a live settings change.
+   *
+   * Do not rely on `isAsleep` here. A settings surface can be opened while the
+   * host is suspending or replacing animation frames, leaving that flag false
+   * even though no callback remains scheduled. Starting again is idempotent:
+   * `start` cancels the previous frame before requesting its replacement.
+   */
   refresh(): void {
-    if (this.isAsleep) {
-      this.wake();
-      return;
-    }
-    this.renderFn?.();
+    if (!this.renderFn || !this.getState) return;
+    this.start(this.renderFn, this.getState);
   }
 
-  /**
-   * Keep ticking even once the layout has settled.
-   *
-   * The engine sleeps on low kinetic energy, which is right for a force layout and
-   * wrong for anything animating on its own clock — a focused encounter's pulse has
-   * no kinetic energy at all and would stop on the first still frame.
-   */
+  /** Record whether the renderer currently has a time-based effect to draw. */
   setAnimationHold(active: boolean): void {
     this.animationHold = active;
     if (active) this.wake();
@@ -449,15 +448,9 @@ export class LayoutEngine {
       node.py += node.vy;
     });
 
-    const kineticEnergy = nodes.reduce((sum, node) => sum + node.vx * node.vx + node.vy * node.vy, 0);
-    const averageKineticEnergy = nodes.length > 0 ? kineticEnergy / nodes.length : 0;
-    // Gravity and noise are deliberate ambient forces: sleeping while either is
-    // enabled freezes the field after one low-energy frame and makes the view
-    // appear to have lost its physics. Zero-force configurations may still sleep.
-    const hasAmbientForce = this.GRAVITY > 0 || this.NOISE > 0;
-    if (averageKineticEnergy < this.SLEEP_THRESHOLD && !this.animationHold && !hasAmbientForce) {
-      this.isAsleep = true;
-    }
+    // The live canvas deliberately keeps its frame loop at equilibrium. Besides
+    // preserving ambient motion, this ensures time-based effects and later model
+    // changes render without requiring a settings or pointer event to wake it.
   }
 
   private calculateBounds(nodes: LayoutNode[]): { x: number; y: number; width: number; height: number } {
